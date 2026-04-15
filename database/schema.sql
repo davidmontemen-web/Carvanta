@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS carvanta_db;
+USE carvanta_db;
+
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  rol ENUM('admin', 'usuario') NOT NULL DEFAULT 'usuario',
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
