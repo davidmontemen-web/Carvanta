@@ -1,121 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useMemo, useState } from 'react';
+import LoginPage from './pages/LoginPage';
+import UsuariosPage from './pages/UsuariosPage';
+import DashboardPage from './pages/DashboardPage';
+import AppraisalsPage from './pages/AppraisalsPage';
+import VentasPage from './pages/VentasPage';
+import InventarioPage from './pages/InventarioPage';
+import MiCuentaPage from './pages/MiCuentaPage';
+import MainLayout from './components/layout/MainLayout';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [usuario, setUsuario] = useState(() => {
+    const stored = localStorage.getItem('usuario');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  const [vistaActiva, setVistaActiva] = useState('dashboard');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    setUsuario(null);
+    setVistaActiva('dashboard');
+  };
+
+  const esAdmin = usuario?.rol === 'administrador';
+
+  const vistasPermitidas = useMemo(() => {
+    if (!usuario) return [];
+
+    if (esAdmin) {
+      return ['dashboard', 'avaluos', 'ventas', 'inventario', 'usuarios', 'mi-cuenta'];
+    }
+
+    return ['dashboard', 'avaluos', 'mi-cuenta'];
+  }, [usuario, esAdmin]);
+
+  const cambiarVista = (vista) => {
+    if (!vistasPermitidas.includes(vista)) return;
+    setVistaActiva(vista);
+  };
+
+  const obtenerTituloVista = () => {
+    switch (vistaActiva) {
+      case 'dashboard':
+        return 'Dashboard';
+      case 'avaluos':
+        return 'Avalúos';
+      case 'ventas':
+        return 'Ventas';
+      case 'inventario':
+        return 'Inventario';
+      case 'usuarios':
+        return 'Usuarios';
+      case 'mi-cuenta':
+        return 'Mi cuenta';
+      default:
+        return 'Carvanta';
+    }
+  };
+
+  const renderVista = () => {
+    switch (vistaActiva) {
+      case 'dashboard':
+        return <DashboardPage />;
+      case 'avaluos':
+        return <AppraisalsPage usuario={usuario} />;
+      case 'ventas':
+        return esAdmin ? <VentasPage /> : <DashboardPage />;
+      case 'inventario':
+        return esAdmin ? <InventarioPage /> : <DashboardPage />;
+      case 'usuarios':
+        return esAdmin ? (
+          <UsuariosPage onLogout={handleLogout} usuario={usuario} />
+        ) : (
+          <DashboardPage />
+        );
+      case 'mi-cuenta':
+        return <MiCuentaPage usuario={usuario} />;
+      default:
+        return <DashboardPage />;
+    }
+  };
+
+  if (!usuario) {
+    return <LoginPage onLogin={setUsuario} />;
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <MainLayout
+      usuario={usuario}
+      onLogout={handleLogout}
+      vistaActiva={vistaActiva}
+      onCambiarVista={cambiarVista}
+      tituloVista={obtenerTituloVista()}
+    >
+      {renderVista()}
+    </MainLayout>
+  );
 }
 
-export default App
+export default App;
