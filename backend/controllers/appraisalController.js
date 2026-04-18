@@ -1,5 +1,28 @@
 const db = require('../db');
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
+
+// ==============================
+// HELPERS
+// ==============================
+
+const safeJSON = (data) => {
+  try {
+    return JSON.stringify(data || {});
+  } catch {
+    return JSON.stringify({});
+  }
+};
+
+const buildPhotoUrl = (path) => {
+  if (!path) return null;
+  return `${BASE_URL}${path.replace(/\\/g, '/')}`;
+};
+
+// ==============================
+// MAPEADOR
+// ==============================
+
 const mapAppraisalRow = async (row) => {
   const [photos] = await db.query(
     `
@@ -20,7 +43,7 @@ const mapAppraisalRow = async (row) => {
       fileName: p.file_name,
       path: p.file_path,
       mimeType: p.mime_type,
-      url: `http://localhost:4000${p.file_path.replace(/\\/g, '/')}`
+      url: buildPhotoUrl(p.file_path)
     }));
 
   const fotosDetalle = photos
@@ -31,7 +54,7 @@ const mapAppraisalRow = async (row) => {
       fileName: p.file_name,
       path: p.file_path,
       mimeType: p.mime_type,
-      url: `http://localhost:4000${p.file_path.replace(/\\/g, '/')}`
+      url: buildPhotoUrl(p.file_path)
     }));
 
   return {
@@ -56,6 +79,10 @@ const mapAppraisalRow = async (row) => {
   };
 };
 
+// ==============================
+// LISTAR
+// ==============================
+
 const listarAppraisals = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -77,7 +104,7 @@ const listarAppraisals = async (req, res) => {
         fugas_motor_json,
         valuacion_json
       FROM appraisals
-      ORDER BY actualizado_en DESC
+      ORDER BY fecha_actualizacion DESC
     `);
 
     const data = await Promise.all(rows.map(mapAppraisalRow));
@@ -95,32 +122,17 @@ const listarAppraisals = async (req, res) => {
   }
 };
 
+// ==============================
+// OBTENER POR ID
+// ==============================
+
 const obtenerAppraisalPorId = async (req, res) => {
   try {
     const { id } = req.params;
 
     const [rows] = await db.query(
       `
-      SELECT 
-        id,
-        folio,
-        cliente_nombre,
-        cliente_telefono,
-        vehiculo_interes,
-        fecha_avaluo,
-        fecha_actualizacion,
-        estatus,
-        asesor_ventas,
-        generales_json,
-        documentacion_json,
-        interior_json,
-        carroceria_json,
-        sistema_electrico_json,
-        fugas_motor_json,
-        valuacion_json
-      FROM appraisals
-      WHERE id = ?
-      LIMIT 1
+      SELECT * FROM appraisals WHERE id = ? LIMIT 1
       `,
       [id]
     );
@@ -147,16 +159,19 @@ const obtenerAppraisalPorId = async (req, res) => {
   }
 };
 
+// ==============================
+// CREAR
+// ==============================
+
 const crearAppraisal = async (req, res) => {
   try {
     const {
-      id,
+  id: rawId,
       folio,
       clienteNombre,
       clienteTelefono,
       vehiculoInteres,
       fechaAvaluo,
-      fechaActualizacion,
       estatus,
       asesorVentas,
       generales,
@@ -168,12 +183,23 @@ const crearAppraisal = async (req, res) => {
       valuacion
     } = req.body;
 
+    const id = Number(rawId);
+
+if (!Number.isFinite(id)) {
+  return res.status(400).json({
+    ok: false,
+    error: 'El identificador del avalúo no es válido'
+  });
+}
+
     if (!id || !folio || !clienteNombre || !clienteTelefono || !vehiculoInteres || !fechaAvaluo) {
       return res.status(400).json({
         ok: false,
         error: 'Faltan campos obligatorios del avalúo'
       });
     }
+
+    const now = new Date();
 
     await db.query(
       `
@@ -205,25 +231,25 @@ const crearAppraisal = async (req, res) => {
         clienteTelefono,
         vehiculoInteres,
         fechaAvaluo,
-        fechaActualizacion || null,
+        now,
         estatus || 'borrador',
         asesorVentas || null,
-        JSON.stringify(generales || {}),
-        JSON.stringify(documentacion || {}),
-        JSON.stringify(interior || {}),
-        JSON.stringify(carroceria || {}),
-        JSON.stringify(sistemaElectrico || {}),
-        JSON.stringify(fugasMotor || {}),
-        JSON.stringify(valuacion || {}),
+        safeJSON(generales),
+        safeJSON(documentacion),
+        safeJSON(interior),
+        safeJSON(carroceria),
+        safeJSON(sistemaElectrico),
+        safeJSON(fugasMotor),
+        safeJSON(valuacion),
         req.usuario?.id || null
       ]
     );
 
     res.status(201).json({
-  ok: true,
-  message: 'Avalúo creado correctamente',
-  appraisalId: id
-});
+      ok: true,
+      message: 'Avalúo creado correctamente',
+      appraisalId: id
+    });
   } catch (error) {
     console.error('Error al crear avalúo:', error);
     res.status(500).json({
@@ -232,6 +258,10 @@ const crearAppraisal = async (req, res) => {
     });
   }
 };
+
+// ==============================
+// ACTUALIZAR
+// ==============================
 
 const actualizarAppraisal = async (req, res) => {
   try {
@@ -242,7 +272,6 @@ const actualizarAppraisal = async (req, res) => {
       clienteTelefono,
       vehiculoInteres,
       fechaAvaluo,
-      fechaActualizacion,
       estatus,
       asesorVentas,
       generales,
@@ -265,6 +294,8 @@ const actualizarAppraisal = async (req, res) => {
         error: 'Avalúo no encontrado'
       });
     }
+
+    const now = new Date();
 
     await db.query(
       `
@@ -293,25 +324,25 @@ const actualizarAppraisal = async (req, res) => {
         clienteTelefono,
         vehiculoInteres,
         fechaAvaluo,
-        fechaActualizacion || null,
+        now,
         estatus || 'borrador',
         asesorVentas || null,
-        JSON.stringify(generales || {}),
-        JSON.stringify(documentacion || {}),
-        JSON.stringify(interior || {}),
-        JSON.stringify(carroceria || {}),
-        JSON.stringify(sistemaElectrico || {}),
-        JSON.stringify(fugasMotor || {}),
-        JSON.stringify(valuacion || {}),
+        safeJSON(generales),
+        safeJSON(documentacion),
+        safeJSON(interior),
+        safeJSON(carroceria),
+        safeJSON(sistemaElectrico),
+        safeJSON(fugasMotor),
+        safeJSON(valuacion),
         id
       ]
     );
 
     res.json({
-  ok: true,
-  message: 'Avalúo actualizado correctamente',
-  appraisalId: id
-});
+      ok: true,
+      message: 'Avalúo actualizado correctamente',
+      appraisalId: id
+    });
   } catch (error) {
     console.error('Error al actualizar avalúo:', error);
     res.status(500).json({

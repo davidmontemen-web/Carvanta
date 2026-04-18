@@ -7,105 +7,11 @@ import {
   updateAppraisal,
   getAppraisalById
 } from '../services/appraisalService';
+import { getEmptyAppraisal, formatMysqlDateTime } from '../utils/appraisalDefaults';
 
-const getEmptyAppraisal = (usuario) => ({
-  id: Date.now(),
-  folio: `AVL-${String(Date.now()).slice(-4)}`,
-  clienteNombre: '',
-  clienteTelefono: '',
-  vehiculoInteres: '',
-  fechaAvaluo: new Date().toISOString().slice(0, 10),
-  fechaActualizacion: new Date().toLocaleString('es-MX'),
-  estatus: 'borrador',
-  asesorVentas: usuario ? `${usuario.nombre} ${usuario.apellido}` : '',
-  generales: {
-    marca: '',
-    subMarca: '',
-    version: '',
-    transmision: '',
-    numeroSerie: '',
-    anioModelo: '',
-    color: '',
-    kilometraje: '',
-    numeroDuenios: '',
-    placas: '',
-    complementarios: '',
-    comentarios: ''
-  },
-  documentacion: {
-    factura: '',
-    cartaOrigen: '',
-    tenencias: '',
-    ultimoServicio: '',
-    verificacion: '',
-    manuales: '',
-    garantia: '',
-    engomado: '',
-    tarjetaCirculacion: '',
-    polizaSeguro: '',
-    comentarios: ''
-  },
-  interior: {
-    vestiduras: '',
-    cielo: '',
-    consola: '',
-    alfombras: '',
-    tablero: '',
-    encendedor: '',
-    puertas: '',
-    volante: '',
-    consolaDos: ''
-  },
-  carroceria: {
-    observaciones: ''
-  },
-  sistemaElectrico: {
-    espejosElectricos: false,
-    bolsasAire: false,
-    aireAcondicionado: false,
-    controlCrucero: false,
-    chisguetero: false,
-    luzMapa: false,
-    funcionesVolante: false,
-    checkEngine: false,
-    asientosElectricos: false,
-    claxon: false,
-    lucesInternas: false,
-    segurosElectricos: false,
-    cristalesElectricos: false,
-    aperturaCajuela: false,
-    pantalla: false,
-    farosNiebla: false,
-    lucesExternas: false,
-    limpiadores: false,
-    estereoUsb: false,
-    quemacocos: false,
-    testigos: false,
-    direccionales: false
-  },
-  fugasMotor: {
-    motor: '',
-    transmision: '',
-    sistemaFrenos: '',
-    direccionHidraulica: '',
-    amortiguadores: '',
-    anticongelante: '',
-    aireAcondicionado: '',
-    flechas: '',
-    soportesMotor: '',
-    soportesCaja: '',
-    comentarios: ''
-  },
-  valuacion: {
-    tomaLibro: '',
-    ventaLibro: '',
-    reparaciones: '',
-    tomaAutorizada: ''
-  },
-  fotosGenerales: [],
-  fotosDetalle: [],
-  historial: []
-});
+// ==============================
+// COMPONENTES AUXILIARES
+// ==============================
 
 function KpiCard({ title, value, subtitle }) {
   return (
@@ -125,12 +31,59 @@ function StatusBadge({ status }) {
       ? styles.badgeIncomplete
       : styles.badgeDraft;
 
-  return (
-    <span style={{ ...styles.badge, ...badgeStyles }}>
-      {status}
-    </span>
-  );
+  return <span style={{ ...styles.badge, ...badgeStyles }}>{status}</span>;
 }
+
+// ==============================
+// HELPERS
+// ==============================
+
+const getSuccessMessageByStatus = (status) => {
+  switch (status) {
+    case 'borrador':
+      return 'Avalúo guardado como borrador';
+    case 'incompleto':
+      return 'Avalúo guardado como incompleto';
+    case 'completo':
+      return 'Avalúo marcado como completo correctamente';
+    default:
+      return 'Avalúo guardado correctamente';
+  }
+};
+
+const normalizeSearchText = (item) => {
+  return [
+    item.folio,
+    item.clienteNombre,
+    item.clienteTelefono,
+    item.vehiculoInteres,
+    item.asesorVentas
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+};
+
+const withPersistedFlag = (appraisal) => ({
+  ...appraisal,
+  isPersisted: true
+});
+
+const sanitizeAppraisalBeforeSave = (data) => {
+  const payload = {
+    ...data,
+    fechaActualizacion: formatMysqlDateTime()
+  };
+
+  delete payload.isPersisted;
+  delete payload.fotosGeneralesMap;
+
+  return payload;
+};
+
+// ==============================
+// PAGE
+// ==============================
 
 export default function AppraisalsPage({ usuario }) {
   const [appraisals, setAppraisals] = useState([]);
@@ -145,31 +98,36 @@ export default function AppraisalsPage({ usuario }) {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const cerrarSesionPorError = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    window.location.reload();
-  };
+  // ==============================
+  // CARGA
+  // ==============================
 
-  const cargarAppraisals = async () => {
+  const loadAppraisals = async () => {
     try {
       setLoading(true);
       setError('');
-      const data = await getAppraisals();
-      setAppraisals(data.appraisals || []);
+
+      const response = await getAppraisals();
+      setAppraisals(response.data || []);
     } catch (err) {
-      if (err?.response?.status === 401 || err?.response?.status === 403) {
-        cerrarSesionPorError();
-        return;
-      }
-      setError(err?.response?.data?.error || 'Error al cargar avalúos');
+      setError(err.message || 'Error al cargar avalúos');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadSingleAppraisal = async (id, fallbackMessage) => {
+    try {
+      const response = await getAppraisalById(id);
+      return withPersistedFlag(response.data);
+    } catch (err) {
+      alert(err.message || fallbackMessage);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    cargarAppraisals();
+    loadAppraisals();
   }, []);
 
   useEffect(() => {
@@ -182,125 +140,150 @@ export default function AppraisalsPage({ usuario }) {
     return () => clearTimeout(timer);
   }, [successMessage]);
 
+  // ==============================
+  // KPIS
+  // ==============================
+
   const totals = useMemo(() => {
     const total = appraisals.length;
-    const borradores = appraisals.filter((x) => x.estatus === 'borrador').length;
-    const incompletos = appraisals.filter((x) => x.estatus === 'incompleto').length;
-    const completos = appraisals.filter((x) => x.estatus === 'completo').length;
+    const borradores = appraisals.filter((item) => item.estatus === 'borrador').length;
+    const incompletos = appraisals.filter((item) => item.estatus === 'incompleto').length;
+    const completos = appraisals.filter((item) => item.estatus === 'completo').length;
 
-    return { total, borradores, incompletos, completos };
+    return {
+      total,
+      borradores,
+      incompletos,
+      completos
+    };
   }, [appraisals]);
 
+  // ==============================
+  // FILTROS
+  // ==============================
+
+  const effectiveStatusFilter = quickTab !== 'todos' ? quickTab : statusFilter;
+
   const filteredAppraisals = useMemo(() => {
+    const normalizedSearch = search.toLowerCase();
+
     return appraisals.filter((item) => {
-      const text =
-        `${item.folio} ${item.clienteNombre} ${item.clienteTelefono} ${item.vehiculoInteres} ${item.asesorVentas}`.toLowerCase();
-
-      const matchesSearch = text.includes(search.toLowerCase());
-
-      const effectiveStatus = quickTab !== 'todos' ? quickTab : statusFilter;
+      const matchesSearch = normalizeSearchText(item).includes(normalizedSearch);
       const matchesStatus =
-        effectiveStatus === 'todos' ? true : item.estatus === effectiveStatus;
+        effectiveStatusFilter === 'todos'
+          ? true
+          : item.estatus === effectiveStatusFilter;
 
       return matchesSearch && matchesStatus;
     });
-  }, [appraisals, search, statusFilter, quickTab]);
+  }, [appraisals, search, effectiveStatusFilter]);
+
+  // ==============================
+  // ACCIONES DE VISTA
+  // ==============================
 
   const handleCreate = () => {
     setSelectedAppraisal(getEmptyAppraisal(usuario));
     setMode('create');
   };
 
+  const handleBackToList = async () => {
+    setMode('list');
+    setSelectedAppraisal(null);
+    await loadAppraisals();
+  };
+
   const handleEdit = async (appraisal) => {
-    try {
-      const data = await getAppraisalById(appraisal.id);
-      setSelectedAppraisal(data.appraisal);
-      setMode('edit');
-    } catch (err) {
-      alert(err?.response?.data?.error || 'Error al cargar el avalúo');
-    }
+    const fullAppraisal = await loadSingleAppraisal(
+      appraisal.id,
+      'Error al cargar el avalúo'
+    );
+
+    if (!fullAppraisal) return;
+
+    setSelectedAppraisal(fullAppraisal);
+    setMode('edit');
   };
 
   const handleView = async (appraisal) => {
-    try {
-      const data = await getAppraisalById(appraisal.id);
-      setSelectedAppraisal(data.appraisal);
-      setDetailOpen(true);
-    } catch (err) {
-      alert(err?.response?.data?.error || 'Error al obtener detalle');
-    }
+    const fullAppraisal = await loadSingleAppraisal(
+      appraisal.id,
+      'Error al obtener detalle'
+    );
+
+    if (!fullAppraisal) return;
+
+    setSelectedAppraisal(fullAppraisal);
+    setDetailOpen(true);
   };
 
-  const saveAppraisalWithStatus = async (data, status, options = {}) => {
+  // ==============================
+  // GUARDADO
+  // ==============================
+
+  const persistAppraisal = async (payload, currentMode) => {
+    if (currentMode === 'edit') {
+      return await updateAppraisal(payload.id, payload);
+    }
+
+    return await createAppraisal(payload);
+  };
+
+  const saveAppraisalWithStatus = async (data, status) => {
     try {
       setSaving(true);
 
-      const payload = {
+      const payload = sanitizeAppraisalBeforeSave({
         ...data,
-        fechaActualizacion: new Date().toLocaleString('sv-SE').replace('T', ' '),
         estatus: status
-      };
+      });
 
-      const exists = appraisals.some((item) => String(item.id) === String(payload.id));
+      const persistResponse = await persistAppraisal(payload, mode);
+      const appraisalId = persistResponse.appraisalId || payload.id;
 
-      let appraisalId = payload.id;
+      const refreshedResponse = await getAppraisalById(appraisalId);
+      const refreshedAppraisal = withPersistedFlag(refreshedResponse.data);
 
-      if (exists) {
-        const res = await updateAppraisal(payload.id, payload);
-        appraisalId = res?.appraisalId || payload.id;
-      } else {
-        const res = await createAppraisal(payload);
-        appraisalId = res?.appraisalId || payload.id;
-      }
-
-      await cargarAppraisals();
-
-      const refreshed = await getAppraisalById(appraisalId);
-
-      if (status === 'borrador') {
-        setSuccessMessage('Avalúo guardado como borrador');
-      } else if (status === 'incompleto') {
-        setSuccessMessage('Avalúo guardado como incompleto');
-      } else if (status === 'completo') {
-        setSuccessMessage('Avalúo marcado como completo correctamente');
-      }
-
-      setSelectedAppraisal(refreshed.appraisal);
+      setSelectedAppraisal(refreshedAppraisal);
       setMode('edit');
+      setSuccessMessage(getSuccessMessageByStatus(status));
+
+      await loadAppraisals();
 
       return {
         ok: true,
-        appraisal: refreshed.appraisal
+        appraisal: refreshedAppraisal
       };
     } catch (err) {
-      alert(err?.response?.data?.error || 'Error al guardar el avalúo');
+      alert(err.message || 'Error al guardar el avalúo');
       return { ok: false };
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveDraft = async (data, options = {}) => {
-    return await saveAppraisalWithStatus(data, 'borrador', options);
+  const handleSaveDraft = async (data) => {
+    return await saveAppraisalWithStatus(data, 'borrador');
   };
 
-  const handleSaveIncomplete = async (data, options = {}) => {
-    return await saveAppraisalWithStatus(data, 'incompleto', options);
+  const handleSaveIncomplete = async (data) => {
+    return await saveAppraisalWithStatus(data, 'incompleto');
   };
 
-  const handleMarkComplete = async (data, options = {}) => {
-    return await saveAppraisalWithStatus(data, 'completo', options);
+  const handleMarkComplete = async (data) => {
+    return await saveAppraisalWithStatus(data, 'completo');
   };
+
+  // ==============================
+  // FORM MODE
+  // ==============================
 
   if (mode === 'create' || mode === 'edit') {
     return (
       <AppraisalFormWorkspace
         mode={mode}
         initialData={selectedAppraisal}
-        onBack={() => {
-          setMode('list');
-          setSelectedAppraisal(null);
-        }}
+        onBack={handleBackToList}
         onSaveDraft={handleSaveDraft}
         onSaveIncomplete={handleSaveIncomplete}
         onMarkComplete={handleMarkComplete}
@@ -309,13 +292,13 @@ export default function AppraisalsPage({ usuario }) {
     );
   }
 
+  // ==============================
+  // LIST MODE
+  // ==============================
+
   return (
     <div style={styles.page}>
-      {successMessage && (
-        <div style={styles.successBox}>
-          {successMessage}
-        </div>
-      )}
+      {successMessage && <div style={styles.successBox}>{successMessage}</div>}
 
       <div style={styles.kpiGrid}>
         <KpiCard title="Total de avalúos" value={totals.total} subtitle="Expedientes registrados" />
@@ -332,6 +315,7 @@ export default function AppraisalsPage({ usuario }) {
           { key: 'completo', label: 'Completos' }
         ].map((tab) => {
           const active = quickTab === tab.key;
+
           return (
             <button
               key={tab.key}
@@ -422,14 +406,18 @@ export default function AppraisalsPage({ usuario }) {
               <tbody>
                 {filteredAppraisals.map((item) => (
                   <tr key={item.id}>
-                    <td style={styles.td}><strong>{item.folio}</strong></td>
+                    <td style={styles.td}>
+                      <strong>{item.folio}</strong>
+                    </td>
                     <td style={styles.td}>{item.clienteNombre || '-'}</td>
                     <td style={styles.td}>{item.clienteTelefono || '-'}</td>
                     <td style={styles.td}>{item.vehiculoInteres || '-'}</td>
                     <td style={styles.td}>{item.asesorVentas || '-'}</td>
                     <td style={styles.td}>{item.fechaAvaluo || '-'}</td>
                     <td style={styles.td}>{item.fechaActualizacion || '-'}</td>
-                    <td style={styles.td}><StatusBadge status={item.estatus} /></td>
+                    <td style={styles.td}>
+                      <StatusBadge status={item.estatus} />
+                    </td>
                     <td style={styles.td}>
                       <div style={styles.actions}>
                         <button style={styles.actionButton} onClick={() => handleView(item)}>

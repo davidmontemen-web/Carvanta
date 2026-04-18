@@ -3,7 +3,77 @@ const fs = require('fs');
 const archiver = require('archiver');
 const db = require('../db');
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
+const VALID_PHOTO_TYPES = ['general', 'detail'];
+const VALID_GENERAL_SLOT_KEYS = [
+  'frontal',
+  'frontalDerecha',
+  'lateralDerecha',
+  'traseraDerecha',
+  'trasera',
+  'traseraIzquierda',
+  'lateralIzquierda',
+  'frontalIzquierda',
+  'interiorTablero',
+  'motor'
+];
 
+// ==============================
+// HELPERS
+// ==============================
+
+const normalizePublicPath = (filePath) => {
+  if (!filePath) return null;
+  return filePath.replace(/\\/g, '/');
+};
+
+const buildFileUrl = (filePath) => {
+  const normalizedPath = normalizePublicPath(filePath);
+  return normalizedPath ? `${BASE_URL}${normalizedPath}` : null;
+};
+
+const getAbsolutePathFromPublicPath = (filePath) => {
+  return path.join(process.cwd(), String(filePath || '').replace(/^\/+/, ''));
+};
+
+const fileExists = (absolutePath) => {
+  try {
+    return fs.existsSync(absolutePath);
+  } catch {
+    return false;
+  }
+};
+
+const removeFileIfExists = async (absolutePath) => {
+  if (!fileExists(absolutePath)) return;
+
+  try {
+    await fs.promises.unlink(absolutePath);
+  } catch (error) {
+    console.error('No se pudo eliminar archivo físico:', absolutePath, error);
+  }
+};
+
+const validarPhotoType = (photoType) => {
+  return VALID_PHOTO_TYPES.includes(photoType);
+};
+
+const validarSlotKeyGeneral = (slotKey) => {
+  return VALID_GENERAL_SLOT_KEYS.includes(slotKey);
+};
+
+const obtenerAppraisalExistente = async (id) => {
+  const [rows] = await db.query(
+    'SELECT id FROM appraisals WHERE id = ? LIMIT 1',
+    [id]
+  );
+
+  return rows.length ? rows[0] : null;
+};
+
+// ==============================
+// SUBIR FOTO
+// ==============================
 
 const subirFotoAppraisal = async (req, res) => {
   try {
@@ -17,26 +87,37 @@ const subirFotoAppraisal = async (req, res) => {
       });
     }
 
-    if (!['general', 'detail'].includes(photoType)) {
+    if (!validarPhotoType(photoType)) {
       return res.status(400).json({
         ok: false,
         error: 'Tipo de foto no válido'
       });
     }
 
-    const [appraisal] = await db.query(
-      'SELECT id FROM appraisals WHERE id = ? LIMIT 1',
-      [id]
-    );
+    if (photoType === 'general' && !slotKey) {
+      return res.status(400).json({
+        ok: false,
+        error: 'La foto general requiere una posición (slotKey)'
+      });
+    }
 
-    if (!appraisal.length) {
+    if (photoType === 'general' && !validarSlotKeyGeneral(slotKey)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'La posición de foto general no es válida'
+      });
+    }
+
+    const appraisal = await obtenerAppraisalExistente(id);
+
+    if (!appraisal) {
       return res.status(404).json({
         ok: false,
         error: 'Avalúo no encontrado'
       });
     }
 
-    if (photoType === 'general' && slotKey) {
+    if (photoType === 'general') {
       const [oldPhotos] = await db.query(
         `
         SELECT id, file_path
@@ -47,16 +128,13 @@ const subirFotoAppraisal = async (req, res) => {
       );
 
       for (const old of oldPhotos) {
-        const absolutePath = path.join(
-          process.cwd(),
-          old.file_path.replace(/^\/+/, '')
+        const absolutePath = getAbsolutePathFromPublicPath(old.file_path);
+        await removeFileIfExists(absolutePath);
+
+        await db.query(
+          'DELETE FROM appraisal_photos WHERE id = ?',
+          [old.id]
         );
-
-        if (fs.existsSync(absolutePath)) {
-          fs.unlinkSync(absolutePath);
-        }
-
-        await db.query('DELETE FROM appraisal_photos WHERE id = ?', [old.id]);
       }
     }
 
@@ -78,7 +156,7 @@ const subirFotoAppraisal = async (req, res) => {
       [
         id,
         photoType,
-        slotKey || null,
+        photoType === 'general' ? slotKey : null,
         req.file.originalname,
         req.file.filename,
         publicPath,
@@ -92,8 +170,9 @@ const subirFotoAppraisal = async (req, res) => {
       file: {
         name: req.file.originalname,
         fileName: req.file.filename,
-        path: publicPath,
-        url: `http://localhost:4000${publicPath}`
+        path: normalizePublicPath(publicPath),
+        mimeType: req.file.mimetype,
+        url: buildFileUrl(publicPath)
       }
     });
   } catch (error) {
@@ -105,13 +184,35 @@ const subirFotoAppraisal = async (req, res) => {
   }
 };
 
+// ==============================
+// LISTAR FOTOS
+// ==============================
+
 const listarFotosAppraisal = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const appraisal = await obtenerAppraisalExistente(id);
+
+    if (!appraisal) {
+      return res.status(404).json({
+        ok: false,
+        error: 'Avalúo no encontrado'
+      });
+    }
+
     const [photos] = await db.query(
       `
-      SELECT id, appraisal_id, photo_type, slot_key, original_name, file_name, file_path, mime_type, created_at
+      SELECT
+        id,
+        appraisal_id,
+        photo_type,
+        slot_key,
+        original_name,
+        file_name,
+        file_path,
+        mime_type,
+        created_at
       FROM appraisal_photos
       WHERE appraisal_id = ?
       ORDER BY created_at ASC
@@ -121,9 +222,10 @@ const listarFotosAppraisal = async (req, res) => {
 
     res.json({
       ok: true,
-      photos: photos.map((p) => ({
-        ...p,
-        url: `http://localhost:4000${p.file_path.replace(/\\/g, '/')}`
+      photos: photos.map((photo) => ({
+        ...photo,
+        file_path: normalizePublicPath(photo.file_path),
+        url: buildFileUrl(photo.file_path)
       }))
     });
   } catch (error) {
@@ -135,15 +237,28 @@ const listarFotosAppraisal = async (req, res) => {
   }
 };
 
+// ==============================
+// DESCARGAR ZIP
+// ==============================
+
 const descargarZipFotosAppraisal = async (req, res) => {
   try {
     const { id } = req.params;
     const { photoType } = req.query;
 
-    if (!['general', 'detail'].includes(photoType)) {
+    if (!validarPhotoType(photoType)) {
       return res.status(400).json({
         ok: false,
         error: 'Tipo de foto no válido para ZIP'
+      });
+    }
+
+    const appraisal = await obtenerAppraisalExistente(id);
+
+    if (!appraisal) {
+      return res.status(404).json({
+        ok: false,
+        error: 'Avalúo no encontrado'
       });
     }
 
@@ -183,12 +298,9 @@ const descargarZipFotosAppraisal = async (req, res) => {
     archive.pipe(res);
 
     for (const photo of photos) {
-      const absolutePath = path.join(
-        process.cwd(),
-        photo.file_path.replace(/^\/+/, '')
-      );
+      const absolutePath = getAbsolutePathFromPublicPath(photo.file_path);
 
-      if (fs.existsSync(absolutePath)) {
+      if (fileExists(absolutePath)) {
         const safeName = photo.original_name || photo.file_name;
         archive.file(absolutePath, { name: safeName });
       }
@@ -197,6 +309,7 @@ const descargarZipFotosAppraisal = async (req, res) => {
     await archive.finalize();
   } catch (error) {
     console.error('Error al descargar ZIP de fotos:', error);
+
     if (!res.headersSent) {
       res.status(500).json({
         ok: false,
