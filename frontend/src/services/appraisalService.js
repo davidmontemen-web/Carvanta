@@ -135,3 +135,31 @@ export const updateAppraisal = async (id, data) => {
     handleError(error, 'Error al actualizar avalúo');
   }
 };
+
+export const getAppraisalHistory = async (id) => {
+  try {
+    const response = await api.get(`/api/appraisals/${id}/history`);
+
+    return {
+      ok: true,
+      data: response.data.historial || []
+    };
+  } catch (error) {
+    handleError(error, 'Error al obtener historial del avalúo');
+  }
+};
+
+export const downloadAppraisalPdf = async (id) => {
+  try {
+    const response = await api.get(`/api/appraisals/${id}/pdf`, {
+      responseType: 'blob'
+    });
+
+    return {
+      ok: true,
+      blob: response.data
+    };
+  } catch (error) {
+    handleError(error, 'Error al descargar PDF del avalúo');
+  }
+};

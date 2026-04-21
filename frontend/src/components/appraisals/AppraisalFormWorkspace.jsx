@@ -26,6 +26,29 @@ const toDateInputValue = (value) => {
 
   return `${year}-${month}-${day}`;
 };
+const parseCurrencyNumber = (value) => {
+  if (value === null || value === undefined) return 0;
+  const cleaned = String(value).replace(/[^\d.-]/g, '');
+  const parsed = Number(cleaned);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const calculateMediaValue = (tomaLibro, ventaLibro) => {
+  const toma = parseCurrencyNumber(tomaLibro);
+  const venta = parseCurrencyNumber(ventaLibro);
+
+  if (!toma || !venta || venta < toma) return '';
+
+  const media = ((venta - toma) / 2) + toma;
+  return String(Math.round(media));
+};
+
+const formatMoneyDisplay = (value) => {
+  if (value === '' || value === null || value === undefined) return '';
+  const numeric = parseCurrencyNumber(value);
+  if (!numeric && numeric !== 0) return '';
+  return new Intl.NumberFormat('es-MX').format(numeric);
+};
 
 const sections = [
   { key: 'encabezado', label: 'Encabezado' },
@@ -54,6 +77,47 @@ const generalPhotoSlots = [
   { key: 'motor', label: 'Motor' }
 ];
 
+const carroceriaDamageOptions = [
+  { value: 'pieza_repintada', label: 'Pieza repintada' },
+  { value: 'rayon_leve', label: 'Rayón leve' },
+  { value: 'rayon_profundo', label: 'Rayón profundo' },
+  { value: 'pieza_rota', label: 'Pieza rota' },
+  { value: 'pieza_con_pasta', label: 'Pieza con pasta' },
+  { value: 'abolladura', label: 'Abolladura' },
+  { value: 'golpe_fuerte', label: 'Golpe fuerte' },
+  { value: 'parabrisas_estrellado', label: 'Parabrisas estrellado' },
+  { value: 'parabrisas_roto', label: 'Parabrisas roto' }
+];
+
+const neumaticoOptions = [
+  { value: 'buen_estado', label: 'Buen estado' },
+  { value: 'desgastada', label: 'Desgastada' },
+  { value: 'seccionada', label: 'Seccionada' },
+  { value: 'chipote', label: 'Chipote' }
+];
+
+const rinOptions = [
+  { value: 'buen_estado', label: 'Buen estado' },
+  { value: 'rayado', label: 'Rayado' },
+  { value: 'estrellado', label: 'Estrellado' }
+];
+
+const carroceriaZones = [
+  { key: 'frente', label: 'Frente' },
+  { key: 'costadoIzquierdo', label: 'Costado izquierdo' },
+  { key: 'costadoDerecho', label: 'Costado derecho' },
+  { key: 'trasera', label: 'Parte trasera' },
+  { key: 'techo', label: 'Techo' },
+  { key: 'parabrisas', label: 'Parabrisas' }
+];
+
+const neumaticoPositions = [
+  { key: 'delanteraIzquierda', label: 'Delantera izquierda' },
+  { key: 'delanteraDerecha', label: 'Delantera derecha' },
+  { key: 'traseraIzquierda', label: 'Trasera izquierda' },
+  { key: 'traseraDerecha', label: 'Trasera derecha' }
+];
+
 const createEmptyGeneralPhotosMap = () => {
   const map = {};
   generalPhotoSlots.forEach((slot) => {
@@ -74,98 +138,151 @@ const createEmptyForm = () => ({
   asesorVentas: '',
   isPersisted: false,
   generales: {
-    marca: '',
-    subMarca: '',
-    version: '',
-    transmision: '',
-    numeroSerie: '',
-    anioModelo: '',
-    color: '',
-    kilometraje: '',
-    numeroDuenios: '',
-    placas: '',
-    complementarios: '',
-    comentarios: ''
-  },
+  marca: '',
+  submarca: '',
+  version: '',
+  transmision: '',
+  numeroSerie: '',
+  anio: '',
+  color: '',
+  kilometraje: '',
+  numeroDuenos: '',
+  placas: '',
+  comentarios: ''
+},
   documentacion: {
-    factura: '',
-    cartaOrigen: '',
-    tenencias: '',
-    ultimoServicio: '',
-    verificacion: '',
-    manuales: '',
-    garantia: '',
-    engomado: '',
-    tarjetaCirculacion: '',
-    polizaSeguro: ''
-  },
+  factura: '',
+  cartaOrigen: '',
+  tenencias: '',
+  ultimoServicio: '',
+  verificacion: '',
+  manuales: '',
+  garantia: '',
+  engomado: '',
+  tarjetaCirculacion: '',
+  polizaSeguro: '',
+  comentarios: ''
+},
   interior: {
-    vestiduras: '',
-    cielo: '',
-    consola: '',
-    alfombras: '',
-    tablero: '',
-    encendedor: '',
-    puertas: '',
-    volante: '',
-    consolaDos: ''
-  },
+  vestiduras: '',
+  cielo: '',
+  consolaCentral: '',
+  alfombras: '',
+  tablero: '',
+  encendedor: '',
+  puertasLaterales: '',
+  volante: '',
+  comentarios: ''
+},
   carroceria: {
-    observaciones: ''
+  zonas: {
+    frente: [],
+    costadoIzquierdo: [],
+    costadoDerecho: [],
+    trasera: [],
+    techo: [],
+    parabrisas: []
   },
+  neumaticos: {
+    delanteraIzquierda: { neumatico: '', rin: '' },
+    delanteraDerecha: { neumatico: '', rin: '' },
+    traseraIzquierda: { neumatico: '', rin: '' },
+    traseraDerecha: { neumatico: '', rin: '' }
+  },
+  observaciones: ''
+},
   sistemaElectrico: {
-    espejosElectricos: false,
-    bolsasAire: false,
-    aireAcondicionado: false,
-    controlCrucero: false,
-    chisguetero: false,
-    luzMapa: false,
-    funcionesVolante: false,
-    checkEngine: false,
-    asientosElectricos: false,
-    claxon: false,
-    lucesInternas: false,
-    segurosElectricos: false,
-    cristalesElectricos: false,
-    aperturaCajuela: false,
-    pantalla: false,
-    farosNiebla: false,
-    lucesExternas: false,
-    limpiadores: false,
-    estereoUsb: false,
-    quemacocos: false,
-    testigos: false,
-    direccionales: false
-  },
+    espejosElectricos: '',
+  bolsasAire: '',
+  aireAcondicionado: '',
+  controlCrucero: '',
+  chisguetero: '',
+  luzMapa: '',
+
+  controlesVolante: '',
+  checkEngine: '',
+  asientosElectricos: '',
+  encendedor: '',
+  claxon: '',
+
+  lucesInternas: '',
+  segurosElectricos: '',
+  cristalesElectricos: '',
+  aperturaCajuela: '',
+  pantalla: '',
+  farosNiebla: '',
+
+  lucesExternas: '',
+  limpiadores: '',
+  estereoUsb: '',
+  quemacocos: '',
+  testigos: '',
+  direccionales: '',
+
+  comentarios: ''
+},
   fugasMotor: {
-    motor: '',
-    transmision: '',
-    sistemaFrenos: '',
-    direccionHidraulica: '',
-    amortiguadores: '',
-    anticongelante: '',
-    aireAcondicionado: '',
-    flechas: '',
-    soportesMotor: '',
-    soportesCaja: '',
-    comentarios: ''
-  },
+  motor: '',
+  transmision: '',
+  sistemaFrenos: '',
+  direccionHidraulica: '',
+  amortiguadores: '',
+  anticongelante: '',
+  aireAcondicionado: '',
+  flechas: '',
+  soportesMotor: '',
+  soportesCaja: '',
+  comentarios: ''
+},
   valuacion: {
-    tomaLibro: '',
-    ventaLibro: '',
-    reparaciones: '',
-    tomaAutorizada: ''
-  },
+  tomaLibro: '',
+  ventaLibro: '',
+  reparaciones: '',
+  tomaAutorizada: '',
+  media: '',
+  comentarios: ''
+},
   fotosGeneralesMap: createEmptyGeneralPhotosMap(),
   fotosDetalle: []
 });
 
 const normalizeInitialData = (initialData) => {
   const base = createEmptyForm();
-const source = initialData || {};
-const generalPhotosMap = createEmptyGeneralPhotosMap();
-const normalizedFechaAvaluo = toDateInputValue(source?.fechaAvaluo);
-const normalizedFechaActualizacion = toDateInputValue(source?.fechaActualizacion);
+  const source = initialData || {};
+  const generalPhotosMap = createEmptyGeneralPhotosMap();
+  const normalizedFechaAvaluo = toDateInputValue(source?.fechaAvaluo);
+  const normalizedFechaActualizacion = toDateInputValue(source?.fechaActualizacion);
+
+  const normalizedGenerales = {
+    ...(source.generales || {}),
+    marca: source?.generales?.marca ?? '',
+    submarca: source?.generales?.submarca ?? source?.generales?.subMarca ?? '',
+    version: source?.generales?.version ?? '',
+    transmision: source?.generales?.transmision ?? '',
+    numeroSerie: source?.generales?.numeroSerie ?? '',
+    anio: source?.generales?.anio ?? source?.generales?.anioModelo ?? '',
+    color: source?.generales?.color ?? '',
+    kilometraje: source?.generales?.kilometraje ?? '',
+    numeroDuenos:
+      source?.generales?.numeroDuenos ?? source?.generales?.numeroDuenios ?? '',
+    placas: source?.generales?.placas ?? '',
+    comentarios: source?.generales?.comentarios ?? ''
+  };
+  
+  const normalizedValuacion = {
+  ...(source.valuacion || {}),
+  tomaLibro: source?.valuacion?.tomaLibro ?? '',
+  ventaLibro: source?.valuacion?.ventaLibro ?? '',
+  reparaciones: source?.valuacion?.reparaciones ?? '',
+  tomaAutorizada: source?.valuacion?.tomaAutorizada ?? '',
+  media:
+    source?.valuacion?.media ??
+    calculateMediaValue(
+      source?.valuacion?.tomaLibro,
+      source?.valuacion?.ventaLibro
+    ),
+  comentarios: source?.valuacion?.comentarios ?? ''
+};
 
   if (Array.isArray(source?.fotosGenerales)) {
     source.fotosGenerales.forEach((item, index) => {
@@ -193,9 +310,9 @@ const normalizedFechaActualizacion = toDateInputValue(source?.fechaActualizacion
   fechaActualizacion: normalizedFechaActualizacion,
   isPersisted: source?.isPersisted === true,
     generales: {
-      ...base.generales,
-      ...(source.generales || {})
-    },
+  ...base.generales,
+  ...normalizedGenerales
+},
     documentacion: {
       ...base.documentacion,
       ...(source.documentacion || {})
@@ -205,9 +322,17 @@ const normalizedFechaActualizacion = toDateInputValue(source?.fechaActualizacion
       ...(source.interior || {})
     },
     carroceria: {
-      ...base.carroceria,
-      ...(source.carroceria || {})
-    },
+  ...base.carroceria,
+  ...(source.carroceria || {}),
+  zonas: {
+    ...base.carroceria.zonas,
+    ...(source?.carroceria?.zonas || {})
+  },
+  neumaticos: {
+    ...base.carroceria.neumaticos,
+    ...(source?.carroceria?.neumaticos || {})
+  }
+},
     sistemaElectrico: {
       ...base.sistemaElectrico,
       ...(source.sistemaElectrico || {})
@@ -217,9 +342,9 @@ const normalizedFechaActualizacion = toDateInputValue(source?.fechaActualizacion
       ...(source.fugasMotor || {})
     },
     valuacion: {
-      ...base.valuacion,
-      ...(source.valuacion || {})
-    },
+  ...base.valuacion,
+  ...normalizedValuacion
+},
     fotosGeneralesMap: generalPhotosMap,
     fotosDetalle: Array.isArray(source?.fotosDetalle)
       ? source.fotosDetalle.map((item) => ({
@@ -248,28 +373,123 @@ const buildPayloadFromForm = (form, generalPhotosArray) => ({
   fugasMotor: form.fugasMotor,
   valuacion: form.valuacion,
   fotosGenerales: generalPhotosArray,
-  fotosDetalle: form.fotosDetalle
+  fotosDetalle: form.fotosDetalle,
+  media: form.valuacion.media
 });
 
 const hasValue = (value) => String(value ?? '').trim() !== '';
 
+const formatPhoneDigits = (value) => String(value ?? '').replace(/\D/g, '').slice(0, 10);
+
+const formatPhoneDisplay = (value) => {
+  const digits = formatPhoneDigits(value);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 10)}`;
+};
+
+const normalizeTextValue = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trimStart();
+
+const normalizeUppercase = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+
+const normalizeTitle = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());    
+
+const toTitleCase = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
 const getValidation = (form, generalPhotosArray) => {
   const missingHeaderFields = [];
-  if (!hasValue(form.clienteNombre)) missingHeaderFields.push('Nombre del cliente');
-  if (!hasValue(form.clienteTelefono)) missingHeaderFields.push('Teléfono');
-  if (!hasValue(form.vehiculoInteres)) missingHeaderFields.push('Vehículo de interés');
-  if (!hasValue(form.fechaAvaluo)) missingHeaderFields.push('Fecha de avalúo');
+if (!hasValue(form.folio)) missingHeaderFields.push('Folio');
+if (!hasValue(form.fechaAvaluo)) missingHeaderFields.push('Fecha de avalúo');
+if (!hasValue(form.asesorVentas)) missingHeaderFields.push('Asesor de ventas');
+if (!hasValue(form.clienteNombre)) missingHeaderFields.push('Nombre del cliente');
+if (formatPhoneDigits(form.clienteTelefono).length !== 10) {
+  missingHeaderFields.push('Teléfono (10 dígitos)');
+}
+if (!hasValue(form.vehiculoInteres)) missingHeaderFields.push('Vehículo de interés');
 
   const missingGeneralesFields = [];
-  if (!hasValue(form.generales?.marca)) missingGeneralesFields.push('Marca');
-  if (!hasValue(form.generales?.subMarca)) missingGeneralesFields.push('Sub marca');
-  if (!hasValue(form.generales?.anioModelo)) missingGeneralesFields.push('Año modelo');
-  if (!hasValue(form.generales?.kilometraje)) missingGeneralesFields.push('Kilometraje');
+
+if (!hasValue(form.generales.marca)) missingGeneralesFields.push('Marca');
+if (!hasValue(form.generales.submarca)) missingGeneralesFields.push('Submarca');
+if (!hasValue(form.generales.version)) missingGeneralesFields.push('Versión');
+if (!hasValue(form.generales.anio)) missingGeneralesFields.push('Año modelo');
+if (!hasValue(form.generales.transmision)) missingGeneralesFields.push('Transmisión');
+if (!hasValue(form.generales.color)) missingGeneralesFields.push('Color');
+if (!hasValue(form.generales.kilometraje)) missingGeneralesFields.push('Kilometraje');
+if (!hasValue(form.generales.numeroDuenos)) missingGeneralesFields.push('Número de dueños');
+
+const missingInteriorFields = [];
+
+if (!hasValue(form.interior.vestiduras)) missingInteriorFields.push('Vestiduras');
+if (!hasValue(form.interior.cielo)) missingInteriorFields.push('Cielo');
+if (!hasValue(form.interior.consolaCentral)) missingInteriorFields.push('Consola central');
+if (!hasValue(form.interior.alfombras)) missingInteriorFields.push('Alfombras');
+if (!hasValue(form.interior.tablero)) missingInteriorFields.push('Tablero');
+if (!hasValue(form.interior.encendedor)) missingInteriorFields.push('Encendedor / toma corriente');
+if (!hasValue(form.interior.puertasLaterales)) missingInteriorFields.push('Puertas / vestiduras laterales');
+if (!hasValue(form.interior.volante)) missingInteriorFields.push('Volante');
+
+const missingFugasMotorFields = [];
+
+if (!hasValue(form.fugasMotor.motor)) missingFugasMotorFields.push('Motor');
+if (!hasValue(form.fugasMotor.transmision)) missingFugasMotorFields.push('Transmisión');
+if (!hasValue(form.fugasMotor.sistemaFrenos)) missingFugasMotorFields.push('Sistema de frenos');
+if (!hasValue(form.fugasMotor.direccionHidraulica)) missingFugasMotorFields.push('Dirección hidráulica');
+if (!hasValue(form.fugasMotor.amortiguadores)) missingFugasMotorFields.push('Amortiguadores');
+if (!hasValue(form.fugasMotor.anticongelante)) missingFugasMotorFields.push('Anticongelante');
+if (!hasValue(form.fugasMotor.aireAcondicionado)) missingFugasMotorFields.push('Aire acondicionado');
+if (!hasValue(form.fugasMotor.flechas)) missingFugasMotorFields.push('Flechas');
+if (!hasValue(form.fugasMotor.soportesMotor)) missingFugasMotorFields.push('Soportes de motor');
+if (!hasValue(form.fugasMotor.soportesCaja)) missingFugasMotorFields.push('Soportes de caja');
 
   const missingValuacionFields = [];
-  if (!hasValue(form.valuacion?.tomaLibro)) missingValuacionFields.push('Toma libro');
-  if (!hasValue(form.valuacion?.ventaLibro)) missingValuacionFields.push('Venta libro');
-  if (!hasValue(form.valuacion?.tomaAutorizada)) missingValuacionFields.push('Toma autorizada');
+if (!hasValue(form.valuacion.tomaLibro)) missingValuacionFields.push('Toma libro');
+if (!hasValue(form.valuacion.ventaLibro)) missingValuacionFields.push('Venta libro');
+if (!hasValue(form.valuacion.reparaciones) && form.valuacion.reparaciones !== '0') {
+  missingValuacionFields.push('Reparaciones');
+}
+if (!hasValue(form.valuacion.tomaAutorizada)) {
+  missingValuacionFields.push('Toma autorizada');
+}
+
+  const missingGeneralesForComplete = [];
+
+if (!hasValue(form.generales.numeroSerie)) {
+  missingGeneralesForComplete.push('Número de serie');
+}
+
+if (!hasValue(form.generales.placas)) {
+  missingGeneralesForComplete.push('Placas');
+}
+const missingCarroceriaCompleteFields = [];
+
+neumaticoPositions.forEach(({ key, label }) => {
+  const current = form.carroceria?.neumaticos?.[key] || {};
+
+  if (!hasValue(current.neumatico)) {
+    missingCarroceriaCompleteFields.push(`Neumático ${label}`);
+  }
+
+  if (!hasValue(current.rin)) {
+    missingCarroceriaCompleteFields.push(`Rin ${label}`);
+  }
+});
 
   const loadedGeneralSlots = generalPhotoSlots.filter(
     (slot) => form.fotosGeneralesMap?.[slot.key]
@@ -292,10 +512,18 @@ const getValidation = (form, generalPhotosArray) => {
     missingGeneralesFields,
     missingValuacionFields,
     missingPhotoRequirements,
+    missingFugasMotorFields,
+    missingGeneralesForComplete,
+missingInteriorFields,
+missingCarroceriaCompleteFields,
     canComplete:
       missingHeaderFields.length === 0 &&
       missingGeneralesFields.length === 0 &&
       missingValuacionFields.length === 0 &&
+      missingGeneralesForComplete.length === 0 &&
+      missingInteriorFields.length === 0 &&
+      missingCarroceriaCompleteFields.length === 0 &&
+      missingFugasMotorFields.length === 0 &&
       missingPhotoRequirements.length === 0
   };
 };
@@ -386,6 +614,24 @@ export default function AppraisalFormWorkspace({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleClienteChange = (e) => {
+  const value = normalizeTextValue(e.target.value);
+  updateRootField('clienteNombre', value);
+};
+
+const handleClienteBlur = () => {
+  updateRootField('clienteNombre', toTitleCase(form.clienteNombre));
+};
+
+const handleTelefonoChange = (e) => {
+  updateRootField('clienteTelefono', formatPhoneDigits(e.target.value));
+};
+
+const handleVehiculoInteresChange = (e) => {
+  const value = normalizeTextValue(e.target.value);
+  updateRootField('vehiculoInteres', value);
+};
+
   const updateSectionField = (section, field, value) => {
     setForm((prev) => ({
       ...prev,
@@ -395,6 +641,85 @@ export default function AppraisalFormWorkspace({
       }
     }));
   };
+
+  const handleValuacionNumberChange = (field, value) => {
+  const numeric = String(value ?? '').replace(/\D/g, '');
+
+  setForm((prev) => {
+    const nextValuacion = {
+      ...prev.valuacion,
+      [field]: numeric
+    };
+
+    nextValuacion.media = calculateMediaValue(
+      nextValuacion.tomaLibro,
+      nextValuacion.ventaLibro
+    );
+
+    return {
+      ...prev,
+      valuacion: nextValuacion
+    };
+  });
+};
+
+  const toggleCarroceriaDamage = (zoneKey, damageValue) => {
+  setForm((prev) => {
+    const current = prev.carroceria?.zonas?.[zoneKey] || [];
+    const exists = current.includes(damageValue);
+
+    return {
+      ...prev,
+      carroceria: {
+        ...prev.carroceria,
+        zonas: {
+          ...prev.carroceria.zonas,
+          [zoneKey]: exists
+            ? current.filter((item) => item !== damageValue)
+            : [...current, damageValue]
+        }
+      }
+    };
+  });
+};
+
+const updateNeumaticoField = (positionKey, field, value) => {
+  setForm((prev) => ({
+    ...prev,
+    carroceria: {
+      ...prev.carroceria,
+      neumaticos: {
+        ...prev.carroceria.neumaticos,
+        [positionKey]: {
+          ...prev.carroceria.neumaticos[positionKey],
+          [field]: value
+        }
+      }
+    }
+  }));
+};
+
+  const handleGeneralTextChange = (field, value) => {
+  updateSectionField('generales', field, normalizeTextValue(value));
+};
+
+const handleGeneralUppercase = (field, value) => {
+  updateSectionField('generales', field, normalizeUppercase(value));
+};
+
+const handleGeneralTitle = (field, value) => {
+  updateSectionField('generales', field, normalizeTitle(value));
+};
+
+const handleKilometrajeChange = (value) => {
+  const numeric = String(value ?? '').replace(/\D/g, '');
+  updateSectionField('generales', 'kilometraje', numeric);
+};
+
+const handleAnioChange = (value) => {
+  const numeric = String(value ?? '').replace(/\D/g, '').slice(0, 4);
+  updateSectionField('generales', 'anio', numeric);
+};
 
   const handleCheckboxField = (section, field) => {
     setForm((prev) => ({
@@ -412,9 +737,9 @@ export default function AppraisalFormWorkspace({
   if (validation.requiredHeader) return true;
 
   showNotification(
-    'error',
-    `Falta completar el encabezado: ${validation.missingHeaderFields.join(', ')}.`
-  );
+  'warning',
+  `Completa el encabezado para continuar. Faltan: ${validation.missingHeaderFields.join(', ')}.`
+);
   scrollToSection('encabezado');
   return false;
 };
@@ -619,14 +944,22 @@ export default function AppraisalFormWorkspace({
     const warnings = [
       ...validation.missingGeneralesFields.map((item) => `Generales: ${item}`),
       ...validation.missingValuacionFields.map((item) => `Valuación: ${item}`),
+      ...validation.missingFugasMotorFields.map((item) => `Fugas y motor: ${item}`),
+      ...validation.missingCarroceriaCompleteFields.map((item) => `Carrocería/Neumáticos: ${item}`),
       ...validation.missingPhotoRequirements.map((item) => `Fotos: ${item}`)
     ];
 
     const firstMissingSection = validation.missingGeneralesFields.length
-      ? 'generales'
-      : validation.missingValuacionFields.length
-      ? 'valuacion'
-      : 'fotosGenerales';
+  ? 'generales'
+  : validation.missingInteriorFields.length
+  ? 'interior'
+  : validation.missingCarroceriaCompleteFields.length
+  ? 'carroceria'
+  : validation.missingFugasMotorFields.length
+  ? 'fugasMotor'
+  : validation.missingValuacionFields.length
+  ? 'valuacion'
+  : 'fotosGenerales';
 
     scrollToSection(firstMissingSection);
     showNotification(
@@ -695,19 +1028,200 @@ export default function AppraisalFormWorkspace({
     );
   };
 
-  const renderField = (label, value, onChange, type = 'text') => (
-    <div style={styles.field}>
-      <label style={styles.label}>{label}</label>
-      <input type={type} value={value || ''} onChange={onChange} style={styles.input} />
-    </div>
-  );
+  const renderField = (label, value, onChange, type = 'text', placeholder = '') => (
+  <div style={styles.field}>
+    <label style={styles.label}>{label}</label>
+    <input
+      type={type}
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      style={styles.input}
+    />
+  </div>
+);
 
-  const renderTextarea = (label, value, onChange) => (
-    <div style={styles.fieldFull}>
-      <label style={styles.label}>{label}</label>
-      <textarea value={value || ''} onChange={onChange} style={styles.textarea} rows={4} />
+const renderYesNoField = (label, value, onChange) => (
+  <div style={styles.field}>
+    <label style={styles.label}>{label}</label>
+
+    <div style={styles.toggleGroup}>
+      <button
+        type="button"
+        onClick={() => onChange('si')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'si' ? styles.toggleYesActive : {})
+        }}
+      >
+        ✔
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('no')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'no' ? styles.toggleNoActive : {})
+        }}
+      >
+        ✖
+      </button>
     </div>
-  );
+  </div>
+);
+
+const renderYesNoNAField = (label, value, onChange) => (
+  <div style={styles.field}>
+    <label style={styles.label}>{label}</label>
+
+    <div style={styles.toggleGroup}>
+      <button
+        type="button"
+        onClick={() => onChange('si')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'si' ? styles.toggleYesActive : {})
+        }}
+        title="Sí"
+      >
+        ✔
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('no')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'no' ? styles.toggleNoActive : {})
+        }}
+        title="No"
+      >
+        ✖
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('na')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'na' ? styles.toggleNAActive : {})
+        }}
+        title="No aplica"
+      >
+        —
+      </button>
+    </div>
+  </div>
+);
+
+const renderConditionField = (label, value, onChange) => (
+  <div style={styles.field}>
+    <label style={styles.label}>{label}</label>
+
+    <div style={styles.conditionGroup}>
+      <button
+        type="button"
+        onClick={() => onChange('excelente')}
+        style={{
+          ...styles.conditionButton,
+          ...(value === 'excelente' ? styles.conditionExcellent : {})
+        }}
+      >
+        Excelente
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('bueno')}
+        style={{
+          ...styles.conditionButton,
+          ...(value === 'bueno' ? styles.conditionGood : {})
+        }}
+      >
+        Bueno
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('regular')}
+        style={{
+          ...styles.conditionButton,
+          ...(value === 'regular' ? styles.conditionRegular : {})
+        }}
+      >
+        Regular
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('malo')}
+        style={{
+          ...styles.conditionButton,
+          ...(value === 'malo' ? styles.conditionBad : {})
+        }}
+      >
+        Malo
+      </button>
+    </div>
+  </div>
+);
+
+const renderTechnicalStatusField = (label, value, onChange) => (
+  <div style={styles.field}>
+    <label style={styles.label}>{label}</label>
+
+    <div style={styles.toggleGroup}>
+      <button
+        type="button"
+        onClick={() => onChange('ok')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'ok' ? styles.toggleYesActive : {})
+        }}
+        title="OK"
+      >
+        OK
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('detalle')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'detalle' ? styles.toggleNoActive : {})
+        }}
+        title="Con detalle"
+      >
+        Detalle
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange('na')}
+        style={{
+          ...styles.toggleButton,
+          ...(value === 'na' ? styles.toggleNAActive : {})
+        }}
+        title="No aplica"
+      >
+        N/A
+      </button>
+    </div>
+  </div>
+);
+  const renderTextarea = (label, value, onChange, placeholder = '') => (
+  <div style={styles.fieldFull}>
+    <label style={styles.label}>{label}</label>
+    <textarea
+      value={value || ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      style={styles.textarea}
+      rows={4}
+    />
+  </div>
+);
 
   const renderCheckboxGrid = (section, fields) => (
     <div style={styles.checkboxGrid}>
@@ -723,6 +1237,83 @@ export default function AppraisalFormWorkspace({
       ))}
     </div>
   );
+
+  const renderDamageZone = (zoneKey, label) => {
+  const selected = form.carroceria?.zonas?.[zoneKey] || [];
+
+  return (
+    <div style={styles.damageZoneCard}>
+      <div style={styles.damageZoneHeader}>
+        <h4 style={styles.damageZoneTitle}>{label}</h4>
+      </div>
+
+      <div style={styles.damageChips}>
+        {carroceriaDamageOptions.map((option) => {
+          const active = selected.includes(option.value);
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => toggleCarroceriaDamage(zoneKey, option.value)}
+              style={{
+                ...styles.damageChip,
+                ...(active ? styles.damageChipActive : {})
+              }}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const renderNeumaticoCard = (positionKey, label) => {
+  const current = form.carroceria?.neumaticos?.[positionKey] || {
+    neumatico: '',
+    rin: ''
+  };
+
+  return (
+    <div style={styles.tireCard}>
+      <h4 style={styles.tireCardTitle}>{label}</h4>
+
+      <div style={styles.field}>
+        <label style={styles.label}>Neumático</label>
+        <select
+          value={current.neumatico || ''}
+          onChange={(e) => updateNeumaticoField(positionKey, 'neumatico', e.target.value)}
+          style={styles.input}
+        >
+          <option value="">Selecciona</option>
+          {neumaticoOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div style={styles.field}>
+        <label style={styles.label}>Rin</label>
+        <select
+          value={current.rin || ''}
+          onChange={(e) => updateNeumaticoField(positionKey, 'rin', e.target.value)}
+          style={styles.input}
+        >
+          <option value="">Selecciona</option>
+          {rinOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+};
 
   const showNotification = (type, message) => {
   setNotification({ type, message });
@@ -822,21 +1413,89 @@ export default function AppraisalFormWorkspace({
             renderSectionStatus={renderSectionStatus}
           >
             <div style={styles.grid2}>
-              {renderField('Folio', form.folio, (e) => updateRootField('folio', e.target.value))}
-              {renderField('Asesor de ventas', form.asesorVentas, (e) => updateRootField('asesorVentas', e.target.value))}
-              {renderField('Nombre del cliente', form.clienteNombre, (e) => updateRootField('clienteNombre', e.target.value))}
-              {renderField('Teléfono', form.clienteTelefono, (e) => updateRootField('clienteTelefono', e.target.value))}
-              {renderField('Vehículo de interés', form.vehiculoInteres, (e) => updateRootField('vehiculoInteres', e.target.value))}
-              <div style={styles.field}>
-  <label style={styles.label}>Fecha de avalúo</label>
-  <input
-    type="date"
-    value={form.fechaAvaluo || getTodayLocalDate()}
-    disabled
-    style={styles.inputDisabled}
-  />
+  <div style={styles.field}>
+    <label style={styles.label}>Folio</label>
+    <input
+      type="text"
+      value={form.folio || ''}
+      readOnly
+      style={styles.inputReadOnly}
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Fecha de avalúo</label>
+    <input
+      type="date"
+      value={toDateInputValue(form.fechaAvaluo)}
+      readOnly
+      style={styles.inputReadOnly}
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Nombre del cliente</label>
+    <input
+      type="text"
+      value={form.clienteNombre || ''}
+      onChange={handleClienteChange}
+      onBlur={handleClienteBlur}
+      placeholder="Nombre del cliente"
+      style={{
+        ...styles.input,
+        ...(!hasValue(form.clienteNombre) ? styles.inputRequired : {})
+      }}
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Teléfono</label>
+    <input
+      type="text"
+      inputMode="numeric"
+      value={formatPhoneDisplay(form.clienteTelefono)}
+      onChange={handleTelefonoChange}
+      placeholder="222 123 4567"
+      style={{
+        ...styles.input,
+        ...(formatPhoneDigits(form.clienteTelefono).length > 0 &&
+        formatPhoneDigits(form.clienteTelefono).length !== 10
+          ? styles.inputError
+          : !hasValue(form.clienteTelefono)
+          ? styles.inputRequired
+          : {})
+      }}
+    />
+    {formatPhoneDigits(form.clienteTelefono).length > 0 &&
+      formatPhoneDigits(form.clienteTelefono).length !== 10 && (
+        <span style={styles.helperError}>El teléfono debe tener 10 dígitos.</span>
+      )}
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Vehículo de interés</label>
+    <input
+      type="text"
+      value={form.vehiculoInteres || ''}
+      onChange={handleVehiculoInteresChange}
+      placeholder="Ej. Mazda CX-5 2020"
+      style={{
+        ...styles.input,
+        ...(!hasValue(form.vehiculoInteres) ? styles.inputRequired : {})
+      }}
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Asesor de ventas</label>
+    <input
+      type="text"
+      value={form.asesorVentas || ''}
+      readOnly
+      style={styles.inputReadOnly}
+    />
+  </div>
 </div>
-            </div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -846,27 +1505,110 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            <div style={styles.grid3}>
-              {renderField('Marca', form.generales.marca, (e) => updateSectionField('generales', 'marca', e.target.value))}
-              {renderField('Sub marca', form.generales.subMarca, (e) => updateSectionField('generales', 'subMarca', e.target.value))}
-              {renderField('Versión', form.generales.version, (e) => updateSectionField('generales', 'version', e.target.value))}
-              {renderField('Transmisión', form.generales.transmision, (e) => updateSectionField('generales', 'transmision', e.target.value))}
-              {renderField('No. de serie', form.generales.numeroSerie, (e) => updateSectionField('generales', 'numeroSerie', e.target.value))}
-              {renderField('Año modelo', form.generales.anioModelo, (e) => updateSectionField('generales', 'anioModelo', e.target.value))}
-              {renderField('Color', form.generales.color, (e) => updateSectionField('generales', 'color', e.target.value))}
-              {renderField('Kilometraje', form.generales.kilometraje, (e) => updateSectionField('generales', 'kilometraje', e.target.value))}
-              {renderField('No. dueños', form.generales.numeroDuenios, (e) => updateSectionField('generales', 'numeroDuenios', e.target.value))}
-              {renderField('Placas', form.generales.placas, (e) => updateSectionField('generales', 'placas', e.target.value))}
-            </div>
-            {renderTextarea(
-              'Complementarios y comentarios',
-              `${form.generales.complementarios || ''}${form.generales.complementarios && form.generales.comentarios ? '\n' : ''}${form.generales.comentarios || ''}`,
-              (e) => {
-                const value = e.target.value;
-                updateSectionField('generales', 'complementarios', value);
-                updateSectionField('generales', 'comentarios', '');
-              }
-            )}
+            <div style={styles.grid2}>
+  {renderField(
+    'Marca',
+    form.generales.marca,
+    (e) => handleGeneralTitle('marca', e.target.value),
+    'text',
+    'Ej. Mazda'
+  )}
+
+  {renderField(
+    'Submarca',
+    form.generales.submarca,
+    (e) => handleGeneralTitle('submarca', e.target.value),
+    'text',
+    'Ej. CX-5'
+  )}
+
+  {renderField(
+    'Versión',
+    form.generales.version,
+    (e) => handleGeneralTextChange('version', e.target.value),
+    'text',
+    'Ej. i Grand Touring'
+  )}
+
+  {renderField(
+    'Año modelo',
+    form.generales.anio,
+    (e) => handleAnioChange(e.target.value),
+    'text',
+    'Ej. 2020'
+  )}
+
+  <div style={styles.field}>
+    <label style={styles.label}>Transmisión</label>
+    <select
+      value={form.generales.transmision || ''}
+      onChange={(e) => updateSectionField('generales', 'transmision', e.target.value)}
+      style={styles.input}
+    >
+      <option value="">Selecciona</option>
+      <option value="Automática">Automática</option>
+      <option value="Manual">Manual</option>
+      <option value="CVT">CVT</option>
+      <option value="No especificado">No especificado</option>
+    </select>
+  </div>
+
+  {renderField(
+    'Color',
+    form.generales.color,
+    (e) => handleGeneralTitle('color', e.target.value),
+    'text',
+    'Ej. Blanco perla'
+  )}
+
+  {renderField(
+    'Kilometraje',
+    form.generales.kilometraje,
+    (e) => handleKilometrajeChange(e.target.value),
+    'text',
+    'Ej. 87000'
+  )}
+
+  <div style={styles.field}>
+    <label style={styles.label}>Número de dueños</label>
+    <select
+      value={form.generales.numeroDuenos || ''}
+      onChange={(e) => updateSectionField('generales', 'numeroDuenos', e.target.value)}
+      style={styles.input}
+    >
+      <option value="">Selecciona</option>
+      <option value="Único dueño">Único dueño</option>
+      <option value="2 dueños">2 dueños</option>
+      <option value="3 dueños">3 dueños</option>
+      <option value="4+ dueños">4+ dueños</option>
+      <option value="No sabe">No sabe</option>
+    </select>
+  </div>
+
+  {renderField(
+    'Número de serie',
+    form.generales.numeroSerie,
+    (e) => handleGeneralUppercase('numeroSerie', e.target.value),
+    'text',
+    'VIN'
+  )}
+
+  {renderField(
+    'Placas',
+    form.generales.placas,
+    (e) => handleGeneralUppercase('placas', e.target.value),
+    'text',
+    'Ej. ABC1234'
+  )}
+
+  {renderTextarea(
+  'Comentarios',
+  form.generales.comentarios,
+  (e) => handleGeneralTextChange('comentarios', e.target.value),
+  'Ej. Vehículo con desgaste normal de uso y detalle ligero en fascia delantera'
+)}
+</div>
+            
           </AppraisalSection>
 
           <AppraisalSection
@@ -876,18 +1618,54 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            <div style={styles.grid3}>
-              {renderField('Factura', form.documentacion.factura, (e) => updateSectionField('documentacion', 'factura', e.target.value))}
-              {renderField('Carta de origen', form.documentacion.cartaOrigen, (e) => updateSectionField('documentacion', 'cartaOrigen', e.target.value))}
-              {renderField('Tenencias', form.documentacion.tenencias, (e) => updateSectionField('documentacion', 'tenencias', e.target.value))}
-              {renderField('Último servicio', form.documentacion.ultimoServicio, (e) => updateSectionField('documentacion', 'ultimoServicio', e.target.value))}
-              {renderField('Verificación', form.documentacion.verificacion, (e) => updateSectionField('documentacion', 'verificacion', e.target.value))}
-              {renderField('Manuales', form.documentacion.manuales, (e) => updateSectionField('documentacion', 'manuales', e.target.value))}
-              {renderField('Garantía', form.documentacion.garantia, (e) => updateSectionField('documentacion', 'garantia', e.target.value))}
-              {renderField('Engomado', form.documentacion.engomado, (e) => updateSectionField('documentacion', 'engomado', e.target.value))}
-              {renderField('Tarjeta de circulación', form.documentacion.tarjetaCirculacion, (e) => updateSectionField('documentacion', 'tarjetaCirculacion', e.target.value))}
-              {renderField('Póliza de seguro', form.documentacion.polizaSeguro, (e) => updateSectionField('documentacion', 'polizaSeguro', e.target.value))}
-            </div>
+            <div style={styles.grid2}>
+  {renderYesNoField('Factura', form.documentacion.factura, (val) =>
+    updateSectionField('documentacion', 'factura', val)
+  )}
+
+  {renderYesNoField('Carta origen', form.documentacion.cartaOrigen, (val) =>
+    updateSectionField('documentacion', 'cartaOrigen', val)
+  )}
+
+  {renderYesNoField('Tenencias', form.documentacion.tenencias, (val) =>
+    updateSectionField('documentacion', 'tenencias', val)
+  )}
+
+  {renderYesNoField('Último servicio', form.documentacion.ultimoServicio, (val) =>
+    updateSectionField('documentacion', 'ultimoServicio', val)
+  )}
+
+  {renderYesNoField('Verificación', form.documentacion.verificacion, (val) =>
+    updateSectionField('documentacion', 'verificacion', val)
+  )}
+
+  {renderYesNoField('Manuales', form.documentacion.manuales, (val) =>
+    updateSectionField('documentacion', 'manuales', val)
+  )}
+
+  {renderYesNoField('Garantía', form.documentacion.garantia, (val) =>
+    updateSectionField('documentacion', 'garantia', val)
+  )}
+
+  {renderYesNoField('Engomado', form.documentacion.engomado, (val) =>
+    updateSectionField('documentacion', 'engomado', val)
+  )}
+
+  {renderYesNoField('Tarjeta de circulación', form.documentacion.tarjetaCirculacion, (val) =>
+    updateSectionField('documentacion', 'tarjetaCirculacion', val)
+  )}
+
+  {renderYesNoField('Póliza de seguro', form.documentacion.polizaSeguro, (val) =>
+    updateSectionField('documentacion', 'polizaSeguro', val)
+  )}
+
+  {renderTextarea(
+    'Comentarios',
+    form.documentacion.comentarios,
+    (e) => updateSectionField('documentacion', 'comentarios', e.target.value),
+    'Ej. Factura original, falta endoso'
+  )}
+</div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -897,17 +1675,46 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            <div style={styles.grid3}>
-              {renderField('Vestiduras', form.interior.vestiduras, (e) => updateSectionField('interior', 'vestiduras', e.target.value))}
-              {renderField('Cielo', form.interior.cielo, (e) => updateSectionField('interior', 'cielo', e.target.value))}
-              {renderField('Consola', form.interior.consola, (e) => updateSectionField('interior', 'consola', e.target.value))}
-              {renderField('Alfombras', form.interior.alfombras, (e) => updateSectionField('interior', 'alfombras', e.target.value))}
-              {renderField('Tablero', form.interior.tablero, (e) => updateSectionField('interior', 'tablero', e.target.value))}
-              {renderField('Encendedor', form.interior.encendedor, (e) => updateSectionField('interior', 'encendedor', e.target.value))}
-              {renderField('Puertas', form.interior.puertas, (e) => updateSectionField('interior', 'puertas', e.target.value))}
-              {renderField('Volante', form.interior.volante, (e) => updateSectionField('interior', 'volante', e.target.value))}
-              {renderField('Consola 2', form.interior.consolaDos, (e) => updateSectionField('interior', 'consolaDos', e.target.value))}
-            </div>
+            <div style={styles.grid2}>
+  {renderConditionField('Vestiduras', form.interior.vestiduras, (val) =>
+    updateSectionField('interior', 'vestiduras', val)
+  )}
+
+  {renderConditionField('Cielo', form.interior.cielo, (val) =>
+    updateSectionField('interior', 'cielo', val)
+  )}
+
+  {renderConditionField('Consola central', form.interior.consolaCentral, (val) =>
+    updateSectionField('interior', 'consolaCentral', val)
+  )}
+
+  {renderConditionField('Alfombras', form.interior.alfombras, (val) =>
+    updateSectionField('interior', 'alfombras', val)
+  )}
+
+  {renderConditionField('Tablero', form.interior.tablero, (val) =>
+    updateSectionField('interior', 'tablero', val)
+  )}
+
+  {renderConditionField('Encendedor / toma corriente', form.interior.encendedor, (val) =>
+    updateSectionField('interior', 'encendedor', val)
+  )}
+
+  {renderConditionField('Puertas / vestiduras laterales', form.interior.puertasLaterales, (val) =>
+    updateSectionField('interior', 'puertasLaterales', val)
+  )}
+
+  {renderConditionField('Volante', form.interior.volante, (val) =>
+    updateSectionField('interior', 'volante', val)
+  )}
+
+  {renderTextarea(
+    'Comentarios',
+    form.interior.comentarios,
+    (e) => updateSectionField('interior', 'comentarios', e.target.value),
+    'Ej. Vestiduras con desgaste ligero en asiento del conductor y detalle menor en tablero'
+  )}
+</div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -918,11 +1725,38 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            {renderTextarea(
-              'Observaciones de carrocería y neumáticos',
-              form.carroceria.observaciones,
-              (e) => updateSectionField('carroceria', 'observaciones', e.target.value)
-            )}
+            <div style={styles.carroceriaWrapper}>
+  <div style={styles.subsectionBlock}>
+    <h4 style={styles.subsectionTitle}>Carrocería por zonas</h4>
+    <p style={styles.helperText}>
+      Selecciona uno o varios hallazgos por cada zona del vehículo.
+    </p>
+
+    <div style={styles.damageZoneGrid}>
+      {carroceriaZones.map((zone) => renderDamageZone(zone.key, zone.label))}
+    </div>
+  </div>
+
+  <div style={styles.subsectionBlock}>
+    <h4 style={styles.subsectionTitle}>Neumáticos y rines</h4>
+    <p style={styles.helperText}>
+      Para guardar el avalúo completo debes evaluar las 4 posiciones.
+    </p>
+
+    <div style={styles.tireGrid}>
+      {neumaticoPositions.map((position) =>
+        renderNeumaticoCard(position.key, position.label)
+      )}
+    </div>
+  </div>
+
+  {renderTextarea(
+    'Comentarios',
+    form.carroceria.observaciones,
+    (e) => updateSectionField('carroceria', 'observaciones', e.target.value),
+    'Ej. Costado izquierdo con abolladura ligera y llanta delantera derecha desgastada'
+  )}
+</div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -932,30 +1766,42 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            {renderCheckboxGrid('sistemaElectrico', [
-              { key: 'espejosElectricos', label: 'Espejos eléctricos' },
-              { key: 'bolsasAire', label: 'Bolsas de aire' },
-              { key: 'aireAcondicionado', label: 'Aire acondicionado' },
-              { key: 'controlCrucero', label: 'Control crucero' },
-              { key: 'chisguetero', label: 'Chisguetero' },
-              { key: 'luzMapa', label: 'Luz de mapa' },
-              { key: 'funcionesVolante', label: 'Funciones en volante' },
-              { key: 'checkEngine', label: 'Check engine' },
-              { key: 'asientosElectricos', label: 'Asientos eléctricos' },
-              { key: 'claxon', label: 'Claxon' },
-              { key: 'lucesInternas', label: 'Luces internas' },
-              { key: 'segurosElectricos', label: 'Seguros eléctricos' },
-              { key: 'cristalesElectricos', label: 'Cristales eléctricos' },
-              { key: 'aperturaCajuela', label: 'Apertura cajuela' },
-              { key: 'pantalla', label: 'Pantalla' },
-              { key: 'farosNiebla', label: 'Faros niebla' },
-              { key: 'lucesExternas', label: 'Luces externas' },
-              { key: 'limpiadores', label: 'Limpiadores' },
-              { key: 'estereoUsb', label: 'Estéreo/CD/USB' },
-              { key: 'quemacocos', label: 'Quemacocos' },
-              { key: 'testigos', label: 'Testigos' },
-              { key: 'direccionales', label: 'Direccionales' }
-            ])}
+            <div style={styles.grid2}>
+  {renderYesNoNAField('Espejos eléctricos', form.sistemaElectrico.espejosElectricos, (val) => updateSectionField('sistemaElectrico', 'espejosElectricos', val))}
+  {renderYesNoNAField('Bolsas de aire', form.sistemaElectrico.bolsasAire, (val) => updateSectionField('sistemaElectrico', 'bolsasAire', val))}
+  {renderYesNoNAField('Aire acondicionado', form.sistemaElectrico.aireAcondicionado, (val) => updateSectionField('sistemaElectrico', 'aireAcondicionado', val))}
+  {renderYesNoNAField('Control de crucero', form.sistemaElectrico.controlCrucero, (val) => updateSectionField('sistemaElectrico', 'controlCrucero', val))}
+  {renderYesNoNAField('Chisguetero', form.sistemaElectrico.chisguetero, (val) => updateSectionField('sistemaElectrico', 'chisguetero', val))}
+  {renderYesNoNAField('Luz de mapa', form.sistemaElectrico.luzMapa, (val) => updateSectionField('sistemaElectrico', 'luzMapa', val))}
+
+  {renderYesNoNAField('Controles de volante', form.sistemaElectrico.controlesVolante, (val) => updateSectionField('sistemaElectrico', 'controlesVolante', val))}
+  {renderYesNoNAField('Check engine', form.sistemaElectrico.checkEngine, (val) => updateSectionField('sistemaElectrico', 'checkEngine', val))}
+  {renderYesNoNAField('Asientos eléctricos', form.sistemaElectrico.asientosElectricos, (val) => updateSectionField('sistemaElectrico', 'asientosElectricos', val))}
+  {renderYesNoNAField('Encendedor', form.sistemaElectrico.encendedor, (val) => updateSectionField('sistemaElectrico', 'encendedor', val))}
+  {renderYesNoNAField('Claxon', form.sistemaElectrico.claxon, (val) => updateSectionField('sistemaElectrico', 'claxon', val))}
+
+  {renderYesNoNAField('Luces internas', form.sistemaElectrico.lucesInternas, (val) => updateSectionField('sistemaElectrico', 'lucesInternas', val))}
+  {renderYesNoNAField('Seguros eléctricos', form.sistemaElectrico.segurosElectricos, (val) => updateSectionField('sistemaElectrico', 'segurosElectricos', val))}
+  {renderYesNoNAField('Cristales eléctricos', form.sistemaElectrico.cristalesElectricos, (val) => updateSectionField('sistemaElectrico', 'cristalesElectricos', val))}
+  {renderYesNoNAField('Apertura cajuela', form.sistemaElectrico.aperturaCajuela, (val) => updateSectionField('sistemaElectrico', 'aperturaCajuela', val))}
+  {renderYesNoNAField('Pantalla', form.sistemaElectrico.pantalla, (val) => updateSectionField('sistemaElectrico', 'pantalla', val))}
+  {renderYesNoNAField('Faros de niebla', form.sistemaElectrico.farosNiebla, (val) => updateSectionField('sistemaElectrico', 'farosNiebla', val))}
+
+  {renderYesNoNAField('Luces externas', form.sistemaElectrico.lucesExternas, (val) => updateSectionField('sistemaElectrico', 'lucesExternas', val))}
+  {renderYesNoNAField('Limpiadores', form.sistemaElectrico.limpiadores, (val) => updateSectionField('sistemaElectrico', 'limpiadores', val))}
+  {renderYesNoNAField('Estéreo / USB', form.sistemaElectrico.estereoUsb, (val) => updateSectionField('sistemaElectrico', 'estereoUsb', val))}
+  {renderYesNoNAField('Quemacocos', form.sistemaElectrico.quemacocos, (val) => updateSectionField('sistemaElectrico', 'quemacocos', val))}
+  {renderYesNoNAField('Testigos', form.sistemaElectrico.testigos, (val) => updateSectionField('sistemaElectrico', 'testigos', val))}
+  {renderYesNoNAField('Direccionales', form.sistemaElectrico.direccionales, (val) => updateSectionField('sistemaElectrico', 'direccionales', val))}
+
+  {renderTextarea(
+    'Comentarios',
+    form.sistemaElectrico.comentarios,
+    (e) => updateSectionField('sistemaElectrico', 'comentarios', e.target.value),
+    'Ej. Aire acondicionado no enfría y check engine activo'
+  )}
+</div>
+            
           </AppraisalSection>
 
           <AppraisalSection
@@ -965,24 +1811,54 @@ export default function AppraisalFormWorkspace({
             sectionRefs={sectionRefs}
             renderSectionStatus={renderSectionStatus}
           >
-            <div style={styles.grid3}>
-              {renderField('Motor', form.fugasMotor.motor, (e) => updateSectionField('fugasMotor', 'motor', e.target.value))}
-              {renderField('Transmisión', form.fugasMotor.transmision, (e) => updateSectionField('fugasMotor', 'transmision', e.target.value))}
-              {renderField('Sistema de frenos', form.fugasMotor.sistemaFrenos, (e) => updateSectionField('fugasMotor', 'sistemaFrenos', e.target.value))}
-              {renderField('Dirección hidráulica', form.fugasMotor.direccionHidraulica, (e) => updateSectionField('fugasMotor', 'direccionHidraulica', e.target.value))}
-              {renderField('Amortiguadores', form.fugasMotor.amortiguadores, (e) => updateSectionField('fugasMotor', 'amortiguadores', e.target.value))}
-              {renderField('Anticongelante', form.fugasMotor.anticongelante, (e) => updateSectionField('fugasMotor', 'anticongelante', e.target.value))}
-              {renderField('Aire acondicionado', form.fugasMotor.aireAcondicionado, (e) => updateSectionField('fugasMotor', 'aireAcondicionado', e.target.value))}
-              {renderField('Flechas', form.fugasMotor.flechas, (e) => updateSectionField('fugasMotor', 'flechas', e.target.value))}
-              {renderField('Soportes de motor', form.fugasMotor.soportesMotor, (e) => updateSectionField('fugasMotor', 'soportesMotor', e.target.value))}
-              {renderField('Soportes de caja', form.fugasMotor.soportesCaja, (e) => updateSectionField('fugasMotor', 'soportesCaja', e.target.value))}
-            </div>
+            <div style={styles.grid2}>
+  {renderTechnicalStatusField('Motor', form.fugasMotor.motor, (val) =>
+    updateSectionField('fugasMotor', 'motor', val)
+  )}
 
-            {renderTextarea(
-              'Comentarios',
-              form.fugasMotor.comentarios,
-              (e) => updateSectionField('fugasMotor', 'comentarios', e.target.value)
-            )}
+  {renderTechnicalStatusField('Transmisión', form.fugasMotor.transmision, (val) =>
+    updateSectionField('fugasMotor', 'transmision', val)
+  )}
+
+  {renderTechnicalStatusField('Sistema de frenos', form.fugasMotor.sistemaFrenos, (val) =>
+    updateSectionField('fugasMotor', 'sistemaFrenos', val)
+  )}
+
+  {renderTechnicalStatusField('Dirección hidráulica', form.fugasMotor.direccionHidraulica, (val) =>
+    updateSectionField('fugasMotor', 'direccionHidraulica', val)
+  )}
+
+  {renderTechnicalStatusField('Amortiguadores', form.fugasMotor.amortiguadores, (val) =>
+    updateSectionField('fugasMotor', 'amortiguadores', val)
+  )}
+
+  {renderTechnicalStatusField('Anticongelante', form.fugasMotor.anticongelante, (val) =>
+    updateSectionField('fugasMotor', 'anticongelante', val)
+  )}
+
+  {renderTechnicalStatusField('Aire acondicionado', form.fugasMotor.aireAcondicionado, (val) =>
+    updateSectionField('fugasMotor', 'aireAcondicionado', val)
+  )}
+
+  {renderTechnicalStatusField('Flechas', form.fugasMotor.flechas, (val) =>
+    updateSectionField('fugasMotor', 'flechas', val)
+  )}
+
+  {renderTechnicalStatusField('Soportes de motor', form.fugasMotor.soportesMotor, (val) =>
+    updateSectionField('fugasMotor', 'soportesMotor', val)
+  )}
+
+  {renderTechnicalStatusField('Soportes de caja', form.fugasMotor.soportesCaja, (val) =>
+    updateSectionField('fugasMotor', 'soportesCaja', val)
+  )}
+
+  {renderTextarea(
+    'Comentarios',
+    form.fugasMotor.comentarios,
+    (e) => updateSectionField('fugasMotor', 'comentarios', e.target.value),
+    'Ej. Ligera fuga en dirección hidráulica y soportes de motor con desgaste visible'
+  )}
+</div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -993,11 +1869,72 @@ export default function AppraisalFormWorkspace({
             renderSectionStatus={renderSectionStatus}
           >
             <div style={styles.grid2}>
-              {renderField('Toma libro', form.valuacion.tomaLibro, (e) => updateSectionField('valuacion', 'tomaLibro', e.target.value))}
-              {renderField('Venta libro', form.valuacion.ventaLibro, (e) => updateSectionField('valuacion', 'ventaLibro', e.target.value))}
-              {renderField('Reparaciones', form.valuacion.reparaciones, (e) => updateSectionField('valuacion', 'reparaciones', e.target.value))}
-              {renderField('Toma autorizada', form.valuacion.tomaAutorizada, (e) => updateSectionField('valuacion', 'tomaAutorizada', e.target.value))}
-            </div>
+  <div style={styles.field}>
+    <label style={styles.label}>Toma libro</label>
+    <input
+      type="text"
+      value={formatMoneyDisplay(form.valuacion.tomaLibro)}
+      onChange={(e) => handleValuacionNumberChange('tomaLibro', e.target.value)}
+      placeholder="Ej. 180000"
+      style={styles.input}
+      inputMode="numeric"
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Venta libro</label>
+    <input
+      type="text"
+      value={formatMoneyDisplay(form.valuacion.ventaLibro)}
+      onChange={(e) => handleValuacionNumberChange('ventaLibro', e.target.value)}
+      placeholder="Ej. 220000"
+      style={styles.input}
+      inputMode="numeric"
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Media</label>
+    <input
+      type="text"
+      value={formatMoneyDisplay(form.valuacion.media)}
+      readOnly
+      placeholder="Se calcula automáticamente"
+      style={styles.inputReadOnly}
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Reparaciones</label>
+    <input
+      type="text"
+      value={formatMoneyDisplay(form.valuacion.reparaciones)}
+      onChange={(e) => handleValuacionNumberChange('reparaciones', e.target.value)}
+      placeholder="Ej. 8500"
+      style={styles.input}
+      inputMode="numeric"
+    />
+  </div>
+
+  <div style={styles.field}>
+    <label style={styles.label}>Toma autorizada</label>
+    <input
+      type="text"
+      value={formatMoneyDisplay(form.valuacion.tomaAutorizada)}
+      onChange={(e) => handleValuacionNumberChange('tomaAutorizada', e.target.value)}
+      placeholder="Ej. 178000"
+      style={styles.input}
+      inputMode="numeric"
+    />
+  </div>
+
+  {renderTextarea(
+    'Comentarios',
+    form.valuacion.comentarios,
+    (e) => updateSectionField('valuacion', 'comentarios', e.target.value),
+    'Ej. Se considera ajuste por detalle estético y costo estimado de reacondicionamiento'
+  )}
+</div>
           </AppraisalSection>
 
           <AppraisalSection
@@ -1210,45 +2147,63 @@ export default function AppraisalFormWorkspace({
 const styles = {
   workspace: {
     display: 'grid',
-    gridTemplateColumns: '290px 1fr',
-    gap: '20px',
+    gridTemplateColumns: '240px 1fr',
+    gap: '12px',
     alignItems: 'start'
   },
   sidebar: {
     background: '#fff',
-    borderRadius: '20px',
-    padding: '18px',
-    boxShadow: '0 12px 34px rgba(0,0,0,0.06)',
+    borderRadius: '12px',
+    padding: '10px',
+    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
     position: 'sticky',
-    top: '24px',
+    top: '12px',
     alignSelf: 'start'
   },
-  sidebarHeader: { marginBottom: '18px' },
-  sidebarTitle: { margin: 0, fontSize: '22px', color: '#111827' },
-  sidebarText: { margin: '8px 0 0 0', color: '#6b7280', fontSize: '14px' },
-  sectionNav: { display: 'grid', gap: '10px' },
+  sidebarHeader: {
+    marginBottom: '10px'
+  },
+  sidebarTitle: {
+    margin: 0,
+    fontSize: '16px',
+    color: '#111827',
+    fontWeight: 800
+  },
+  sidebarText: {
+    margin: '4px 0 0 0',
+    color: '#6b7280',
+    fontSize: '11px',
+    lineHeight: 1.35
+  },
+  sectionNav: {
+    display: 'grid',
+    gap: '6px'
+  },
   sectionButton: {
-    width: '100%',
-    textAlign: 'left',
-    border: '1px solid #e5e7eb',
-    borderRadius: '14px',
-    background: '#fff',
-    padding: '12px 14px',
-    cursor: 'pointer',
     display: 'flex',
-    justifyContent: 'space-between',
-    gap: '10px',
     alignItems: 'center',
-    fontWeight: 600
+    justifyContent: 'space-between',
+    gap: '8px',
+    width: '100%',
+    padding: '7px 9px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    background: '#ffffff',
+    color: '#374151',
+    fontSize: '11px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    textAlign: 'left'
   },
   sectionButtonActive: {
-    border: '1px solid #111827',
-    background: '#f9fafb'
+    background: '#eff6ff',
+    border: '1px solid #93c5fd',
+    color: '#1d4ed8'
   },
   navStatus: {
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: 800,
-    padding: '4px 8px',
+    padding: '3px 7px',
     borderRadius: '999px',
     whiteSpace: 'nowrap'
   },
@@ -1260,30 +2215,44 @@ const styles = {
     background: '#fef3c7',
     color: '#92400e'
   },
-  main: { display: 'grid', gap: '18px' },
+  main: {
+    display: 'grid',
+    gap: '10px'
+  },
   heroCard: {
     background: '#fff',
-    borderRadius: '20px',
-    padding: '22px',
-    boxShadow: '0 12px 34px rgba(0,0,0,0.06)',
+    borderRadius: '12px',
+    padding: '10px 12px',
+    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '16px',
-    flexWrap: 'wrap',
-    alignItems: 'center'
+    gap: '10px',
+    marginBottom: '8px'
   },
-  formTitle: { margin: 0, fontSize: '36px', color: '#111827' },
-  formMeta: { margin: '10px 0 0 0', color: '#6b7280', fontSize: '16px' },
-  topbarActions: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
-  flowContainer: {
-    display: 'grid',
-    gap: '18px'
+  formTitle: {
+    margin: 0,
+    fontSize: '17px',
+    color: '#111827',
+    lineHeight: 1.1,
+    fontWeight: 800
+  },
+  formMeta: {
+    margin: '4px 0 0 0',
+    color: '#6b7280',
+    fontSize: '11px'
+  },
+  topbarActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexWrap: 'wrap'
   },
   sectionCard: {
     background: '#fff',
-    borderRadius: '20px',
-    padding: '24px',
-    boxShadow: '0 12px 34px rgba(0,0,0,0.05)',
+    borderRadius: '12px',
+    padding: '12px',
+    boxShadow: '0 8px 18px rgba(0,0,0,0.04)',
     border: '1px solid transparent'
   },
   sectionCardActive: {
@@ -1292,127 +2261,290 @@ const styles = {
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '16px',
+    gap: '10px',
     alignItems: 'flex-start',
-    marginBottom: '20px'
+    marginBottom: '10px'
   },
-  sectionTitle: { margin: 0, fontSize: '24px', color: '#111827' },
-  helperText: { margin: '8px 0 0 0', color: '#6b7280' },
-  grid2: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' },
-  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' },
-  field: { display: 'grid', gap: '8px' },
-  fieldFull: { display: 'grid', gap: '8px', marginTop: '16px' },
-  label: { fontWeight: 700, fontSize: '14px', color: '#374151' },
+  sectionTitle: {
+    margin: 0,
+    fontSize: '14px',
+    fontWeight: 800,
+    color: '#111827'
+  },
+  helperText: {
+    margin: '4px 0 0 0',
+    color: '#6b7280',
+    fontSize: '11px',
+    lineHeight: 1.35
+  },
+  grid2: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px'
+  },
+  grid3: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '10px'
+  },
+  field: {
+    display: 'grid',
+    gap: '4px'
+  },
+  fieldFull: {
+    display: 'grid',
+    gap: '4px',
+    marginTop: '10px'
+  },
+  label: {
+    fontWeight: 700,
+    fontSize: '11px',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em'
+  },
   input: {
     width: '100%',
-    padding: '13px 14px',
+    padding: '8px 10px',
     border: '1px solid #d1d5db',
-    borderRadius: '12px',
-    fontSize: '14px',
-    background: '#fff'
+    borderRadius: '8px',
+    fontSize: '13px',
+    background: '#fff',
+    color: '#111827',
+    minHeight: '34px'
   },
   inputDisabled: {
-  width: '100%',
-  padding: '13px 14px',
-  border: '1px solid #d1d5db',
-  borderRadius: '12px',
-  fontSize: '14px',
-  background: '#f3f4f6',
-  color: '#6b7280',
-  cursor: 'not-allowed'
-},
+    width: '100%',
+    padding: '8px 10px',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '13px',
+    background: '#f3f4f6',
+    color: '#6b7280',
+    cursor: 'not-allowed',
+    minHeight: '34px'
+  },
+  inputReadOnly: {
+    width: '100%',
+    padding: '8px 10px',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '13px',
+    background: '#f8fafc',
+    color: '#475569',
+    minHeight: '34px'
+  },
+  inputRequired: {
+    border: '1px solid #f59e0b',
+    background: '#fffbeb'
+  },
+  inputError: {
+    border: '1px solid #ef4444',
+    background: '#fef2f2'
+  },
+  helperError: {
+    display: 'block',
+    marginTop: '4px',
+    fontSize: '11px',
+    color: '#b91c1c',
+    fontWeight: 600
+  },
   textarea: {
     width: '100%',
-    padding: '13px 14px',
+    padding: '9px 10px',
     border: '1px solid #d1d5db',
-    borderRadius: '12px',
+    borderRadius: '8px',
     resize: 'vertical',
-    fontSize: '14px'
+    fontSize: '13px',
+    minHeight: '78px',
+    color: '#111827',
+    background: '#fff'
   },
   checkboxGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '12px'
+    gap: '8px'
   },
   checkboxItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    padding: '12px',
+    gap: '6px',
+    padding: '8px 10px',
     border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    background: '#fafafa'
+    borderRadius: '8px',
+    background: '#fafafa',
+    fontSize: '12px'
+  },
+  radioGroup: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+    flexWrap: 'wrap'
+  },
+  radioOption: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    fontSize: '12px',
+    fontWeight: 600
+  },
+  toggleGroup: {
+    display: 'flex',
+    gap: '6px',
+    flexWrap: 'wrap'
+  },
+  toggleButton: {
+    minWidth: '30px',
+    height: '28px',
+    padding: '4px 8px',
+    borderRadius: '6px',
+    border: '1px solid #d1d5db',
+    background: '#f9fafb',
+    cursor: 'pointer',
+    fontSize: '11px',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
+  },
+  toggleYesActive: {
+    background: '#dcfce7',
+    border: '1px solid #22c55e',
+    color: '#166534'
+  },
+  toggleNoActive: {
+    background: '#fee2e2',
+    border: '1px solid #ef4444',
+    color: '#7f1d1d'
+  },
+  toggleNAActive: {
+    background: '#e5e7eb',
+    border: '1px solid #9ca3af',
+    color: '#374151'
+  },
+  conditionGroup: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '6px'
+  },
+  conditionButton: {
+    minWidth: '72px',
+    padding: '6px 8px',
+    borderRadius: '7px',
+    border: '1px solid #d1d5db',
+    background: '#f9fafb',
+    cursor: 'pointer',
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#334155',
+    transition: 'all 0.2s ease'
+  },
+  conditionExcellent: {
+    background: '#dcfce7',
+    border: '1px solid #22c55e',
+    color: '#166534'
+  },
+  conditionGood: {
+    background: '#dbeafe',
+    border: '1px solid #3b82f6',
+    color: '#1d4ed8'
+  },
+  conditionRegular: {
+    background: '#fef3c7',
+    border: '1px solid #f59e0b',
+    color: '#92400e'
+  },
+  conditionBad: {
+    background: '#fee2e2',
+    border: '1px solid #ef4444',
+    color: '#991b1b'
   },
   primaryButton: {
     background: '#111827',
     color: '#fff',
     border: 'none',
-    borderRadius: '12px',
-    padding: '12px 16px',
+    borderRadius: '8px',
+    padding: '8px 12px',
     cursor: 'pointer',
-    fontWeight: 700
+    fontWeight: 700,
+    fontSize: '12px'
   },
   secondaryButton: {
     background: '#fff',
     color: '#111827',
     border: '1px solid #d1d5db',
-    borderRadius: '12px',
-    padding: '12px 16px',
+    borderRadius: '8px',
+    padding: '8px 12px',
     cursor: 'pointer',
-    fontWeight: 700
+    fontWeight: 700,
+    fontSize: '12px'
+  },
+  disabledButton: {
+    background: '#e5e7eb',
+    color: '#9ca3af',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    cursor: 'not-allowed',
+    fontWeight: 700,
+    fontSize: '12px'
   },
   infoBox: {
     background: '#eff6ff',
     color: '#1d4ed8',
-    padding: '14px 16px',
-    borderRadius: '14px',
+    padding: '10px 12px',
+    borderRadius: '10px',
     fontWeight: 600,
+    fontSize: '12px',
     border: '1px solid #bfdbfe'
   },
   warningBox: {
     background: '#fff7ed',
     color: '#9a3412',
-    padding: '14px 16px',
-    borderRadius: '14px',
+    padding: '10px 12px',
+    borderRadius: '10px',
     fontWeight: 600,
+    fontSize: '12px',
     border: '1px solid #fed7aa',
-    marginBottom: '16px'
+    marginBottom: '10px'
   },
   notificationBox: {
-  padding: '14px 16px',
-  borderRadius: '14px',
-  fontWeight: 700,
-  border: '1px solid transparent',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
-},
-notificationSuccess: {
-  background: '#dcfce7',
-  color: '#166534',
-  border: '1px solid #bbf7d0'
-},
-notificationWarning: {
-  background: '#fff7ed',
-  color: '#9a3412',
-  border: '1px solid #fed7aa'
-},
-notificationError: {
-  background: '#fee2e2',
-  color: '#991b1b',
-  border: '1px solid #fecaca'
-},
+    padding: '10px 12px',
+    borderRadius: '10px',
+    fontWeight: 700,
+    fontSize: '12px',
+    border: '1px solid transparent',
+    boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+  },
+  notificationSuccess: {
+    background: '#dcfce7',
+    color: '#166534',
+    border: '1px solid #bbf7d0'
+  },
+  notificationWarning: {
+    background: '#fff7ed',
+    color: '#9a3412',
+    border: '1px solid #fed7aa'
+  },
+  notificationError: {
+    background: '#fee2e2',
+    color: '#991b1b',
+    border: '1px solid #fecaca'
+  },
   generalPhotoGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '16px'
+    gap: '10px'
   },
   generalPhotoCard: {
     border: '1px solid #e5e7eb',
-    borderRadius: '16px',
+    borderRadius: '12px',
     overflow: 'hidden',
     background: '#fff'
   },
   generalPhotoPreview: {
-    height: '190px',
+    height: '150px',
     background: '#f8fafc',
     display: 'flex',
     alignItems: 'center',
@@ -1423,94 +2555,179 @@ notificationError: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
     color: '#6b7280'
   },
-  silhouetteIcon: { fontSize: '28px' },
-  silhouetteText: { fontSize: '14px', fontWeight: 700 },
+  silhouetteIcon: {
+    fontSize: '22px'
+  },
+  silhouetteText: {
+    fontSize: '12px',
+    fontWeight: 700
+  },
   previewImage: {
     width: '100%',
     height: '100%',
     objectFit: 'cover'
   },
   generalPhotoFooter: {
-    padding: '12px',
+    padding: '10px',
     display: 'grid',
-    gap: '10px'
+    gap: '8px'
   },
   slotActions: {
     display: 'flex',
-    gap: '8px',
+    gap: '6px',
     flexWrap: 'wrap'
   },
   smallButton: {
     background: '#fff',
     color: '#111827',
     border: '1px solid #d1d5db',
-    borderRadius: '10px',
-    padding: '8px 10px',
+    borderRadius: '8px',
+    padding: '6px 8px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px'
+    fontSize: '11px'
   },
   smallDangerButton: {
     background: '#fff',
     color: '#b91c1c',
     border: '1px solid #fecaca',
-    borderRadius: '10px',
-    padding: '8px 10px',
+    borderRadius: '8px',
+    padding: '6px 8px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px'
+    fontSize: '11px'
   },
   detailPhotoGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '16px',
-    marginTop: '18px'
+    gap: '10px',
+    marginTop: '10px'
   },
   detailPhotoCard: {
     border: '1px solid #e5e7eb',
-    borderRadius: '16px',
+    borderRadius: '12px',
     overflow: 'hidden',
     background: '#fff'
   },
   detailPhotoPreview: {
-    height: '190px',
+    height: '150px',
     background: '#f8fafc'
   },
   detailPhotoInfo: {
-    padding: '12px',
+    padding: '10px',
     display: 'grid',
-    gap: '10px'
+    gap: '8px'
   },
   detailPhotoName: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: '#111827',
     wordBreak: 'break-word'
   },
   emptyPhotoBox: {
     border: '1px dashed #d1d5db',
-    borderRadius: '16px',
-    padding: '24px',
+    borderRadius: '12px',
+    padding: '16px',
     color: '#6b7280',
-    textAlign: 'center'
+    textAlign: 'center',
+    fontSize: '12px'
   },
-  validationGrid: { display: 'grid', gap: '12px' },
+  carroceriaWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px'
+  },
+  subsectionBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  subsectionTitle: {
+    margin: 0,
+    fontSize: '14px',
+    fontWeight: 800,
+    color: '#0f172a'
+  },
+  damageZoneGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px'
+  },
+  damageZoneCard: {
+    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    padding: '10px',
+    background: '#f8fafc'
+  },
+  damageZoneHeader: {
+    marginBottom: '8px'
+  },
+  damageZoneTitle: {
+    margin: 0,
+    fontSize: '13px',
+    fontWeight: 800,
+    color: '#0f172a'
+  },
+  damageChips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '6px'
+  },
+  damageChip: {
+    border: '1px solid #d1d5db',
+    borderRadius: '999px',
+    padding: '6px 10px',
+    background: '#ffffff',
+    color: '#334155',
+    fontSize: '11px',
+    fontWeight: 700,
+    cursor: 'pointer'
+  },
+  damageChipActive: {
+    background: '#dbeafe',
+    border: '1px solid #3b82f6',
+    color: '#1d4ed8'
+  },
+  tireGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px'
+  },
+  tireCard: {
+    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    padding: '10px',
+    background: '#ffffff',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  tireCardTitle: {
+    margin: 0,
+    fontSize: '13px',
+    fontWeight: 800,
+    color: '#0f172a'
+  },
+  validationGrid: {
+    display: 'grid',
+    gap: '8px'
+  },
   validationItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '14px',
+    padding: '10px',
     border: '1px solid #e5e7eb',
-    borderRadius: '14px',
+    borderRadius: '10px',
     background: '#fafafa'
   },
   statusPill: {
     display: 'inline-block',
-    padding: '5px 10px',
+    padding: '4px 8px',
     borderRadius: '999px',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: 800
   },
   statusOk: {
@@ -1522,20 +2739,22 @@ notificationError: {
     color: '#92400e'
   },
   bottomBar: {
-    background: '#fff',
-    borderRadius: '20px',
-    padding: '18px 20px',
-    boxShadow: '0 12px 34px rgba(0,0,0,0.05)',
+    position: 'sticky',
+    bottom: '0',
+    background: 'rgba(255,255,255,0.96)',
+    backdropFilter: 'blur(8px)',
+    borderTop: '1px solid #e5e7eb',
+    padding: '10px 12px',
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '16px',
+    gap: '10px',
     alignItems: 'center',
     flexWrap: 'wrap',
-    position: 'sticky',
-    bottom: '12px'
+    marginTop: '10px'
   },
   bottomBarText: {
     color: '#4b5563',
-    fontWeight: 600
+    fontWeight: 600,
+    fontSize: '12px'
   }
 };

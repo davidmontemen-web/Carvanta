@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logHistory } = require('../utils/historyLogger');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
 
@@ -14,9 +15,53 @@ const safeJSON = (data) => {
   }
 };
 
-const buildPhotoUrl = (path) => {
-  if (!path) return null;
-  return `${BASE_URL}${path.replace(/\\/g, '/')}`;
+const parseJSONColumn = (value) => {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+};
+
+const buildPhotoUrl = (filePath) => {
+  if (!filePath) return null;
+  return `${BASE_URL}${String(filePath).replace(/\\/g, '/')}`;
+};
+
+const getActorInfo = async (usuario) => {
+  if (!usuario?.id) {
+    return { id: null, nombreCompleto: 'Sistema' };
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT nombre, apellido FROM usuarios WHERE id = ? LIMIT 1`,
+      [usuario.id]
+    );
+
+    if (!rows.length) {
+      return {
+        id: usuario.id,
+        nombreCompleto: `Usuario ${usuario.id}`
+      };
+    }
+
+    const row = rows[0];
+    const nombreCompleto = `${row.nombre || ''} ${row.apellido || ''}`.trim();
+
+    return {
+      id: usuario.id,
+      nombreCompleto: nombreCompleto || `Usuario ${usuario.id}`
+    };
+  } catch (error) {
+    return {
+      id: usuario.id,
+      nombreCompleto: `Usuario ${usuario.id}`
+    };
+  }
 };
 
 // ==============================
@@ -26,7 +71,7 @@ const buildPhotoUrl = (path) => {
 const mapAppraisalRow = async (row) => {
   const [photos] = await db.query(
     `
-    SELECT id, photo_type, slot_key, original_name, file_name, file_path, mime_type, created_at
+    SELECT *
     FROM appraisal_photos
     WHERE appraisal_id = ?
     ORDER BY created_at ASC
@@ -67,13 +112,13 @@ const mapAppraisalRow = async (row) => {
     fechaActualizacion: row.fecha_actualizacion,
     estatus: row.estatus,
     asesorVentas: row.asesor_ventas,
-    generales: row.generales_json || {},
-    documentacion: row.documentacion_json || {},
-    interior: row.interior_json || {},
-    carroceria: row.carroceria_json || {},
-    sistemaElectrico: row.sistema_electrico_json || {},
-    fugasMotor: row.fugas_motor_json || {},
-    valuacion: row.valuacion_json || {},
+    generales: parseJSONColumn(row.generales_json),
+    documentacion: parseJSONColumn(row.documentacion_json),
+    interior: parseJSONColumn(row.interior_json),
+    carroceria: parseJSONColumn(row.carroceria_json),
+    sistemaElectrico: parseJSONColumn(row.sistema_electrico_json),
+    fugasMotor: parseJSONColumn(row.fugas_motor_json),
+    valuacion: parseJSONColumn(row.valuacion_json),
     fotosGenerales,
     fotosDetalle
   };
@@ -85,27 +130,9 @@ const mapAppraisalRow = async (row) => {
 
 const listarAppraisals = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT 
-        id,
-        folio,
-        cliente_nombre,
-        cliente_telefono,
-        vehiculo_interes,
-        fecha_avaluo,
-        fecha_actualizacion,
-        estatus,
-        asesor_ventas,
-        generales_json,
-        documentacion_json,
-        interior_json,
-        carroceria_json,
-        sistema_electrico_json,
-        fugas_motor_json,
-        valuacion_json
-      FROM appraisals
-      ORDER BY fecha_actualizacion DESC
-    `);
+    const [rows] = await db.query(
+      `SELECT * FROM appraisals ORDER BY fecha_actualizacion DESC`
+    );
 
     const data = await Promise.all(rows.map(mapAppraisalRow));
 
@@ -131,9 +158,7 @@ const obtenerAppraisalPorId = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await db.query(
-      `
-      SELECT * FROM appraisals WHERE id = ? LIMIT 1
-      `,
+      `SELECT * FROM appraisals WHERE id = ? LIMIT 1`,
       [id]
     );
 
@@ -160,18 +185,45 @@ const obtenerAppraisalPorId = async (req, res) => {
 };
 
 // ==============================
+// HISTORIAL
+// ==============================
+
+const obtenerHistorialAppraisal = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT * FROM appraisal_history WHERE appraisal_id = ? ORDER BY created_at DESC, id DESC`,
+      [id]
+    );
+
+    res.json({
+      ok: true,
+      historial: rows
+    });
+  } catch (error) {
+    console.error('Error al obtener historial:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Error al obtener historial'
+    });
+  }
+};
+
+// ==============================
 // CREAR
 // ==============================
 
 const crearAppraisal = async (req, res) => {
   try {
     const {
-  id: rawId,
+      id,
       folio,
       clienteNombre,
       clienteTelefono,
       vehiculoInteres,
       fechaAvaluo,
+      fechaActualizacion,
       estatus,
       asesorVentas,
       generales,
@@ -183,15 +235,6 @@ const crearAppraisal = async (req, res) => {
       valuacion
     } = req.body;
 
-    const id = Number(rawId);
-
-if (!Number.isFinite(id)) {
-  return res.status(400).json({
-    ok: false,
-    error: 'El identificador del avalúo no es válido'
-  });
-}
-
     if (!id || !folio || !clienteNombre || !clienteTelefono || !vehiculoInteres || !fechaAvaluo) {
       return res.status(400).json({
         ok: false,
@@ -199,9 +242,19 @@ if (!Number.isFinite(id)) {
       });
     }
 
-    const now = new Date();
+    const [exists] = await db.query(
+      `SELECT id FROM appraisals WHERE id = ? OR folio = ? LIMIT 1`,
+      [id, folio]
+    );
 
-    await db.query(
+    if (exists.length) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Ya existe un avalúo con ese identificador o folio'
+      });
+    }
+
+    const [insertResult] = await db.query(
       `
       INSERT INTO appraisals (
         id,
@@ -231,7 +284,7 @@ if (!Number.isFinite(id)) {
         clienteTelefono,
         vehiculoInteres,
         fechaAvaluo,
-        now,
+        fechaActualizacion || new Date(),
         estatus || 'borrador',
         asesorVentas || null,
         safeJSON(generales),
@@ -245,16 +298,39 @@ if (!Number.isFinite(id)) {
       ]
     );
 
-    res.status(201).json({
+    if (!insertResult || insertResult.affectedRows !== 1) {
+      return res.status(500).json({
+        ok: false,
+        error: 'No se pudo confirmar la inserción del avalúo'
+      });
+    }
+
+    const actor = await getActorInfo(req.usuario);
+
+    await logHistory({
+      appraisalId: id,
+      usuario: actor,
+      accion: 'CREATED',
+      detalle: `Avalúo creado con estatus ${estatus || 'borrador'}`
+    });
+
+    res.json({
       ok: true,
       message: 'Avalúo creado correctamente',
       appraisalId: id
     });
   } catch (error) {
     console.error('Error al crear avalúo:', error);
+    console.error('Error SQL message:', error?.message);
+    console.error('Error SQL code:', error?.code);
+    console.error('Error SQL errno:', error?.errno);
+    console.error('Error SQL sqlMessage:', error?.sqlMessage);
+    console.error('Error SQL sqlState:', error?.sqlState);
+
     res.status(500).json({
       ok: false,
-      error: 'Error al crear avalúo'
+      error: 'Error al crear avalúo',
+      detalle: error?.sqlMessage || error?.message || 'Error desconocido'
     });
   }
 };
@@ -266,12 +342,14 @@ if (!Number.isFinite(id)) {
 const actualizarAppraisal = async (req, res) => {
   try {
     const { id } = req.params;
+
     const {
       folio,
       clienteNombre,
       clienteTelefono,
       vehiculoInteres,
       fechaAvaluo,
+      fechaActualizacion,
       estatus,
       asesorVentas,
       generales,
@@ -283,21 +361,29 @@ const actualizarAppraisal = async (req, res) => {
       valuacion
     } = req.body;
 
-    const [exists] = await db.query(
-      'SELECT id FROM appraisals WHERE id = ? LIMIT 1',
+    const [rows] = await db.query(
+      `SELECT id, estatus FROM appraisals WHERE id = ? LIMIT 1`,
       [id]
     );
 
-    if (!exists.length) {
+    if (!rows.length) {
       return res.status(404).json({
         ok: false,
         error: 'Avalúo no encontrado'
       });
     }
 
-    const now = new Date();
+    const estatusActual = rows[0].estatus;
+    const estatusNuevo = estatus || 'borrador';
 
-    await db.query(
+    if (estatusActual === 'completo' && req.usuario?.rol !== 'administrador') {
+      return res.status(403).json({
+        ok: false,
+        error: 'No puedes editar un avalúo completo'
+      });
+    }
+
+    const [updateResult] = await db.query(
       `
       UPDATE appraisals
       SET
@@ -324,8 +410,8 @@ const actualizarAppraisal = async (req, res) => {
         clienteTelefono,
         vehiculoInteres,
         fechaAvaluo,
-        now,
-        estatus || 'borrador',
+        fechaActualizacion || new Date(),
+        estatusNuevo,
         asesorVentas || null,
         safeJSON(generales),
         safeJSON(documentacion),
@@ -338,23 +424,67 @@ const actualizarAppraisal = async (req, res) => {
       ]
     );
 
+    if (!updateResult || updateResult.affectedRows !== 1) {
+      return res.status(500).json({
+        ok: false,
+        error: 'No se pudo confirmar la actualización del avalúo'
+      });
+    }
+
+    const actor = await getActorInfo(req.usuario);
+
+    await logHistory({
+      appraisalId: Number(id),
+      usuario: actor,
+      accion: 'UPDATED',
+      detalle: `Avalúo actualizado por ${actor.nombreCompleto}`
+    });
+
+    if (estatusActual !== estatusNuevo) {
+      await logHistory({
+        appraisalId: Number(id),
+        usuario: actor,
+        accion: 'STATUS_CHANGED',
+        detalle: `Estatus cambiado de ${estatusActual} a ${estatusNuevo}`
+      });
+    }
+
+    if (estatusActual === 'completo' && req.usuario?.rol === 'administrador') {
+      await logHistory({
+        appraisalId: Number(id),
+        usuario: actor,
+        accion: 'COMPLETED_RECORD_EDITED',
+        detalle: 'Un administrador editó un avalúo completo'
+      });
+    }
+
     res.json({
       ok: true,
       message: 'Avalúo actualizado correctamente',
-      appraisalId: id
+      appraisalId: Number(id)
     });
   } catch (error) {
     console.error('Error al actualizar avalúo:', error);
+    console.error('Error SQL message:', error?.message);
+    console.error('Error SQL code:', error?.code);
+    console.error('Error SQL errno:', error?.errno);
+    console.error('Error SQL sqlMessage:', error?.sqlMessage);
+    console.error('Error SQL sqlState:', error?.sqlState);
+
     res.status(500).json({
       ok: false,
-      error: 'Error al actualizar avalúo'
+      error: 'Error al actualizar avalúo',
+      detalle: error?.sqlMessage || error?.message || 'Error desconocido'
     });
   }
 };
 
+// ==============================
+
 module.exports = {
   listarAppraisals,
   obtenerAppraisalPorId,
+  obtenerHistorialAppraisal,
   crearAppraisal,
   actualizarAppraisal
 };

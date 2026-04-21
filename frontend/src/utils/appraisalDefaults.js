@@ -17,7 +17,8 @@ export const getEmptyAppraisal = (usuario) => ({
   clienteTelefono: '',
   vehiculoInteres: '',
 
-  fechaAvaluo: new Date().toISOString().slice(0, 10),
+  // 🔥 FORMATO CORRECTO PARA MYSQL (YYYY-MM-DD)
+  fechaAvaluo: new Date().toLocaleDateString('en-CA'),
   fechaActualizacion: null,
 
   estatus: 'borrador',
@@ -26,21 +27,26 @@ export const getEmptyAppraisal = (usuario) => ({
     ? `${usuario.nombre} ${usuario.apellido}`
     : '',
 
+  // ------------------------
+  // GENERALES
+  // ------------------------
   generales: {
     marca: '',
-    subMarca: '',
+    submarca: '',
     version: '',
     transmision: '',
     numeroSerie: '',
-    anioModelo: '',
+    anio: '',
     color: '',
     kilometraje: '',
-    numeroDuenios: '',
+    numeroDuenos: '',
     placas: '',
-    complementarios: '',
     comentarios: ''
   },
 
+  // ------------------------
+  // DOCUMENTACIÓN
+  // ------------------------
   documentacion: {
     factura: '',
     cartaOrigen: '',
@@ -55,47 +61,63 @@ export const getEmptyAppraisal = (usuario) => ({
     comentarios: ''
   },
 
+  // ------------------------
+  // INTERIOR (ACTUALIZADO)
+  // ------------------------
   interior: {
     vestiduras: '',
     cielo: '',
-    consola: '',
+    consolaCentral: '',
     alfombras: '',
     tablero: '',
     encendedor: '',
-    puertas: '',
+    puertasLaterales: '',
     volante: '',
-    consolaDos: ''
+    comentarios: ''
   },
 
+  // ------------------------
+  // CARROCERÍA (LISTO PARA CRECER)
+  // ------------------------
   carroceria: {
+    zonas: {},
+    neumaticos: {},
     observaciones: ''
   },
 
+  // ------------------------
+  // SISTEMA ELÉCTRICO (YA CON ESTADOS)
+  // ------------------------
   sistemaElectrico: {
-    espejosElectricos: false,
-    bolsasAire: false,
-    aireAcondicionado: false,
-    controlCrucero: false,
-    chisguetero: false,
-    luzMapa: false,
-    funcionesVolante: false,
-    checkEngine: false,
-    asientosElectricos: false,
-    claxon: false,
-    lucesInternas: false,
-    segurosElectricos: false,
-    cristalesElectricos: false,
-    aperturaCajuela: false,
-    pantalla: false,
-    farosNiebla: false,
-    lucesExternas: false,
-    limpiadores: false,
-    estereoUsb: false,
-    quemacocos: false,
-    testigos: false,
-    direccionales: false
+    espejosElectricos: '',
+    bolsasAire: '',
+    aireAcondicionado: '',
+    controlCrucero: '',
+    chisguetero: '',
+    luzMapa: '',
+    controlesVolante: '',
+    checkEngine: '',
+    asientosElectricos: '',
+    encendedor: '',
+    claxon: '',
+    lucesInternas: '',
+    segurosElectricos: '',
+    cristalesElectricos: '',
+    aperturaCajuela: '',
+    pantalla: '',
+    farosNiebla: '',
+    lucesExternas: '',
+    limpiadores: '',
+    estereoUsb: '',
+    quemacocos: '',
+    testigos: '',
+    direccionales: '',
+    comentarios: ''
   },
 
+  // ------------------------
+  // FUGAS Y MOTOR
+  // ------------------------
   fugasMotor: {
     motor: '',
     transmision: '',
@@ -110,18 +132,28 @@ export const getEmptyAppraisal = (usuario) => ({
     comentarios: ''
   },
 
+  // ------------------------
+  // VALUACIÓN (CON MEDIA)
+  // ------------------------
   valuacion: {
     tomaLibro: '',
     ventaLibro: '',
     reparaciones: '',
-    tomaAutorizada: ''
+    tomaAutorizada: '',
+    media: '',
+    comentarios: ''
   },
 
+  // ------------------------
+  // FOTOS
+  // ------------------------
   fotosGenerales: [],
   fotosDetalle: [],
+
   historial: []
 });
 
+// 🔥 FORMATO MYSQL DATETIME
 export const formatMysqlDateTime = () => {
   return new Date().toLocaleString('sv-SE').replace('T', ' ');
 };
