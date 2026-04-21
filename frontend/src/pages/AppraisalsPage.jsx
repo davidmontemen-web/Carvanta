@@ -8,6 +8,13 @@ import {
   getAppraisalById
 } from '../services/appraisalService';
 import { getEmptyAppraisal, formatMysqlDateTime } from '../utils/appraisalDefaults';
+import {
+  getSuccessMessageByStatus,
+  withPersistedFlag,
+  sanitizeAppraisalBeforeSave,
+  getTotals,
+  filterAppraisals
+} from './appraisals/appraisalsHelpers';
 
 // ==============================
 // COMPONENTES AUXILIARES
@@ -34,52 +41,6 @@ function StatusBadge({ status }) {
   return <span style={{ ...styles.badge, ...badgeStyles }}>{status}</span>;
 }
 
-// ==============================
-// HELPERS
-// ==============================
-
-const getSuccessMessageByStatus = (status) => {
-  switch (status) {
-    case 'borrador':
-      return 'Avalúo guardado como borrador';
-    case 'incompleto':
-      return 'Avalúo guardado como incompleto';
-    case 'completo':
-      return 'Avalúo marcado como completo correctamente';
-    default:
-      return 'Avalúo guardado correctamente';
-  }
-};
-
-const normalizeSearchText = (item) => {
-  return [
-    item.folio,
-    item.clienteNombre,
-    item.clienteTelefono,
-    item.vehiculoInteres,
-    item.asesorVentas
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-};
-
-const withPersistedFlag = (appraisal) => ({
-  ...appraisal,
-  isPersisted: true
-});
-
-const sanitizeAppraisalBeforeSave = (data) => {
-  const payload = {
-    ...data,
-    fechaActualizacion: formatMysqlDateTime()
-  };
-
-  delete payload.isPersisted;
-  delete payload.fotosGeneralesMap;
-
-  return payload;
-};
 
 // ==============================
 // PAGE
@@ -144,19 +105,7 @@ export default function AppraisalsPage({ usuario }) {
   // KPIS
   // ==============================
 
-  const totals = useMemo(() => {
-    const total = appraisals.length;
-    const borradores = appraisals.filter((item) => item.estatus === 'borrador').length;
-    const incompletos = appraisals.filter((item) => item.estatus === 'incompleto').length;
-    const completos = appraisals.filter((item) => item.estatus === 'completo').length;
-
-    return {
-      total,
-      borradores,
-      incompletos,
-      completos
-    };
-  }, [appraisals]);
+  const totals = useMemo(() => getTotals(appraisals), [appraisals]);
 
   // ==============================
   // FILTROS
@@ -164,19 +113,10 @@ export default function AppraisalsPage({ usuario }) {
 
   const effectiveStatusFilter = quickTab !== 'todos' ? quickTab : statusFilter;
 
-  const filteredAppraisals = useMemo(() => {
-    const normalizedSearch = search.toLowerCase();
-
-    return appraisals.filter((item) => {
-      const matchesSearch = normalizeSearchText(item).includes(normalizedSearch);
-      const matchesStatus =
-        effectiveStatusFilter === 'todos'
-          ? true
-          : item.estatus === effectiveStatusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [appraisals, search, effectiveStatusFilter]);
+  const filteredAppraisals = useMemo(
+  () => filterAppraisals(appraisals, search, effectiveStatusFilter),
+  [appraisals, search, effectiveStatusFilter]
+);
 
   // ==============================
   // ACCIONES DE VISTA
@@ -233,10 +173,13 @@ export default function AppraisalsPage({ usuario }) {
     try {
       setSaving(true);
 
-      const payload = sanitizeAppraisalBeforeSave({
-        ...data,
-        estatus: status
-      });
+      const payload = sanitizeAppraisalBeforeSave(
+  {
+    ...data,
+    estatus: status
+  },
+  formatMysqlDateTime
+);
 
       const persistResponse = await persistAppraisal(payload, mode);
       const appraisalId = persistResponse.appraisalId || payload.id;

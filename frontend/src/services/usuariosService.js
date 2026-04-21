@@ -1,31 +1,38 @@
-import axios from 'axios';
+import httpClient from './httpClient';
 
-const API_URL = 'http://localhost:4000/api/usuarios';
+const ENDPOINT = '/api/usuarios';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  };
+const normalizeError = (error, fallbackMessage) => {
+  if (error?.response?.data?.error) {
+    throw new Error(error.response.data.error);
+  }
+
+  throw new Error(fallbackMessage);
 };
 
 export const obtenerUsuarios = async () => {
-  const response = await axios.get(API_URL, getAuthHeaders());
-  return response.data;
+  try {
+    const { data } = await httpClient.get(ENDPOINT);
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Error al obtener usuarios');
+  }
 };
 
-export const crearUsuario = async (data) => {
-  const response = await axios.post(API_URL, data, getAuthHeaders());
-  return response.data;
+export const crearUsuario = async (payload) => {
+  try {
+    const { data } = await httpClient.post(ENDPOINT, payload);
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Error al crear usuario');
+  }
 };
 
 export const cambiarEstadoUsuario = async (id, activo) => {
-  const response = await axios.patch(
-    `${API_URL}/${id}/estado`,
-    { activo },
-    getAuthHeaders()
-  );
-  return response.data;
+  try {
+    const { data } = await httpClient.patch(`${ENDPOINT}/${id}/estado`, { activo });
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Error al cambiar estado de usuario');
+  }
 };

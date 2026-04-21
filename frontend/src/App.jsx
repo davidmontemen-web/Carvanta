@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import LoginPage from './pages/LoginPage';
-import UsuariosPage from './pages/UsuariosPage';
-import DashboardPage from './pages/DashboardPage';
-import AppraisalsPage from './pages/AppraisalsPage';
-import VentasPage from './pages/VentasPage';
-import InventarioPage from './pages/InventarioPage';
-import MiCuentaPage from './pages/MiCuentaPage';
 import MainLayout from './components/layout/MainLayout';
+import {
+  VIEW_KEYS,
+  getAllowedViews,
+  getViewTitle,
+  getViewComponent
+} from './config/appViews.jsx';
 
 function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -14,72 +14,22 @@ function App() {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const [vistaActiva, setVistaActiva] = useState('dashboard');
+  const [vistaActiva, setVistaActiva] = useState(VIEW_KEYS.DASHBOARD);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     setUsuario(null);
-    setVistaActiva('dashboard');
+    setVistaActiva(VIEW_KEYS.DASHBOARD);
   };
 
   const esAdmin = usuario?.rol === 'administrador';
 
-  const vistasPermitidas = useMemo(() => {
-    if (!usuario) return [];
-
-    if (esAdmin) {
-      return ['dashboard', 'avaluos', 'ventas', 'inventario', 'usuarios', 'mi-cuenta'];
-    }
-
-    return ['dashboard', 'avaluos', 'mi-cuenta'];
-  }, [usuario, esAdmin]);
+  const vistasPermitidas = useMemo(() => getAllowedViews(usuario), [usuario]);
 
   const cambiarVista = (vista) => {
     if (!vistasPermitidas.includes(vista)) return;
     setVistaActiva(vista);
-  };
-
-  const obtenerTituloVista = () => {
-    switch (vistaActiva) {
-      case 'dashboard':
-        return 'Dashboard';
-      case 'avaluos':
-        return 'Avalúos';
-      case 'ventas':
-        return 'Ventas';
-      case 'inventario':
-        return 'Inventario';
-      case 'usuarios':
-        return 'Usuarios';
-      case 'mi-cuenta':
-        return 'Mi cuenta';
-      default:
-        return 'Carvanta';
-    }
-  };
-
-  const renderVista = () => {
-    switch (vistaActiva) {
-      case 'dashboard':
-        return <DashboardPage />;
-      case 'avaluos':
-        return <AppraisalsPage usuario={usuario} />;
-      case 'ventas':
-        return esAdmin ? <VentasPage /> : <DashboardPage />;
-      case 'inventario':
-        return esAdmin ? <InventarioPage /> : <DashboardPage />;
-      case 'usuarios':
-        return esAdmin ? (
-          <UsuariosPage onLogout={handleLogout} usuario={usuario} />
-        ) : (
-          <DashboardPage />
-        );
-      case 'mi-cuenta':
-        return <MiCuentaPage usuario={usuario} />;
-      default:
-        return <DashboardPage />;
-    }
   };
 
   if (!usuario) {
@@ -92,9 +42,14 @@ function App() {
       onLogout={handleLogout}
       vistaActiva={vistaActiva}
       onCambiarVista={cambiarVista}
-      tituloVista={obtenerTituloVista()}
+      tituloVista={getViewTitle(vistaActiva)}
     >
-      {renderVista()}
+      {getViewComponent({
+        viewKey: vistaActiva,
+        esAdmin,
+        usuario,
+        onLogout: handleLogout
+      })}
     </MainLayout>
   );
 }

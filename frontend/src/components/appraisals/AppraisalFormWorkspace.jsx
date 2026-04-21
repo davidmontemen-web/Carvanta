@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { uploadAppraisalPhoto } from '../../services/appraisalPhotoService';
+import { styles } from './AppraisalFormWorkspace.styles';
+import {
+  AppraisalFormHeaderSection,
+  AppraisalFormGeneralesSection,
+  AppraisalFormDocumentacionSection,
+  AppraisalFormInteriorSection,
+  AppraisalFormCarroceriaSection,
+  AppraisalFormSistemaElectricoSection,
+  AppraisalFormFugasMotorSection,
+  AppraisalFormValuacionSection
+} from './sections';
 
 
 const getTodayLocalDate = () => {
@@ -412,7 +423,7 @@ const toTitleCase = (value) =>
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const getValidation = (form, generalPhotosArray) => {
+const getValidation = (form) => {
   const missingHeaderFields = [];
 if (!hasValue(form.folio)) missingHeaderFields.push('Folio');
 if (!hasValue(form.fechaAvaluo)) missingHeaderFields.push('Fecha de avalúo');
@@ -533,14 +544,14 @@ function AppraisalSection({
   title,
   subtitle,
   activeSection,
-  sectionRefs,
+  registerSectionRef,
   renderSectionStatus,
   children
 }) {
   return (
     <section
       ref={(el) => {
-        sectionRefs.current[sectionKey] = el;
+        registerSectionRef(sectionKey, el);
       }}
       style={{
         ...styles.sectionCard,
@@ -579,8 +590,15 @@ export default function AppraisalFormWorkspace({
   const [activeSection, setActiveSection] = useState('encabezado');
 
   const sectionRefs = useRef({});
-  const generalInputRefs = useRef({});
-  const detailInputRef = useRef(null);
+const generalInputRefs = useRef({});
+const detailInputRef = useRef(null);
+
+const registerSectionRef = (key, el) => {
+  sectionRefs.current = {
+    ...sectionRefs.current,
+    [key]: el
+  };
+};
 
   useEffect(() => {
     setForm(normalizedInitialData);
@@ -599,8 +617,8 @@ export default function AppraisalFormWorkspace({
   }, [form.fotosGeneralesMap]);
 
   const validation = useMemo(() => {
-    return getValidation(form, generalPhotosArray);
-  }, [form, generalPhotosArray]);
+  return getValidation(form);
+}, [form]);
 
   const scrollToSection = (key) => {
     setActiveSection(key);
@@ -721,15 +739,6 @@ const handleAnioChange = (value) => {
   updateSectionField('generales', 'anio', numeric);
 };
 
-  const handleCheckboxField = (section, field) => {
-    setForm((prev) => ({
-      ...prev,
-      [section]: {
-        ...(prev[section] || {}),
-        [field]: !prev?.[section]?.[field]
-      }
-    }));
-  };
 
   const buildPayload = () => buildPayloadFromForm(form, generalPhotosArray);
 
@@ -1223,20 +1232,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
   </div>
 );
 
-  const renderCheckboxGrid = (section, fields) => (
-    <div style={styles.checkboxGrid}>
-      {fields.map(({ key, label }) => (
-        <label key={key} style={styles.checkboxItem}>
-          <input
-            type="checkbox"
-            checked={!!form?.[section]?.[key]}
-            onChange={() => handleCheckboxField(section, key)}
-          />
-          <span>{label}</span>
-        </label>
-      ))}
-    </div>
-  );
+  
 
   const renderDamageZone = (zoneKey, label) => {
   const selected = form.carroceria?.zonas?.[zoneKey] || [];
@@ -1405,544 +1401,114 @@ const renderNeumaticoCard = (positionKey, label) => {
         )}
 
         <div style={styles.flowContainer}>
-          <AppraisalSection
-            sectionKey="encabezado"
-            title="Encabezado"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  <div style={styles.field}>
-    <label style={styles.label}>Folio</label>
-    <input
-      type="text"
-      value={form.folio || ''}
-      readOnly
-      style={styles.inputReadOnly}
-    />
-  </div>
+          <AppraisalFormHeaderSection
+  AppraisalSection={AppraisalSection}
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  toDateInputValue={toDateInputValue}
+  handleClienteChange={handleClienteChange}
+  handleClienteBlur={handleClienteBlur}
+  hasValue={hasValue}
+  formatPhoneDisplay={formatPhoneDisplay}
+  formatPhoneDigits={formatPhoneDigits}
+  handleTelefonoChange={handleTelefonoChange}
+  handleVehiculoInteresChange={handleVehiculoInteresChange}
+/>
 
-  <div style={styles.field}>
-    <label style={styles.label}>Fecha de avalúo</label>
-    <input
-      type="date"
-      value={toDateInputValue(form.fechaAvaluo)}
-      readOnly
-      style={styles.inputReadOnly}
-    />
-  </div>
+          <AppraisalFormGeneralesSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  renderField={renderField}
+  renderTextarea={renderTextarea}
+  handleGeneralTitle={handleGeneralTitle}
+  handleGeneralTextChange={handleGeneralTextChange}
+  handleAnioChange={handleAnioChange}
+  updateSectionField={updateSectionField}
+  handleKilometrajeChange={handleKilometrajeChange}
+  handleGeneralUppercase={handleGeneralUppercase}
+/>
 
-  <div style={styles.field}>
-    <label style={styles.label}>Nombre del cliente</label>
-    <input
-      type="text"
-      value={form.clienteNombre || ''}
-      onChange={handleClienteChange}
-      onBlur={handleClienteBlur}
-      placeholder="Nombre del cliente"
-      style={{
-        ...styles.input,
-        ...(!hasValue(form.clienteNombre) ? styles.inputRequired : {})
-      }}
-    />
-  </div>
+          <AppraisalFormDocumentacionSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  renderYesNoField={renderYesNoField}
+  renderTextarea={renderTextarea}
+  updateSectionField={updateSectionField}
+/>
 
-  <div style={styles.field}>
-    <label style={styles.label}>Teléfono</label>
-    <input
-      type="text"
-      inputMode="numeric"
-      value={formatPhoneDisplay(form.clienteTelefono)}
-      onChange={handleTelefonoChange}
-      placeholder="222 123 4567"
-      style={{
-        ...styles.input,
-        ...(formatPhoneDigits(form.clienteTelefono).length > 0 &&
-        formatPhoneDigits(form.clienteTelefono).length !== 10
-          ? styles.inputError
-          : !hasValue(form.clienteTelefono)
-          ? styles.inputRequired
-          : {})
-      }}
-    />
-    {formatPhoneDigits(form.clienteTelefono).length > 0 &&
-      formatPhoneDigits(form.clienteTelefono).length !== 10 && (
-        <span style={styles.helperError}>El teléfono debe tener 10 dígitos.</span>
-      )}
-  </div>
+          <AppraisalFormInteriorSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  renderConditionField={renderConditionField}
+  renderTextarea={renderTextarea}
+  updateSectionField={updateSectionField}
+/>
 
-  <div style={styles.field}>
-    <label style={styles.label}>Vehículo de interés</label>
-    <input
-      type="text"
-      value={form.vehiculoInteres || ''}
-      onChange={handleVehiculoInteresChange}
-      placeholder="Ej. Mazda CX-5 2020"
-      style={{
-        ...styles.input,
-        ...(!hasValue(form.vehiculoInteres) ? styles.inputRequired : {})
-      }}
-    />
-  </div>
+          <AppraisalFormCarroceriaSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  carroceriaZones={carroceriaZones}
+  renderDamageZone={renderDamageZone}
+  neumaticoPositions={neumaticoPositions}
+  renderNeumaticoCard={renderNeumaticoCard}
+  renderTextarea={renderTextarea}
+  form={form}
+  updateSectionField={updateSectionField}
+/>
 
-  <div style={styles.field}>
-    <label style={styles.label}>Asesor de ventas</label>
-    <input
-      type="text"
-      value={form.asesorVentas || ''}
-      readOnly
-      style={styles.inputReadOnly}
-    />
-  </div>
-</div>
-          </AppraisalSection>
+          <AppraisalFormSistemaElectricoSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  renderYesNoNAField={renderYesNoNAField}
+  renderTextarea={renderTextarea}
+  updateSectionField={updateSectionField}
+/>
 
-          <AppraisalSection
-            sectionKey="generales"
-            title="Generales del vehículo"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  {renderField(
-    'Marca',
-    form.generales.marca,
-    (e) => handleGeneralTitle('marca', e.target.value),
-    'text',
-    'Ej. Mazda'
-  )}
+          <AppraisalFormFugasMotorSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  renderTechnicalStatusField={renderTechnicalStatusField}
+  renderTextarea={renderTextarea}
+  updateSectionField={updateSectionField}
+/>
 
-  {renderField(
-    'Submarca',
-    form.generales.submarca,
-    (e) => handleGeneralTitle('submarca', e.target.value),
-    'text',
-    'Ej. CX-5'
-  )}
-
-  {renderField(
-    'Versión',
-    form.generales.version,
-    (e) => handleGeneralTextChange('version', e.target.value),
-    'text',
-    'Ej. i Grand Touring'
-  )}
-
-  {renderField(
-    'Año modelo',
-    form.generales.anio,
-    (e) => handleAnioChange(e.target.value),
-    'text',
-    'Ej. 2020'
-  )}
-
-  <div style={styles.field}>
-    <label style={styles.label}>Transmisión</label>
-    <select
-      value={form.generales.transmision || ''}
-      onChange={(e) => updateSectionField('generales', 'transmision', e.target.value)}
-      style={styles.input}
-    >
-      <option value="">Selecciona</option>
-      <option value="Automática">Automática</option>
-      <option value="Manual">Manual</option>
-      <option value="CVT">CVT</option>
-      <option value="No especificado">No especificado</option>
-    </select>
-  </div>
-
-  {renderField(
-    'Color',
-    form.generales.color,
-    (e) => handleGeneralTitle('color', e.target.value),
-    'text',
-    'Ej. Blanco perla'
-  )}
-
-  {renderField(
-    'Kilometraje',
-    form.generales.kilometraje,
-    (e) => handleKilometrajeChange(e.target.value),
-    'text',
-    'Ej. 87000'
-  )}
-
-  <div style={styles.field}>
-    <label style={styles.label}>Número de dueños</label>
-    <select
-      value={form.generales.numeroDuenos || ''}
-      onChange={(e) => updateSectionField('generales', 'numeroDuenos', e.target.value)}
-      style={styles.input}
-    >
-      <option value="">Selecciona</option>
-      <option value="Único dueño">Único dueño</option>
-      <option value="2 dueños">2 dueños</option>
-      <option value="3 dueños">3 dueños</option>
-      <option value="4+ dueños">4+ dueños</option>
-      <option value="No sabe">No sabe</option>
-    </select>
-  </div>
-
-  {renderField(
-    'Número de serie',
-    form.generales.numeroSerie,
-    (e) => handleGeneralUppercase('numeroSerie', e.target.value),
-    'text',
-    'VIN'
-  )}
-
-  {renderField(
-    'Placas',
-    form.generales.placas,
-    (e) => handleGeneralUppercase('placas', e.target.value),
-    'text',
-    'Ej. ABC1234'
-  )}
-
-  {renderTextarea(
-  'Comentarios',
-  form.generales.comentarios,
-  (e) => handleGeneralTextChange('comentarios', e.target.value),
-  'Ej. Vehículo con desgaste normal de uso y detalle ligero en fascia delantera'
-)}
-</div>
-            
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="documentacion"
-            title="Documentación"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  {renderYesNoField('Factura', form.documentacion.factura, (val) =>
-    updateSectionField('documentacion', 'factura', val)
-  )}
-
-  {renderYesNoField('Carta origen', form.documentacion.cartaOrigen, (val) =>
-    updateSectionField('documentacion', 'cartaOrigen', val)
-  )}
-
-  {renderYesNoField('Tenencias', form.documentacion.tenencias, (val) =>
-    updateSectionField('documentacion', 'tenencias', val)
-  )}
-
-  {renderYesNoField('Último servicio', form.documentacion.ultimoServicio, (val) =>
-    updateSectionField('documentacion', 'ultimoServicio', val)
-  )}
-
-  {renderYesNoField('Verificación', form.documentacion.verificacion, (val) =>
-    updateSectionField('documentacion', 'verificacion', val)
-  )}
-
-  {renderYesNoField('Manuales', form.documentacion.manuales, (val) =>
-    updateSectionField('documentacion', 'manuales', val)
-  )}
-
-  {renderYesNoField('Garantía', form.documentacion.garantia, (val) =>
-    updateSectionField('documentacion', 'garantia', val)
-  )}
-
-  {renderYesNoField('Engomado', form.documentacion.engomado, (val) =>
-    updateSectionField('documentacion', 'engomado', val)
-  )}
-
-  {renderYesNoField('Tarjeta de circulación', form.documentacion.tarjetaCirculacion, (val) =>
-    updateSectionField('documentacion', 'tarjetaCirculacion', val)
-  )}
-
-  {renderYesNoField('Póliza de seguro', form.documentacion.polizaSeguro, (val) =>
-    updateSectionField('documentacion', 'polizaSeguro', val)
-  )}
-
-  {renderTextarea(
-    'Comentarios',
-    form.documentacion.comentarios,
-    (e) => updateSectionField('documentacion', 'comentarios', e.target.value),
-    'Ej. Factura original, falta endoso'
-  )}
-</div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="interior"
-            title="Aspecto físico interior"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  {renderConditionField('Vestiduras', form.interior.vestiduras, (val) =>
-    updateSectionField('interior', 'vestiduras', val)
-  )}
-
-  {renderConditionField('Cielo', form.interior.cielo, (val) =>
-    updateSectionField('interior', 'cielo', val)
-  )}
-
-  {renderConditionField('Consola central', form.interior.consolaCentral, (val) =>
-    updateSectionField('interior', 'consolaCentral', val)
-  )}
-
-  {renderConditionField('Alfombras', form.interior.alfombras, (val) =>
-    updateSectionField('interior', 'alfombras', val)
-  )}
-
-  {renderConditionField('Tablero', form.interior.tablero, (val) =>
-    updateSectionField('interior', 'tablero', val)
-  )}
-
-  {renderConditionField('Encendedor / toma corriente', form.interior.encendedor, (val) =>
-    updateSectionField('interior', 'encendedor', val)
-  )}
-
-  {renderConditionField('Puertas / vestiduras laterales', form.interior.puertasLaterales, (val) =>
-    updateSectionField('interior', 'puertasLaterales', val)
-  )}
-
-  {renderConditionField('Volante', form.interior.volante, (val) =>
-    updateSectionField('interior', 'volante', val)
-  )}
-
-  {renderTextarea(
-    'Comentarios',
-    form.interior.comentarios,
-    (e) => updateSectionField('interior', 'comentarios', e.target.value),
-    'Ej. Vestiduras con desgaste ligero en asiento del conductor y detalle menor en tablero'
-  )}
-</div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="carroceria"
-            title="Carrocería y neumáticos"
-            subtitle="Deja aquí las observaciones generales del estado exterior y neumáticos."
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.carroceriaWrapper}>
-  <div style={styles.subsectionBlock}>
-    <h4 style={styles.subsectionTitle}>Carrocería por zonas</h4>
-    <p style={styles.helperText}>
-      Selecciona uno o varios hallazgos por cada zona del vehículo.
-    </p>
-
-    <div style={styles.damageZoneGrid}>
-      {carroceriaZones.map((zone) => renderDamageZone(zone.key, zone.label))}
-    </div>
-  </div>
-
-  <div style={styles.subsectionBlock}>
-    <h4 style={styles.subsectionTitle}>Neumáticos y rines</h4>
-    <p style={styles.helperText}>
-      Para guardar el avalúo completo debes evaluar las 4 posiciones.
-    </p>
-
-    <div style={styles.tireGrid}>
-      {neumaticoPositions.map((position) =>
-        renderNeumaticoCard(position.key, position.label)
-      )}
-    </div>
-  </div>
-
-  {renderTextarea(
-    'Comentarios',
-    form.carroceria.observaciones,
-    (e) => updateSectionField('carroceria', 'observaciones', e.target.value),
-    'Ej. Costado izquierdo con abolladura ligera y llanta delantera derecha desgastada'
-  )}
-</div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="sistemaElectrico"
-            title="Sistema eléctrico"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  {renderYesNoNAField('Espejos eléctricos', form.sistemaElectrico.espejosElectricos, (val) => updateSectionField('sistemaElectrico', 'espejosElectricos', val))}
-  {renderYesNoNAField('Bolsas de aire', form.sistemaElectrico.bolsasAire, (val) => updateSectionField('sistemaElectrico', 'bolsasAire', val))}
-  {renderYesNoNAField('Aire acondicionado', form.sistemaElectrico.aireAcondicionado, (val) => updateSectionField('sistemaElectrico', 'aireAcondicionado', val))}
-  {renderYesNoNAField('Control de crucero', form.sistemaElectrico.controlCrucero, (val) => updateSectionField('sistemaElectrico', 'controlCrucero', val))}
-  {renderYesNoNAField('Chisguetero', form.sistemaElectrico.chisguetero, (val) => updateSectionField('sistemaElectrico', 'chisguetero', val))}
-  {renderYesNoNAField('Luz de mapa', form.sistemaElectrico.luzMapa, (val) => updateSectionField('sistemaElectrico', 'luzMapa', val))}
-
-  {renderYesNoNAField('Controles de volante', form.sistemaElectrico.controlesVolante, (val) => updateSectionField('sistemaElectrico', 'controlesVolante', val))}
-  {renderYesNoNAField('Check engine', form.sistemaElectrico.checkEngine, (val) => updateSectionField('sistemaElectrico', 'checkEngine', val))}
-  {renderYesNoNAField('Asientos eléctricos', form.sistemaElectrico.asientosElectricos, (val) => updateSectionField('sistemaElectrico', 'asientosElectricos', val))}
-  {renderYesNoNAField('Encendedor', form.sistemaElectrico.encendedor, (val) => updateSectionField('sistemaElectrico', 'encendedor', val))}
-  {renderYesNoNAField('Claxon', form.sistemaElectrico.claxon, (val) => updateSectionField('sistemaElectrico', 'claxon', val))}
-
-  {renderYesNoNAField('Luces internas', form.sistemaElectrico.lucesInternas, (val) => updateSectionField('sistemaElectrico', 'lucesInternas', val))}
-  {renderYesNoNAField('Seguros eléctricos', form.sistemaElectrico.segurosElectricos, (val) => updateSectionField('sistemaElectrico', 'segurosElectricos', val))}
-  {renderYesNoNAField('Cristales eléctricos', form.sistemaElectrico.cristalesElectricos, (val) => updateSectionField('sistemaElectrico', 'cristalesElectricos', val))}
-  {renderYesNoNAField('Apertura cajuela', form.sistemaElectrico.aperturaCajuela, (val) => updateSectionField('sistemaElectrico', 'aperturaCajuela', val))}
-  {renderYesNoNAField('Pantalla', form.sistemaElectrico.pantalla, (val) => updateSectionField('sistemaElectrico', 'pantalla', val))}
-  {renderYesNoNAField('Faros de niebla', form.sistemaElectrico.farosNiebla, (val) => updateSectionField('sistemaElectrico', 'farosNiebla', val))}
-
-  {renderYesNoNAField('Luces externas', form.sistemaElectrico.lucesExternas, (val) => updateSectionField('sistemaElectrico', 'lucesExternas', val))}
-  {renderYesNoNAField('Limpiadores', form.sistemaElectrico.limpiadores, (val) => updateSectionField('sistemaElectrico', 'limpiadores', val))}
-  {renderYesNoNAField('Estéreo / USB', form.sistemaElectrico.estereoUsb, (val) => updateSectionField('sistemaElectrico', 'estereoUsb', val))}
-  {renderYesNoNAField('Quemacocos', form.sistemaElectrico.quemacocos, (val) => updateSectionField('sistemaElectrico', 'quemacocos', val))}
-  {renderYesNoNAField('Testigos', form.sistemaElectrico.testigos, (val) => updateSectionField('sistemaElectrico', 'testigos', val))}
-  {renderYesNoNAField('Direccionales', form.sistemaElectrico.direccionales, (val) => updateSectionField('sistemaElectrico', 'direccionales', val))}
-
-  {renderTextarea(
-    'Comentarios',
-    form.sistemaElectrico.comentarios,
-    (e) => updateSectionField('sistemaElectrico', 'comentarios', e.target.value),
-    'Ej. Aire acondicionado no enfría y check engine activo'
-  )}
-</div>
-            
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="fugasMotor"
-            title="Fugas y motor"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  {renderTechnicalStatusField('Motor', form.fugasMotor.motor, (val) =>
-    updateSectionField('fugasMotor', 'motor', val)
-  )}
-
-  {renderTechnicalStatusField('Transmisión', form.fugasMotor.transmision, (val) =>
-    updateSectionField('fugasMotor', 'transmision', val)
-  )}
-
-  {renderTechnicalStatusField('Sistema de frenos', form.fugasMotor.sistemaFrenos, (val) =>
-    updateSectionField('fugasMotor', 'sistemaFrenos', val)
-  )}
-
-  {renderTechnicalStatusField('Dirección hidráulica', form.fugasMotor.direccionHidraulica, (val) =>
-    updateSectionField('fugasMotor', 'direccionHidraulica', val)
-  )}
-
-  {renderTechnicalStatusField('Amortiguadores', form.fugasMotor.amortiguadores, (val) =>
-    updateSectionField('fugasMotor', 'amortiguadores', val)
-  )}
-
-  {renderTechnicalStatusField('Anticongelante', form.fugasMotor.anticongelante, (val) =>
-    updateSectionField('fugasMotor', 'anticongelante', val)
-  )}
-
-  {renderTechnicalStatusField('Aire acondicionado', form.fugasMotor.aireAcondicionado, (val) =>
-    updateSectionField('fugasMotor', 'aireAcondicionado', val)
-  )}
-
-  {renderTechnicalStatusField('Flechas', form.fugasMotor.flechas, (val) =>
-    updateSectionField('fugasMotor', 'flechas', val)
-  )}
-
-  {renderTechnicalStatusField('Soportes de motor', form.fugasMotor.soportesMotor, (val) =>
-    updateSectionField('fugasMotor', 'soportesMotor', val)
-  )}
-
-  {renderTechnicalStatusField('Soportes de caja', form.fugasMotor.soportesCaja, (val) =>
-    updateSectionField('fugasMotor', 'soportesCaja', val)
-  )}
-
-  {renderTextarea(
-    'Comentarios',
-    form.fugasMotor.comentarios,
-    (e) => updateSectionField('fugasMotor', 'comentarios', e.target.value),
-    'Ej. Ligera fuga en dirección hidráulica y soportes de motor con desgaste visible'
-  )}
-</div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="valuacion"
-            title="Valuación"
-            activeSection={activeSection}
-            sectionRefs={sectionRefs}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.grid2}>
-  <div style={styles.field}>
-    <label style={styles.label}>Toma libro</label>
-    <input
-      type="text"
-      value={formatMoneyDisplay(form.valuacion.tomaLibro)}
-      onChange={(e) => handleValuacionNumberChange('tomaLibro', e.target.value)}
-      placeholder="Ej. 180000"
-      style={styles.input}
-      inputMode="numeric"
-    />
-  </div>
-
-  <div style={styles.field}>
-    <label style={styles.label}>Venta libro</label>
-    <input
-      type="text"
-      value={formatMoneyDisplay(form.valuacion.ventaLibro)}
-      onChange={(e) => handleValuacionNumberChange('ventaLibro', e.target.value)}
-      placeholder="Ej. 220000"
-      style={styles.input}
-      inputMode="numeric"
-    />
-  </div>
-
-  <div style={styles.field}>
-    <label style={styles.label}>Media</label>
-    <input
-      type="text"
-      value={formatMoneyDisplay(form.valuacion.media)}
-      readOnly
-      placeholder="Se calcula automáticamente"
-      style={styles.inputReadOnly}
-    />
-  </div>
-
-  <div style={styles.field}>
-    <label style={styles.label}>Reparaciones</label>
-    <input
-      type="text"
-      value={formatMoneyDisplay(form.valuacion.reparaciones)}
-      onChange={(e) => handleValuacionNumberChange('reparaciones', e.target.value)}
-      placeholder="Ej. 8500"
-      style={styles.input}
-      inputMode="numeric"
-    />
-  </div>
-
-  <div style={styles.field}>
-    <label style={styles.label}>Toma autorizada</label>
-    <input
-      type="text"
-      value={formatMoneyDisplay(form.valuacion.tomaAutorizada)}
-      onChange={(e) => handleValuacionNumberChange('tomaAutorizada', e.target.value)}
-      placeholder="Ej. 178000"
-      style={styles.input}
-      inputMode="numeric"
-    />
-  </div>
-
-  {renderTextarea(
-    'Comentarios',
-    form.valuacion.comentarios,
-    (e) => updateSectionField('valuacion', 'comentarios', e.target.value),
-    'Ej. Se considera ajuste por detalle estético y costo estimado de reacondicionamiento'
-  )}
-</div>
-          </AppraisalSection>
+          <AppraisalFormValuacionSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  form={form}
+  formatMoneyDisplay={formatMoneyDisplay}
+  handleValuacionNumberChange={handleValuacionNumberChange}
+  renderTextarea={renderTextarea}
+/>
 
           <AppraisalSection
             sectionKey="fotosGenerales"
             title="Fotos generales"
             subtitle="Captura o reemplaza cada una de las tomas requeridas."
             activeSection={activeSection}
-            sectionRefs={sectionRefs}
+            registerSectionRef={registerSectionRef}
             renderSectionStatus={renderSectionStatus}
           >
             {!validation.requiredHeader && (
@@ -2017,7 +1583,7 @@ const renderNeumaticoCard = (positionKey, label) => {
             title="Fotos de detalle"
             subtitle="Agrega evidencias adicionales, daños, interiores, motor o cualquier hallazgo relevante."
             activeSection={activeSection}
-            sectionRefs={sectionRefs}
+            registerSectionRef={registerSectionRef}
             renderSectionStatus={renderSectionStatus}
           >
             <input
@@ -2078,7 +1644,7 @@ const renderNeumaticoCard = (positionKey, label) => {
             title="Revisión final"
             subtitle="Antes de guardar el avalúo, valida que todo lo esencial esté listo."
             activeSection={activeSection}
-            sectionRefs={sectionRefs}
+            registerSectionRef={registerSectionRef}
             renderSectionStatus={renderSectionStatus}
           >
             <div style={styles.validationGrid}>
@@ -2144,617 +1710,3 @@ const renderNeumaticoCard = (positionKey, label) => {
   );
 }
 
-const styles = {
-  workspace: {
-    display: 'grid',
-    gridTemplateColumns: '240px 1fr',
-    gap: '12px',
-    alignItems: 'start'
-  },
-  sidebar: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '10px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
-    position: 'sticky',
-    top: '12px',
-    alignSelf: 'start'
-  },
-  sidebarHeader: {
-    marginBottom: '10px'
-  },
-  sidebarTitle: {
-    margin: 0,
-    fontSize: '16px',
-    color: '#111827',
-    fontWeight: 800
-  },
-  sidebarText: {
-    margin: '4px 0 0 0',
-    color: '#6b7280',
-    fontSize: '11px',
-    lineHeight: 1.35
-  },
-  sectionNav: {
-    display: 'grid',
-    gap: '6px'
-  },
-  sectionButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-    width: '100%',
-    padding: '7px 9px',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-    background: '#ffffff',
-    color: '#374151',
-    fontSize: '11px',
-    fontWeight: 700,
-    cursor: 'pointer',
-    textAlign: 'left'
-  },
-  sectionButtonActive: {
-    background: '#eff6ff',
-    border: '1px solid #93c5fd',
-    color: '#1d4ed8'
-  },
-  navStatus: {
-    fontSize: '10px',
-    fontWeight: 800,
-    padding: '3px 7px',
-    borderRadius: '999px',
-    whiteSpace: 'nowrap'
-  },
-  navStatusOk: {
-    background: '#dcfce7',
-    color: '#166534'
-  },
-  navStatusPending: {
-    background: '#fef3c7',
-    color: '#92400e'
-  },
-  main: {
-    display: 'grid',
-    gap: '10px'
-  },
-  heroCard: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '10px 12px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '10px',
-    marginBottom: '8px'
-  },
-  formTitle: {
-    margin: 0,
-    fontSize: '17px',
-    color: '#111827',
-    lineHeight: 1.1,
-    fontWeight: 800
-  },
-  formMeta: {
-    margin: '4px 0 0 0',
-    color: '#6b7280',
-    fontSize: '11px'
-  },
-  topbarActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    flexWrap: 'wrap'
-  },
-  sectionCard: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '12px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.04)',
-    border: '1px solid transparent'
-  },
-  sectionCardActive: {
-    border: '1px solid #dbe3ee'
-  },
-  sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '10px',
-    alignItems: 'flex-start',
-    marginBottom: '10px'
-  },
-  sectionTitle: {
-    margin: 0,
-    fontSize: '14px',
-    fontWeight: 800,
-    color: '#111827'
-  },
-  helperText: {
-    margin: '4px 0 0 0',
-    color: '#6b7280',
-    fontSize: '11px',
-    lineHeight: 1.35
-  },
-  grid2: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: '10px'
-  },
-  grid3: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '10px'
-  },
-  field: {
-    display: 'grid',
-    gap: '4px'
-  },
-  fieldFull: {
-    display: 'grid',
-    gap: '4px',
-    marginTop: '10px'
-  },
-  label: {
-    fontWeight: 700,
-    fontSize: '11px',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: '0.03em'
-  },
-  input: {
-    width: '100%',
-    padding: '8px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '13px',
-    background: '#fff',
-    color: '#111827',
-    minHeight: '34px'
-  },
-  inputDisabled: {
-    width: '100%',
-    padding: '8px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '13px',
-    background: '#f3f4f6',
-    color: '#6b7280',
-    cursor: 'not-allowed',
-    minHeight: '34px'
-  },
-  inputReadOnly: {
-    width: '100%',
-    padding: '8px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '13px',
-    background: '#f8fafc',
-    color: '#475569',
-    minHeight: '34px'
-  },
-  inputRequired: {
-    border: '1px solid #f59e0b',
-    background: '#fffbeb'
-  },
-  inputError: {
-    border: '1px solid #ef4444',
-    background: '#fef2f2'
-  },
-  helperError: {
-    display: 'block',
-    marginTop: '4px',
-    fontSize: '11px',
-    color: '#b91c1c',
-    fontWeight: 600
-  },
-  textarea: {
-    width: '100%',
-    padding: '9px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    resize: 'vertical',
-    fontSize: '13px',
-    minHeight: '78px',
-    color: '#111827',
-    background: '#fff'
-  },
-  checkboxGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '8px'
-  },
-  checkboxItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 10px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    background: '#fafafa',
-    fontSize: '12px'
-  },
-  radioGroup: {
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'center',
-    flexWrap: 'wrap'
-  },
-  radioOption: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
-    fontSize: '12px',
-    fontWeight: 600
-  },
-  toggleGroup: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap'
-  },
-  toggleButton: {
-    minWidth: '30px',
-    height: '28px',
-    padding: '4px 8px',
-    borderRadius: '6px',
-    border: '1px solid #d1d5db',
-    background: '#f9fafb',
-    cursor: 'pointer',
-    fontSize: '11px',
-    fontWeight: 700,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease'
-  },
-  toggleYesActive: {
-    background: '#dcfce7',
-    border: '1px solid #22c55e',
-    color: '#166534'
-  },
-  toggleNoActive: {
-    background: '#fee2e2',
-    border: '1px solid #ef4444',
-    color: '#7f1d1d'
-  },
-  toggleNAActive: {
-    background: '#e5e7eb',
-    border: '1px solid #9ca3af',
-    color: '#374151'
-  },
-  conditionGroup: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '6px'
-  },
-  conditionButton: {
-    minWidth: '72px',
-    padding: '6px 8px',
-    borderRadius: '7px',
-    border: '1px solid #d1d5db',
-    background: '#f9fafb',
-    cursor: 'pointer',
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#334155',
-    transition: 'all 0.2s ease'
-  },
-  conditionExcellent: {
-    background: '#dcfce7',
-    border: '1px solid #22c55e',
-    color: '#166534'
-  },
-  conditionGood: {
-    background: '#dbeafe',
-    border: '1px solid #3b82f6',
-    color: '#1d4ed8'
-  },
-  conditionRegular: {
-    background: '#fef3c7',
-    border: '1px solid #f59e0b',
-    color: '#92400e'
-  },
-  conditionBad: {
-    background: '#fee2e2',
-    border: '1px solid #ef4444',
-    color: '#991b1b'
-  },
-  primaryButton: {
-    background: '#111827',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: '12px'
-  },
-  secondaryButton: {
-    background: '#fff',
-    color: '#111827',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: '12px'
-  },
-  disabledButton: {
-    background: '#e5e7eb',
-    color: '#9ca3af',
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    cursor: 'not-allowed',
-    fontWeight: 700,
-    fontSize: '12px'
-  },
-  infoBox: {
-    background: '#eff6ff',
-    color: '#1d4ed8',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    fontWeight: 600,
-    fontSize: '12px',
-    border: '1px solid #bfdbfe'
-  },
-  warningBox: {
-    background: '#fff7ed',
-    color: '#9a3412',
-    padding: '10px 12px',
-    borderRadius: '10px',
-    fontWeight: 600,
-    fontSize: '12px',
-    border: '1px solid #fed7aa',
-    marginBottom: '10px'
-  },
-  notificationBox: {
-    padding: '10px 12px',
-    borderRadius: '10px',
-    fontWeight: 700,
-    fontSize: '12px',
-    border: '1px solid transparent',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
-  },
-  notificationSuccess: {
-    background: '#dcfce7',
-    color: '#166534',
-    border: '1px solid #bbf7d0'
-  },
-  notificationWarning: {
-    background: '#fff7ed',
-    color: '#9a3412',
-    border: '1px solid #fed7aa'
-  },
-  notificationError: {
-    background: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca'
-  },
-  generalPhotoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '10px'
-  },
-  generalPhotoCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    background: '#fff'
-  },
-  generalPhotoPreview: {
-    height: '150px',
-    background: '#f8fafc',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer'
-  },
-  silhouetteBox: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '6px',
-    color: '#6b7280'
-  },
-  silhouetteIcon: {
-    fontSize: '22px'
-  },
-  silhouetteText: {
-    fontSize: '12px',
-    fontWeight: 700
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover'
-  },
-  generalPhotoFooter: {
-    padding: '10px',
-    display: 'grid',
-    gap: '8px'
-  },
-  slotActions: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap'
-  },
-  smallButton: {
-    background: '#fff',
-    color: '#111827',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    padding: '6px 8px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: '11px'
-  },
-  smallDangerButton: {
-    background: '#fff',
-    color: '#b91c1c',
-    border: '1px solid #fecaca',
-    borderRadius: '8px',
-    padding: '6px 8px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: '11px'
-  },
-  detailPhotoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '10px',
-    marginTop: '10px'
-  },
-  detailPhotoCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    background: '#fff'
-  },
-  detailPhotoPreview: {
-    height: '150px',
-    background: '#f8fafc'
-  },
-  detailPhotoInfo: {
-    padding: '10px',
-    display: 'grid',
-    gap: '8px'
-  },
-  detailPhotoName: {
-    fontSize: '12px',
-    color: '#111827',
-    wordBreak: 'break-word'
-  },
-  emptyPhotoBox: {
-    border: '1px dashed #d1d5db',
-    borderRadius: '12px',
-    padding: '16px',
-    color: '#6b7280',
-    textAlign: 'center',
-    fontSize: '12px'
-  },
-  carroceriaWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '14px'
-  },
-  subsectionBlock: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  subsectionTitle: {
-    margin: 0,
-    fontSize: '14px',
-    fontWeight: 800,
-    color: '#0f172a'
-  },
-  damageZoneGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: '10px'
-  },
-  damageZoneCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '10px',
-    background: '#f8fafc'
-  },
-  damageZoneHeader: {
-    marginBottom: '8px'
-  },
-  damageZoneTitle: {
-    margin: 0,
-    fontSize: '13px',
-    fontWeight: 800,
-    color: '#0f172a'
-  },
-  damageChips: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '6px'
-  },
-  damageChip: {
-    border: '1px solid #d1d5db',
-    borderRadius: '999px',
-    padding: '6px 10px',
-    background: '#ffffff',
-    color: '#334155',
-    fontSize: '11px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  damageChipActive: {
-    background: '#dbeafe',
-    border: '1px solid #3b82f6',
-    color: '#1d4ed8'
-  },
-  tireGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: '10px'
-  },
-  tireCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '10px',
-    background: '#ffffff',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-  },
-  tireCardTitle: {
-    margin: 0,
-    fontSize: '13px',
-    fontWeight: 800,
-    color: '#0f172a'
-  },
-  validationGrid: {
-    display: 'grid',
-    gap: '8px'
-  },
-  validationItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '10px',
-    background: '#fafafa'
-  },
-  statusPill: {
-    display: 'inline-block',
-    padding: '4px 8px',
-    borderRadius: '999px',
-    fontSize: '10px',
-    fontWeight: 800
-  },
-  statusOk: {
-    background: '#dcfce7',
-    color: '#166534'
-  },
-  statusPending: {
-    background: '#fef3c7',
-    color: '#92400e'
-  },
-  bottomBar: {
-    position: 'sticky',
-    bottom: '0',
-    background: 'rgba(255,255,255,0.96)',
-    backdropFilter: 'blur(8px)',
-    borderTop: '1px solid #e5e7eb',
-    padding: '10px 12px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '10px',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginTop: '10px'
-  },
-  bottomBarText: {
-    color: '#4b5563',
-    fontWeight: 600,
-    fontSize: '12px'
-  }
-};

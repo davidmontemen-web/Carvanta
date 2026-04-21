@@ -4,212 +4,29 @@ import {
   getAppraisalHistory,
   downloadAppraisalPdf
 } from '../../services/appraisalService';
+import {
+  sectionTitles,
+  tirePositionLabels,
+  generalPhotoOrder,
+  generalPhotoLabels,
+  downloadPhoto,
+  formatMoney,
+  formatDate,
+  formatHistoryDateTime,
+  toDisplayValue,
+  formatYesNoNa,
+  formatTechnical,
+  formatDamage,
+  formatTireState,
+  formatHistoryAction,
+  getHistoryAccent
+} from './AppraisalDetailModal.helpers';
+import AppraisalDetailHeader from './AppraisalDetailHeader';
+import AppraisalDetailPhotosSection from './AppraisalDetailPhotosSection';
+import AppraisalDetailHistorySection from './AppraisalDetailHistorySection';
+import { styles } from './AppraisalDetailModal.styles';
 
-const sectionTitles = {
-  frente: 'Frente',
-  costadoIzquierdo: 'Costado izquierdo',
-  costadoDerecho: 'Costado derecho',
-  trasera: 'Parte trasera',
-  techo: 'Techo',
-  parabrisas: 'Parabrisas'
-};
 
-const damageLabels = {
-  pieza_repintada: 'Pieza repintada',
-  rayon_leve: 'Rayón leve',
-  rayon_profundo: 'Rayón profundo',
-  pieza_rota: 'Pieza rota',
-  pieza_con_pasta: 'Pieza con pasta',
-  abolladura: 'Abolladura',
-  golpe_fuerte: 'Golpe fuerte',
-  parabrisas_estrellado: 'Parabrisas estrellado',
-  parabrisas_roto: 'Parabrisas roto'
-};
-
-const tirePositionLabels = {
-  delanteraIzquierda: 'Delantera izquierda',
-  delanteraDerecha: 'Delantera derecha',
-  traseraIzquierda: 'Trasera izquierda',
-  traseraDerecha: 'Trasera derecha'
-};
-
-const tireStateLabels = {
-  buen_estado: 'Buen estado',
-  desgastada: 'Desgastada',
-  seccionada: 'Seccionada',
-  chipote: 'Chipote',
-  rayado: 'Rayado',
-  estrellado: 'Estrellado'
-};
-
-const yesNoNaLabels = {
-  si: 'Sí',
-  no: 'No',
-  na: 'N/A'
-};
-
-const technicalLabels = {
-  ok: 'OK',
-  detalle: 'Detalle',
-  na: 'N/A'
-};
-
-const generalPhotoOrder = [
-  'frontal',
-  'frontalDerecha',
-  'lateralDerecha',
-  'traseraDerecha',
-  'trasera',
-  'traseraIzquierda',
-  'lateralIzquierda',
-  'frontalIzquierda',
-  'interiorTablero',
-  'motor'
-];
-
-const generalPhotoLabels = {
-  frontal: 'Frontal',
-  frontalDerecha: 'Frontal derecha',
-  lateralDerecha: 'Lateral derecha',
-  traseraDerecha: 'Trasera derecha',
-  trasera: 'Trasera',
-  traseraIzquierda: 'Trasera izquierda',
-  lateralIzquierda: 'Lateral izquierda',
-  frontalIzquierda: 'Frontal izquierda',
-  interiorTablero: 'Interior / tablero',
-  motor: 'Motor'
-};
-
-async function downloadPhoto(photo, fallbackName = 'foto.jpg') {
-  try {
-    const fileUrl = photo?.url || photo?.preview;
-    if (!fileUrl) return;
-
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      throw new Error('No se pudo descargar la imagen');
-    }
-
-    const blob = await response.blob();
-    const objectUrl = window.URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = photo.name || fallbackName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    window.URL.revokeObjectURL(objectUrl);
-  } catch (error) {
-    console.error('Error al descargar foto:', error);
-    alert('No se pudo descargar la imagen.');
-  }
-}
-
-const formatMoney = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-  const numeric = Number(String(value).replace(/[^\d.-]/g, ''));
-  if (Number.isNaN(numeric)) return String(value);
-
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN',
-    maximumFractionDigits: 0
-  }).format(numeric);
-};
-
-const formatDate = (value) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  return new Intl.DateTimeFormat('es-MX', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date);
-};
-
-const formatHistoryDateTime = (value) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  return new Intl.DateTimeFormat('es-MX', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
-
-const toDisplayValue = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-  return String(value);
-};
-
-const formatYesNoNa = (value) => yesNoNaLabels[value] || '-';
-const formatTechnical = (value) => technicalLabels[value] || '-';
-const formatDamage = (value) => damageLabels[value] || value;
-const formatTireState = (value) => tireStateLabels[value] || '-';
-
-const formatHistoryAction = (action) => {
-  const labels = {
-    CREATED: 'Avalúo creado',
-    UPDATED: 'Avalúo actualizado',
-    STATUS_CHANGED: 'Estatus modificado',
-    COMPLETED_RECORD_EDITED: 'Administrador editó un avalúo completo',
-    GENERAL_PHOTO_UPLOADED: 'Foto general agregada',
-    DETAIL_PHOTO_UPLOADED: 'Foto de detalle agregada'
-  };
-
-  return labels[action] || action || '-';
-};
-
-const getHistoryAccent = (action) => {
-  const accents = {
-    CREATED: {
-      bg: '#dcfce7',
-      border: '#86efac',
-      text: '#166534'
-    },
-    UPDATED: {
-      bg: '#dbeafe',
-      border: '#93c5fd',
-      text: '#1d4ed8'
-    },
-    STATUS_CHANGED: {
-      bg: '#fef3c7',
-      border: '#fcd34d',
-      text: '#92400e'
-    },
-    COMPLETED_RECORD_EDITED: {
-      bg: '#fee2e2',
-      border: '#fca5a5',
-      text: '#991b1b'
-    },
-    GENERAL_PHOTO_UPLOADED: {
-      bg: '#ede9fe',
-      border: '#c4b5fd',
-      text: '#6d28d9'
-    },
-    DETAIL_PHOTO_UPLOADED: {
-      bg: '#fce7f3',
-      border: '#f9a8d4',
-      text: '#9d174d'
-    }
-  };
-
-  return (
-    accents[action] || {
-      bg: '#f1f5f9',
-      border: '#cbd5e1',
-      text: '#334155'
-    }
-  );
-};
 
 const renderStatusBadge = (status) => {
   const map = {
@@ -367,27 +184,13 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
     <>
       <div style={styles.overlay} onClick={onClose}>
         <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-          <div style={styles.hero}>
-            <div>
-              <p style={styles.heroEyebrow}>Reporte profesional de avalúo</p>
-              <h2 style={styles.heroTitle}>{appraisal.folio || 'Detalle del avalúo'}</h2>
-              <div style={styles.heroMeta}>
-                <span>{appraisal.clienteNombre || 'Sin cliente'}</span>
-                <span>•</span>
-                <span>{appraisal.vehiculoInteres || 'Sin vehículo de interés'}</span>
-              </div>
-            </div>
-
-            <div style={styles.heroActions}>
-              <button style={styles.secondaryButton} onClick={handleDownloadPdf}>
-                Descargar PDF
-              </button>
-              {renderStatusBadge(appraisal.estatus)}
-              <button style={styles.closeButton} onClick={onClose}>
-                Cerrar
-              </button>
-            </div>
-          </div>
+          <AppraisalDetailHeader
+  appraisal={appraisal}
+  onClose={onClose}
+  onDownloadPdf={handleDownloadPdf}
+  renderStatusBadge={renderStatusBadge}
+  styles={styles}
+/>
 
           <div style={styles.body}>
             <SectionCard title="Resumen ejecutivo" subtitle="Datos principales del expediente.">
@@ -601,58 +404,27 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
               </div>
             </SectionCard>
 
-            <SectionCard
-              title="Fotos generales"
-              subtitle="Vista previa de imágenes principales del expediente."
-              right={
-                <button
-                  style={styles.downloadButton}
-                  onClick={() => downloadZip(appraisal.id, 'general')}
-                  disabled={!generalPhotos.length}
-                >
-                  Descargar generales ZIP
-                </button>
-              }
-            >
-              {generalPhotos.length ? (
-                <div style={styles.photoGrid}>
-                  {generalPhotos.map((photo, index) => (
-                    <div key={`${photo.name}-${index}`} style={styles.photoCard}>
-                      <div style={styles.photoPreview}>
-                        {photo.url || photo.preview ? (
-                          <img
-                            src={photo.url || photo.preview}
-                            alt={photo.name}
-                            style={styles.previewImage}
-                            onClick={() => setPreviewImage(photo.url || photo.preview)}
-                          />
-                        ) : (
-                          <div style={styles.noPreview}>Sin vista previa</div>
-                        )}
-                      </div>
-                      <div style={styles.photoFooter}>
-                        <span style={styles.photoTag}>
-                          {generalPhotoLabels[photo.slotKey] || 'Foto general'}
-                        </span>
-                        <span style={styles.photoName}>
-                          {photo.name || `General ${index + 1}`}
-                        </span>
-                        {photo.url || photo.preview ? (
-                          <button
-                            style={styles.smallButton}
-                            onClick={() => downloadPhoto(photo, photo.name)}
-                          >
-                            Descargar imagen
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={styles.emptyText}>No hay fotos generales.</p>
-              )}
-            </SectionCard>
+            <AppraisalDetailPhotosSection
+  appraisal={appraisal}
+  styles={styles}
+  generalPhotos={generalPhotos}
+  detailPhotos={detailPhotos}
+  generalPhotoLabels={generalPhotoLabels}
+  onDownloadZip={downloadZip}
+  onOpenPreview={setPreviewImage}
+  onDownloadPhoto={downloadPhoto}
+/>
+
+<AppraisalDetailHistorySection
+  styles={styles}
+  historyLoading={historyLoading}
+  history={history}
+  formatHistoryDateTime={formatHistoryDateTime}
+  formatHistoryAction={formatHistoryAction}
+  getHistoryAccent={getHistoryAccent}
+  toDisplayValue={toDisplayValue}
+
+/>
 
             <SectionCard
               title="Fotos de detalle"
@@ -705,50 +477,8 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
               )}
             </SectionCard>
 
-            <SectionCard title="Historial" subtitle="Bitácora real de cambios del expediente.">
-              {historyLoading ? (
-                <p style={styles.emptyText}>Cargando historial...</p>
-              ) : history.length ? (
-                <div style={styles.historyList}>
-                  {history.map((item) => {
-                    const accent = getHistoryAccent(item.accion);
+            
 
-                    return (
-                      <div key={item.id} style={styles.historyCard}>
-                        <div style={styles.historyTopRow}>
-                          <span style={styles.historyDate}>
-                            {formatHistoryDateTime(item.created_at)}
-                          </span>
-
-                          <span
-                            style={{
-                              ...styles.historyBadge,
-                              background: accent.bg,
-                              borderColor: accent.border,
-                              color: accent.text
-                            }}
-                          >
-                            {formatHistoryAction(item.accion)}
-                          </span>
-                        </div>
-
-                        <div style={styles.historyBody}>
-                          <div style={styles.historyUser}>
-                            {toDisplayValue(item.usuario_nombre)}
-                          </div>
-
-                          <div style={styles.historyDetailText}>
-                            {toDisplayValue(item.detalle)}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p style={styles.emptyText}>Sin historial.</p>
-              )}
-            </SectionCard>
           </div>
         </div>
       </div>
@@ -767,443 +497,3 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
   );
 }
 
-const styles = {
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(15, 23, 42, 0.58)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    zIndex: 2000,
-    backdropFilter: 'blur(4px)'
-  },
-  modal: {
-    width: '100%',
-    maxWidth: '1360px',
-    maxHeight: '92vh',
-    overflow: 'auto',
-    background: '#f8fafc',
-    borderRadius: '24px',
-    boxShadow: '0 30px 80px rgba(15,23,42,0.28)',
-    border: '1px solid rgba(255,255,255,0.4)'
-  },
-  hero: {
-    padding: '26px 28px',
-    borderBottom: '1px solid #e2e8f0',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '20px',
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 5
-  },
-  heroEyebrow: {
-    margin: 0,
-    fontSize: '12px',
-    fontWeight: 800,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  },
-  heroTitle: {
-    margin: '8px 0 0 0',
-    fontSize: '34px',
-    lineHeight: 1.05,
-    color: '#0f172a'
-  },
-  heroMeta: {
-    marginTop: '10px',
-    display: 'flex',
-    gap: '10px',
-    flexWrap: 'wrap',
-    color: '#475569',
-    fontWeight: 600
-  },
-  heroActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  badge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '10px 14px',
-    borderRadius: '999px',
-    fontWeight: 800,
-    fontSize: '13px',
-    textTransform: 'capitalize'
-  },
-  badgeDraft: {
-    background: '#fff7ed',
-    color: '#9a3412'
-  },
-  badgeWarning: {
-    background: '#fef3c7',
-    color: '#92400e'
-  },
-  badgeSuccess: {
-    background: '#dcfce7',
-    color: '#166534'
-  },
-  closeButton: {
-    border: '1px solid #cbd5e1',
-    background: '#ffffff',
-    color: '#0f172a',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  secondaryButton: {
-    border: '1px solid #cbd5e1',
-    background: '#ffffff',
-    color: '#0f172a',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  body: {
-    padding: '24px',
-    display: 'grid',
-    gap: '18px'
-  },
-  sectionCard: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '20px',
-    padding: '20px',
-    background: '#ffffff',
-    boxShadow: '0 10px 30px rgba(15,23,42,0.04)'
-  },
-  sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '14px',
-    marginBottom: '16px',
-    flexWrap: 'wrap'
-  },
-  sectionTitle: {
-    margin: 0,
-    fontSize: '22px',
-    color: '#0f172a'
-  },
-  sectionSubtitle: {
-    margin: '6px 0 0 0',
-    color: '#64748b',
-    fontSize: '14px'
-  },
-  summaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '14px'
-  },
-  dataGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: '12px'
-  },
-  statusGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '12px'
-  },
-  detailItem: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '14px',
-    padding: '14px 16px',
-    display: 'grid',
-    gap: '8px',
-    background: '#f8fafc'
-  },
-  detailLabel: {
-    fontSize: '12px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: '#64748b'
-  },
-  detailValue: {
-    fontSize: '16px',
-    fontWeight: 700,
-    color: '#0f172a',
-    lineHeight: 1.35
-  },
-  monoValue: {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
-  },
-  commentBox: {
-    marginTop: '16px',
-    border: '1px dashed #cbd5e1',
-    borderRadius: '14px',
-    padding: '14px 16px',
-    background: '#f8fafc'
-  },
-  commentLabel: {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: '#64748b',
-    marginBottom: '8px'
-  },
-  commentText: {
-    margin: 0,
-    color: '#0f172a',
-    lineHeight: 1.55,
-    whiteSpace: 'pre-wrap'
-  },
-  twoColumnLayout: {
-    display: 'grid',
-    gridTemplateColumns: '1.2fr 1fr',
-    gap: '16px'
-  },
-  subCard: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '16px',
-    padding: '16px',
-    background: '#f8fafc'
-  },
-  subCardTitle: {
-    margin: '0 0 14px 0',
-    fontSize: '16px',
-    color: '#0f172a'
-  },
-  zoneGrid: {
-    display: 'grid',
-    gap: '12px'
-  },
-  zoneCard: {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: '14px',
-    padding: '14px'
-  },
-  zoneTitle: {
-    display: 'block',
-    fontWeight: 800,
-    color: '#0f172a',
-    marginBottom: '10px'
-  },
-  chips: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap'
-  },
-  chip: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '7px 10px',
-    borderRadius: '999px',
-    background: '#dbeafe',
-    color: '#1d4ed8',
-    fontWeight: 700,
-    fontSize: '13px'
-  },
-  tireReportGrid: {
-    display: 'grid',
-    gap: '12px'
-  },
-  tireReportCard: {
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: '14px',
-    padding: '14px',
-    display: 'grid',
-    gap: '10px'
-  },
-  valuationGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-    gap: '12px'
-  },
-  valuationCard: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '16px',
-    padding: '16px',
-    background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-    display: 'grid',
-    gap: '8px'
-  },
-  valuationLabel: {
-    fontSize: '12px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: '#64748b'
-  },
-  valuationValue: {
-    fontSize: '24px',
-    fontWeight: 900,
-    color: '#0f172a',
-    lineHeight: 1.1
-  },
-  downloadButton: {
-    background: '#0f172a',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    padding: '11px 16px',
-    cursor: 'pointer',
-    fontWeight: 700
-  },
-  photoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: '16px'
-  },
-  photoCard: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    background: '#ffffff',
-    boxShadow: '0 8px 20px rgba(15,23,42,0.05)'
-  },
-  photoPreview: {
-    height: '210px',
-    background: '#f8fafc'
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    cursor: 'zoom-in'
-  },
-  noPreview: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#64748b'
-  },
-  photoFooter: {
-    padding: '14px',
-    display: 'grid',
-    gap: '10px'
-  },
-  photoTag: {
-    display: 'inline-flex',
-    width: 'fit-content',
-    padding: '6px 10px',
-    borderRadius: '999px',
-    background: '#eef2ff',
-    color: '#4338ca',
-    fontSize: '12px',
-    fontWeight: 800
-  },
-  photoName: {
-    fontSize: '13px',
-    color: '#0f172a',
-    wordBreak: 'break-word',
-    fontWeight: 600
-  },
-  smallButton: {
-    background: '#ffffff',
-    color: '#0f172a',
-    border: '1px solid #cbd5e1',
-    borderRadius: '10px',
-    padding: '9px 12px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    fontSize: '12px'
-  },
-  emptyText: {
-    color: '#64748b',
-    margin: 0
-  },
-  historyList: {
-    display: 'grid',
-    gap: '12px'
-  },
-  historyCard: {
-    border: '1px solid #e2e8f0',
-    borderRadius: '16px',
-    padding: '14px 16px',
-    background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
-    boxShadow: '0 8px 18px rgba(15,23,42,0.04)'
-  },
-  historyTopRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '10px',
-    flexWrap: 'wrap',
-    marginBottom: '10px'
-  },
-  historyDate: {
-    fontSize: '12px',
-    fontWeight: 800,
-    color: '#64748b',
-    letterSpacing: '0.02em'
-  },
-  historyBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '6px 10px',
-    borderRadius: '999px',
-    border: '1px solid',
-    fontSize: '12px',
-    fontWeight: 800
-  },
-  historyBody: {
-    display: 'grid',
-    gap: '6px'
-  },
-  historyUser: {
-    fontSize: '15px',
-    fontWeight: 800,
-    color: '#334155'
-  },
-  historyDetailText: {
-    fontSize: '14px',
-    color: '#64748b',
-    lineHeight: 1.45
-  },
-  previewOverlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(2, 6, 23, 0.88)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-    padding: '24px',
-    backdropFilter: 'blur(6px)'
-  },
-  previewContainer: {
-    position: 'relative',
-    maxWidth: '92vw',
-    maxHeight: '92vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  previewLargeImage: {
-    maxWidth: '92vw',
-    maxHeight: '92vh',
-    objectFit: 'contain',
-    borderRadius: '14px'
-  },
-  previewCloseButton: {
-    position: 'absolute',
-    top: '-10px',
-    right: '-10px',
-    width: '40px',
-    height: '40px',
-    borderRadius: '999px',
-    border: 'none',
-    background: '#ffffff',
-    color: '#0f172a',
-    fontSize: '18px',
-    cursor: 'pointer',
-    fontWeight: 800
-  }
-};

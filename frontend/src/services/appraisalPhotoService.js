@@ -1,72 +1,5 @@
-import axios from 'axios';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
-
-// ==============================
-// AXIOS INSTANCE
-// ==============================
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 20000
-});
-
-// ==============================
-// INTERCEPTOR (AUTENTICACIÓN)
-// ==============================
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-// ==============================
-// INTERCEPTOR (RESPUESTAS)
-// ==============================
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      const status = error.response.status;
-
-      if (status === 401 || status === 403) {
-        console.warn('Sesión expirada durante operación de fotos');
-
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-
-        window.location.reload();
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-// ==============================
-// HELPERS
-// ==============================
-
-const handleError = (error, defaultMessage) => {
-  console.error(defaultMessage, error);
-
-  if (error.response?.data?.error) {
-    throw new Error(error.response.data.error);
-  }
-
-  throw new Error(defaultMessage);
-};
-
-// ==============================
-// SERVICIOS
-// ==============================
+import httpClient from './httpClient';
+import { normalizeApiError } from './serviceUtils';
 
 export const uploadAppraisalPhoto = async ({
   appraisalId,
@@ -83,7 +16,7 @@ export const uploadAppraisalPhoto = async ({
       formData.append('slotKey', slotKey);
     }
 
-    const response = await api.post(
+    const response = await httpClient.post(
       `/api/appraisals/${appraisalId}/photos`,
       formData,
       {
@@ -99,7 +32,7 @@ export const uploadAppraisalPhoto = async ({
       message: response.data.message || 'Foto cargada correctamente'
     };
   } catch (error) {
-    handleError(error, 'Error al subir foto');
+    normalizeApiError(error, 'Error al subir foto');
   }
 };
 
@@ -108,7 +41,7 @@ export const downloadAppraisalPhotosZip = async ({
   photoType
 }) => {
   try {
-    const response = await api.get(
+    const response = await httpClient.get(
       `/api/appraisals/${appraisalId}/photos/zip`,
       {
         params: { photoType },
@@ -121,6 +54,6 @@ export const downloadAppraisalPhotosZip = async ({
       blob: response.data
     };
   } catch (error) {
-    handleError(error, 'Error al descargar ZIP de fotos');
+    normalizeApiError(error, 'Error al descargar ZIP de fotos');
   }
 };

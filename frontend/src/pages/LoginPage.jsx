@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
+import httpClient from '../services/httpClient';
+import Button from '../components/ui/Button';
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ export default function LoginPage({ onLogin }) {
     try {
       setLoading(true);
 
-      const res = await axios.post('http://localhost:4000/api/auth/login', {
+      const res = await httpClient.post('/api/auth/login', {
         email,
         password
       });
@@ -38,103 +39,41 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Carvanta</h1>
-        <p style={styles.subtitle}>Inicia sesión para continuar</p>
+    <div className="page-center">
+      <div className="ui-card">
+        <h1 className="ui-title">Carvanta</h1>
+        <p className="ui-subtitle">Inicia sesión para continuar</p>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form onSubmit={handleSubmit} className="ui-form">
           <div>
-            <label style={styles.label}>Correo</label>
+            <label className="ui-label">Correo</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
+              className="ui-input"
               placeholder="correo@carvanta.com"
             />
           </div>
 
           <div>
-            <label style={styles.label}>Contraseña</label>
+            <label className="ui-label">Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              className="ui-input"
               placeholder="********"
             />
           </div>
 
-          {error && <div style={styles.error}>{error}</div>}
+          {error && <div className="ui-alert-error">{error}</div>}
 
-          <button type="submit" style={styles.button} disabled={loading}>
+          <Button type="submit" disabled={loading}>
             {loading ? 'Ingresando...' : 'Entrar'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    background: '#f3f4f6',
-    padding: '24px'
-  },
-  card: {
-    width: '100%',
-    maxWidth: '420px',
-    background: '#fff',
-    borderRadius: '18px',
-    padding: '32px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
-  },
-  title: {
-    margin: 0,
-    marginBottom: '8px',
-    fontSize: '32px',
-    color: '#111827'
-  },
-  subtitle: {
-    marginTop: 0,
-    marginBottom: '24px',
-    color: '#6b7280'
-  },
-  form: {
-    display: 'grid',
-    gap: '16px'
-  },
-  label: {
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: 600
-  },
-  input: {
-    width: '100%',
-    padding: '12px',
-    borderRadius: '10px',
-    border: '1px solid #d1d5db',
-    fontSize: '14px',
-    boxSizing: 'border-box'
-  },
-  error: {
-    padding: '12px',
-    background: '#fee2e2',
-    color: '#b91c1c',
-    borderRadius: '10px'
-  },
-  button: {
-    background: '#111827',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '12px 18px',
-    cursor: 'pointer',
-    fontWeight: 600
-  }
-};

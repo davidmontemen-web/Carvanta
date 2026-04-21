@@ -1,16 +1,2 @@
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f3f4f6;
-  color: #111827;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
+@import './styles/tokens.css';
+@import './styles/base.css';
