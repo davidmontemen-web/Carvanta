@@ -426,59 +426,6 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
 
 />
 
-            <SectionCard
-              title="Fotos de detalle"
-              subtitle="Daños, piezas o evidencia adicional del avalúo."
-              right={
-                <button
-                  style={styles.downloadButton}
-                  onClick={() => downloadZip(appraisal.id, 'detail')}
-                  disabled={!detailPhotos.length}
-                >
-                  Descargar detalle ZIP
-                </button>
-              }
-            >
-              {detailPhotos.length ? (
-                <div style={styles.photoGrid}>
-                  {detailPhotos.map((photo, index) => (
-                    <div key={`${photo.name}-${index}`} style={styles.photoCard}>
-                      <div style={styles.photoPreview}>
-                        {photo.url || photo.preview ? (
-                          <img
-                            src={photo.url || photo.preview}
-                            alt={photo.name}
-                            style={styles.previewImage}
-                            onClick={() => setPreviewImage(photo.url || photo.preview)}
-                          />
-                        ) : (
-                          <div style={styles.noPreview}>Sin vista previa</div>
-                        )}
-                      </div>
-                      <div style={styles.photoFooter}>
-                        <span style={styles.photoTag}>Detalle</span>
-                        <span style={styles.photoName}>
-                          {photo.name || `Detalle ${index + 1}`}
-                        </span>
-                        {photo.url || photo.preview ? (
-                          <button
-                            style={styles.smallButton}
-                            onClick={() => downloadPhoto(photo, photo.name)}
-                          >
-                            Descargar imagen
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={styles.emptyText}>No hay fotos de detalle.</p>
-              )}
-            </SectionCard>
-
-            
-
           </div>
         </div>
       </div>

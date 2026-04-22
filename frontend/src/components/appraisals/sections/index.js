@@ -6,3 +6,6 @@ export { default as AppraisalFormCarroceriaSection } from './AppraisalFormCarroc
 export { default as AppraisalFormSistemaElectricoSection } from './AppraisalFormSistemaElectricoSection';
 export { default as AppraisalFormFugasMotorSection } from './AppraisalFormFugasMotorSection';
 export { default as AppraisalFormValuacionSection } from './AppraisalFormValuacionSection';
+export { default as AppraisalFormFotosGeneralesSection } from './AppraisalFormFotosGeneralesSection';
+export { default as AppraisalFormFotosDetalleSection } from './AppraisalFormFotosDetalleSection';
+export { default as AppraisalFormRevisionFinalSection } from './AppraisalFormRevisionFinalSection';

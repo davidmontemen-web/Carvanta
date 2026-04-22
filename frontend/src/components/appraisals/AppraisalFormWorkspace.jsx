@@ -1503,180 +1503,62 @@ const renderNeumaticoCard = (positionKey, label) => {
   renderTextarea={renderTextarea}
 />
 
-          <AppraisalSection
-            sectionKey="fotosGenerales"
-            title="Fotos generales"
-            subtitle="Captura o reemplaza cada una de las tomas requeridas."
-            activeSection={activeSection}
-            registerSectionRef={registerSectionRef}
-            renderSectionStatus={renderSectionStatus}
-          >
-            {!validation.requiredHeader && (
-              <div style={styles.warningBox}>
-                Para capturar fotos primero completa el encabezado y guarda el borrador.
-              </div>
-            )}
+          <AppraisalFormFotosGeneralesSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  validation={validation}
+  generalPhotoSlots={generalPhotoSlots}
+  form={form}
+  generalInputRefs={generalInputRefs}
+  handleGeneralPhotoChange={handleGeneralPhotoChange}
+  handleGeneralPhotoClick={handleGeneralPhotoClick}
+  isBusy={isBusy}
+  removeGeneralPhoto={removeGeneralPhoto}
+/>
 
-            <div style={styles.generalPhotoGrid}>
-              {generalPhotoSlots.map((slot) => {
-                const photo = form.fotosGeneralesMap?.[slot.key];
+<AppraisalFormFotosDetalleSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  detailInputRef={detailInputRef}
+  handleAddDetailPhotos={handleAddDetailPhotos}
+  ensureHeaderBeforeUpload={ensureHeaderBeforeUpload}
+  isBusy={isBusy}
+  form={form}
+  removeDetailPhoto={removeDetailPhoto}
+/>
 
-                return (
-                  <div key={slot.key} style={styles.generalPhotoCard}>
-                    <input
-                      ref={(el) => {
-                        generalInputRefs.current[slot.key] = el;
-                      }}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      style={{ display: 'none' }}
-                      onChange={(e) => handleGeneralPhotoChange(slot.key, e)}
-                    />
+<AppraisalFormRevisionFinalSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  validation={validation}
+/>
 
-                    <div
-                      style={styles.generalPhotoPreview}
-                      onClick={() => handleGeneralPhotoClick(slot.key)}
-                    >
-                      {photo?.preview ? (
-                        <img src={photo.preview} alt={slot.label} style={styles.previewImage} />
-                      ) : (
-                        <div style={styles.silhouetteBox}>
-                          <div style={styles.silhouetteIcon}>📷</div>
-                          <div style={styles.silhouetteText}>Tomar foto</div>
-                        </div>
-                      )}
-                    </div>
+          <AppraisalFormFotosDetalleSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  detailInputRef={detailInputRef}
+  handleAddDetailPhotos={handleAddDetailPhotos}
+  ensureHeaderBeforeUpload={ensureHeaderBeforeUpload}
+  isBusy={isBusy}
+  form={form}
+  removeDetailPhoto={removeDetailPhoto}
+/>
 
-                    <div style={styles.generalPhotoFooter}>
-                      <strong>{slot.label}</strong>
-                      <div style={styles.slotActions}>
-                        <button
-                          type="button"
-                          style={styles.smallButton}
-                          onClick={() => handleGeneralPhotoClick(slot.key)}
-                          disabled={isBusy}
-                        >
-                          {photo ? 'Reemplazar' : 'Capturar'}
-                        </button>
-
-                        {photo && (
-                          <button
-                            type="button"
-                            style={styles.smallDangerButton}
-                            onClick={() => removeGeneralPhoto(slot.key)}
-                            disabled={isBusy}
-                          >
-                            Quitar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="fotosDetalle"
-            title="Fotos de detalle"
-            subtitle="Agrega evidencias adicionales, daños, interiores, motor o cualquier hallazgo relevante."
-            activeSection={activeSection}
-            registerSectionRef={registerSectionRef}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <input
-              ref={detailInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              style={{ display: 'none' }}
-              onChange={handleAddDetailPhotos}
-            />
-
-            <button
-              type="button"
-              style={styles.primaryButton}
-              onClick={() => {
-                if (!ensureHeaderBeforeUpload()) return;
-                detailInputRef.current?.click();
-              }}
-              disabled={isBusy}
-            >
-              + Agregar fotos de detalle
-            </button>
-
-            <div style={styles.detailPhotoGrid}>
-              {form.fotosDetalle.length === 0 ? (
-                <div style={styles.emptyPhotoBox}>No hay fotos de detalle aún.</div>
-              ) : (
-                form.fotosDetalle.map((photo, index) => (
-                  <div key={`${photo.name}-${index}`} style={styles.detailPhotoCard}>
-                    <div style={styles.detailPhotoPreview}>
-                      {photo.preview ? (
-                        <img src={photo.preview} alt={photo.name} style={styles.previewImage} />
-                      ) : (
-                        <div style={styles.emptyPhotoBox}>Sin vista previa</div>
-                      )}
-                    </div>
-
-                    <div style={styles.detailPhotoInfo}>
-                      <span style={styles.detailPhotoName}>{photo.name}</span>
-                      <button
-                        type="button"
-                        style={styles.smallDangerButton}
-                        onClick={() => removeDetailPhoto(index)}
-                        disabled={isBusy}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </AppraisalSection>
-
-          <AppraisalSection
-            sectionKey="revisionFinal"
-            title="Revisión final"
-            subtitle="Antes de guardar el avalúo, valida que todo lo esencial esté listo."
-            activeSection={activeSection}
-            registerSectionRef={registerSectionRef}
-            renderSectionStatus={renderSectionStatus}
-          >
-            <div style={styles.validationGrid}>
-              <div style={styles.validationItem}>
-                <strong>Encabezado</strong>
-                <span style={{ ...styles.statusPill, ...(validation.requiredHeader ? styles.statusOk : styles.statusPending) }}>
-                  {validation.requiredHeader ? 'Listo' : 'Incompleto'}
-                </span>
-              </div>
-
-              <div style={styles.validationItem}>
-                <strong>Generales del vehículo</strong>
-                <span style={{ ...styles.statusPill, ...(validation.requiredGenerales ? styles.statusOk : styles.statusPending) }}>
-                  {validation.requiredGenerales ? 'Listo' : 'Incompleto'}
-                </span>
-              </div>
-
-              <div style={styles.validationItem}>
-                <strong>Valuación</strong>
-                <span style={{ ...styles.statusPill, ...(validation.requiredValuacion ? styles.statusOk : styles.statusPending) }}>
-                  {validation.requiredValuacion ? 'Listo' : 'Incompleto'}
-                </span>
-              </div>
-
-              <div style={styles.validationItem}>
-                <strong>Fotos requeridas</strong>
-                <span style={{ ...styles.statusPill, ...(validation.requiredPhotos ? styles.statusOk : styles.statusPending) }}>
-                  {validation.requiredPhotos ? 'Listo' : 'Incompleto'}
-                </span>
-              </div>
-            </div>
-          </AppraisalSection>
+          <AppraisalFormRevisionFinalSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  validation={validation}
+/>
         </div>
 
         <div style={styles.bottomBar}>
