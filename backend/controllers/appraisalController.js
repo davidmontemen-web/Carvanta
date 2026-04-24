@@ -26,6 +26,38 @@ const parseJSONColumn = (value) => {
   }
 };
 
+const formatDateOnly = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  const stringValue = String(value).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(stringValue)) {
+    return stringValue;
+  }
+
+  const parsed = new Date(stringValue);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString().slice(0, 10);
+};
+
+const formatDateTimeForMySQL = (value) => {
+  const parsed = value ? new Date(value) : new Date();
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  }
+
+  return parsed.toISOString().slice(0, 19).replace('T', ' ');
+};
+
 const buildPhotoUrl = (filePath) => {
   if (!filePath) return null;
   return `${BASE_URL}${String(filePath).replace(/\\/g, '/')}`;
@@ -235,7 +267,17 @@ const crearAppraisal = async (req, res) => {
       valuacion
     } = req.body;
 
-    if (!id || !folio || !clienteNombre || !clienteTelefono || !vehiculoInteres || !fechaAvaluo) {
+    const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
+    const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
+
+    if (
+      !id ||
+      !folio ||
+      !clienteNombre ||
+      !clienteTelefono ||
+      !vehiculoInteres ||
+      !fechaAvaluoFormateada
+    ) {
       return res.status(400).json({
         ok: false,
         error: 'Faltan campos obligatorios del avalúo'
@@ -283,8 +325,8 @@ const crearAppraisal = async (req, res) => {
         clienteNombre,
         clienteTelefono,
         vehiculoInteres,
-        fechaAvaluo,
-        fechaActualizacion || new Date(),
+        fechaAvaluoFormateada,
+        fechaActualizacionMysql,
         estatus || 'borrador',
         asesorVentas || null,
         safeJSON(generales),
@@ -375,6 +417,15 @@ const actualizarAppraisal = async (req, res) => {
 
     const estatusActual = rows[0].estatus;
     const estatusNuevo = estatus || 'borrador';
+    const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
+    const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
+
+    if (!fechaAvaluoFormateada) {
+      return res.status(400).json({
+        ok: false,
+        error: 'La fecha de avalúo no es válida'
+      });
+    }
 
     if (estatusActual === 'completo' && req.usuario?.rol !== 'administrador') {
       return res.status(403).json({
@@ -409,8 +460,8 @@ const actualizarAppraisal = async (req, res) => {
         clienteNombre,
         clienteTelefono,
         vehiculoInteres,
-        fechaAvaluo,
-        fechaActualizacion || new Date(),
+        fechaAvaluoFormateada,
+        fechaActualizacionMysql,
         estatusNuevo,
         asesorVentas || null,
         safeJSON(generales),
@@ -429,6 +480,16 @@ const actualizarAppraisal = async (req, res) => {
         ok: false,
         error: 'No se pudo confirmar la actualización del avalúo'
       });
+    }
+
+    if (estatusNuevo === 'comprado' && estatusActual !== 'comprado') {
+      await db.query(
+        `
+        INSERT IGNORE INTO inventario (appraisal_id)
+        VALUES (?)
+        `,
+        [id]
+      );
     }
 
     const actor = await getActorInfo(req.usuario);

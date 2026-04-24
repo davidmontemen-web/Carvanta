@@ -9,7 +9,10 @@ import {
   AppraisalFormCarroceriaSection,
   AppraisalFormSistemaElectricoSection,
   AppraisalFormFugasMotorSection,
-  AppraisalFormValuacionSection
+  AppraisalFormValuacionSection,
+  AppraisalFormFotosGeneralesSection,
+  AppraisalFormFotosDetalleSection,
+  AppraisalFormRevisionFinalSection
 } from './sections';
 
 
@@ -1402,7 +1405,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 
         <div style={styles.flowContainer}>
           <AppraisalFormHeaderSection
-  AppraisalSection={AppraisalSection}
+  
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1532,27 +1535,6 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
 <AppraisalFormRevisionFinalSection
-  activeSection={activeSection}
-  registerSectionRef={registerSectionRef}
-  renderSectionStatus={renderSectionStatus}
-  styles={styles}
-  validation={validation}
-/>
-
-          <AppraisalFormFotosDetalleSection
-  activeSection={activeSection}
-  registerSectionRef={registerSectionRef}
-  renderSectionStatus={renderSectionStatus}
-  styles={styles}
-  detailInputRef={detailInputRef}
-  handleAddDetailPhotos={handleAddDetailPhotos}
-  ensureHeaderBeforeUpload={ensureHeaderBeforeUpload}
-  isBusy={isBusy}
-  form={form}
-  removeDetailPhoto={removeDetailPhoto}
-/>
-
-          <AppraisalFormRevisionFinalSection
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}

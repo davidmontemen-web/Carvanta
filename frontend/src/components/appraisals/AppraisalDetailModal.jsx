@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { downloadAppraisalPhotosZip } from '../../services/appraisalPhotoService';
 import {
   getAppraisalHistory,
-  downloadAppraisalPdf
+  downloadAppraisalPdf,
+  updateAppraisal
 } from '../../services/appraisalService';
 import {
   sectionTitles,
@@ -30,10 +31,10 @@ import { styles } from './AppraisalDetailModal.styles';
 
 const renderStatusBadge = (status) => {
   const map = {
-    borrador: styles.badgeDraft,
-    incompleto: styles.badgeWarning,
-    completo: styles.badgeSuccess
-  };
+  borrador: styles.badgeDraft,
+  completo: styles.badgeSuccess,
+  comprado: styles.badgeWarning
+};
 
   return (
     <span style={{ ...styles.badge, ...(map[status] || styles.badgeDraft) }}>
@@ -151,31 +152,74 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
   }
 
   async function handleDownloadPdf() {
-    try {
-      if (!appraisal?.id) {
-        throw new Error('No hay avalúo disponible para descargar');
-      }
-
-      const result = await downloadAppraisalPdf(appraisal.id);
-      const blob = result?.blob;
-
-      if (!blob) {
-        throw new Error('No se recibió el PDF');
-      }
-
-      const objectUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = `avaluo_${appraisal.folio || appraisal.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(objectUrl);
-    } catch (error) {
-      console.error('Error al descargar PDF:', error);
-      alert('No se pudo descargar el PDF.');
+  try {
+    if (!appraisal?.id) {
+      throw new Error('No hay avalúo disponible para descargar');
     }
+
+    const result = await downloadAppraisalPdf(appraisal.id);
+    const blob = result?.blob;
+
+    if (!blob) {
+      throw new Error('No se recibió el PDF');
+    }
+
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `avaluo_${appraisal.folio || appraisal.id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(objectUrl);
+  } catch (error) {
+    console.error('Error al descargar PDF:', error);
+    alert('No se pudo descargar el PDF.');
   }
+}
+
+async function handleConfirmPurchase() {
+  try {
+    if (!appraisal?.id) {
+      throw new Error('No hay avalúo disponible');
+    }
+
+    const confirmed = window.confirm(
+      `¿Estás seguro de pasar esta unidad a inventario?\n\nFolio: ${appraisal.folio || appraisal.id}\nVehículo: ${appraisal.generales?.marca || ''} ${appraisal.generales?.submarca || ''} ${appraisal.generales?.version || ''}\n\nEsta acción confirmará la compra del vehículo.`
+    );
+
+    if (!confirmed) return;
+
+    const payload = {
+  ...appraisal,
+  fechaAvaluo: appraisal?.fechaAvaluo
+    ? String(appraisal.fechaAvaluo).slice(0, 10)
+    : '',
+  estatus: 'comprado'
+};
+
+    const response = await updateAppraisal(appraisal.id, payload);
+
+    if (!response?.ok) {
+      throw new Error('No se pudo actualizar el avalúo');
+    }
+
+    alert('Unidad enviada a inventario correctamente.');
+
+    if (typeof onSaved === 'function') {
+      await onSaved();
+    }
+
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  } catch (error) {
+    console.error('Error al confirmar compra:', error);
+    alert(error?.message || 'No se pudo confirmar la compra.');
+  }
+}
+
+
 
   const carroceriaZonas = appraisal.carroceria?.zonas || {};
   const carroceriaNeumaticos = appraisal.carroceria?.neumaticos || {};
@@ -188,6 +232,7 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
   appraisal={appraisal}
   onClose={onClose}
   onDownloadPdf={handleDownloadPdf}
+  onConfirmPurchase={handleConfirmPurchase}
   renderStatusBadge={renderStatusBadge}
   styles={styles}
 />

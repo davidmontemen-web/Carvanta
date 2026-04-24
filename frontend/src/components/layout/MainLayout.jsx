@@ -10,7 +10,7 @@ export default function MainLayout({
   children
 }) {
   return (
-    <div style={styles.container}>
+    <div style={styles.appShell}>
       <Sidebar
         usuario={usuario}
         vistaActiva={vistaActiva}
@@ -24,8 +24,10 @@ export default function MainLayout({
           tituloVista={tituloVista}
         />
 
-        <div style={styles.content}>
-          {children}
+        <div style={styles.contentViewport}>
+          <div style={styles.contentInner}>
+            {children}
+          </div>
         </div>
       </main>
     </div>
@@ -33,16 +35,31 @@ export default function MainLayout({
 }
 
 const styles = {
-  container: {
+  appShell: {
     display: 'flex',
     minHeight: '100vh',
-    background: '#f3f4f6'
+    background: '#eef2f7'
   },
+
   main: {
     flex: 1,
-    padding: '24px'
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    background: '#f4f6f8'
   },
-  content: {
-    minHeight: 'calc(100vh - 120px)'
+
+  contentViewport: {
+    flex: 1,
+    minHeight: 0,
+    padding: '0 18px 18px',
+    boxSizing: 'border-box'
+  },
+
+  contentInner: {
+    minHeight: '100%',
+    display: 'grid',
+    alignContent: 'start',
+    gap: '14px'
   }
 };

@@ -82,3 +82,21 @@ export const downloadAppraisalPdf = async (id) => {
     normalizeApiError(error, 'Error al descargar PDF del avalúo');
   }
 };
+
+export const marcarComoComprado = async (id, dataActual) => {
+  try {
+    const payload = {
+      ...dataActual,
+      estatus: 'comprado'
+    };
+
+    const response = await httpClient.put(`/api/appraisals/${id}`, payload);
+
+    return {
+      ok: true,
+      appraisalId: response.data.appraisalId
+    };
+  } catch (error) {
+    normalizeApiError(error, 'Error al confirmar compra');
+  }
+};

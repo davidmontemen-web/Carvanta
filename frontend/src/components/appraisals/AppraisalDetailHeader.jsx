@@ -2,9 +2,13 @@ export default function AppraisalDetailHeader({
   appraisal,
   onClose,
   onDownloadPdf,
+  onConfirmPurchase,
   renderStatusBadge,
   styles
 }) {
+  const canSendToInventory =
+    appraisal?.estatus === 'completo' && typeof onConfirmPurchase === 'function';
+
   return (
     <div style={styles.hero}>
       <div>
@@ -21,7 +25,23 @@ export default function AppraisalDetailHeader({
         <button style={styles.secondaryButton} onClick={onDownloadPdf}>
           Descargar PDF
         </button>
+
+        {canSendToInventory && (
+          <button
+            style={{
+              ...styles.secondaryButton,
+              backgroundColor: '#16a34a',
+              borderColor: '#16a34a',
+              color: '#ffffff'
+            }}
+            onClick={onConfirmPurchase}
+          >
+            Pasar a inventario
+          </button>
+        )}
+
         {renderStatusBadge(appraisal.estatus)}
+
         <button style={styles.closeButton} onClick={onClose}>
           Cerrar
         </button>

@@ -1,38 +1,43 @@
 export const styles = {
-    
   workspace: {
     display: 'grid',
-    gridTemplateColumns: '240px 1fr',
+    gridTemplateColumns: '220px 1fr',
     gap: '12px',
     alignItems: 'start'
   },
+
   sidebar: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '10px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
+    background: '#ffffff',
+    borderRadius: '14px',
+    padding: '12px',
+    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
+    border: '1px solid #e5e7eb',
     position: 'sticky',
     top: '12px',
     alignSelf: 'start'
   },
   sidebarHeader: {
-    marginBottom: '10px'
+    marginBottom: '12px',
+    paddingBottom: '10px',
+    borderBottom: '1px solid #eef2f7'
   },
   sidebarTitle: {
     margin: 0,
-    fontSize: '16px',
-    color: '#111827',
-    fontWeight: 800
+    fontSize: '15px',
+    color: '#0f172a',
+    fontWeight: 800,
+    letterSpacing: '-0.02em'
   },
   sidebarText: {
     margin: '4px 0 0 0',
-    color: '#6b7280',
+    color: '#64748b',
     fontSize: '11px',
-    lineHeight: 1.35
+    lineHeight: 1.4
   },
+
   sectionNav: {
     display: 'grid',
-    gap: '6px'
+    gap: '7px'
   },
   sectionButton: {
     display: 'flex',
@@ -40,21 +45,24 @@ export const styles = {
     justifyContent: 'space-between',
     gap: '8px',
     width: '100%',
-    padding: '7px 9px',
-    borderRadius: '8px',
+    padding: '8px 10px',
+    borderRadius: '10px',
     border: '1px solid #e5e7eb',
     background: '#ffffff',
-    color: '#374151',
+    color: '#334155',
     fontSize: '11px',
     fontWeight: 700,
     cursor: 'pointer',
-    textAlign: 'left'
+    textAlign: 'left',
+    transition: 'all 0.18s ease'
   },
   sectionButtonActive: {
-    background: '#eff6ff',
-    border: '1px solid #93c5fd',
-    color: '#1d4ed8'
+    background: '#0f172a',
+    border: '1px solid #0f172a',
+    color: '#ffffff',
+    boxShadow: '0 8px 16px rgba(15, 23, 42, 0.14)'
   },
+
   navStatus: {
     fontSize: '10px',
     fontWeight: 800,
@@ -70,32 +78,37 @@ export const styles = {
     background: '#fef3c7',
     color: '#92400e'
   },
+
   main: {
     display: 'grid',
     gap: '10px'
   },
+
   heroCard: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '10px 12px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)',
+    background: '#ffffff',
+    borderRadius: '14px',
+    padding: '12px 14px',
+    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
+    border: '1px solid #e5e7eb',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: '10px',
-    marginBottom: '8px'
+    gap: '12px',
+    marginBottom: '6px'
   },
   formTitle: {
     margin: 0,
-    fontSize: '17px',
-    color: '#111827',
-    lineHeight: 1.1,
-    fontWeight: 800
+    fontSize: '18px',
+    color: '#0f172a',
+    lineHeight: 1.05,
+    fontWeight: 800,
+    letterSpacing: '-0.02em'
   },
   formMeta: {
     margin: '4px 0 0 0',
-    color: '#6b7280',
-    fontSize: '11px'
+    color: '#64748b',
+    fontSize: '11px',
+    lineHeight: 1.4
   },
   topbarActions: {
     display: 'flex',
@@ -103,35 +116,42 @@ export const styles = {
     gap: '6px',
     flexWrap: 'wrap'
   },
+
   sectionCard: {
-    background: '#fff',
-    borderRadius: '12px',
+    background: '#ffffff',
+    borderRadius: '14px',
     padding: '12px',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.04)',
-    border: '1px solid transparent'
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.035)',
+    border: '1px solid #e5e7eb'
   },
   sectionCardActive: {
-    border: '1px solid #dbe3ee'
+    border: '1px solid #d8e0ea',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.05)'
   },
+
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     gap: '10px',
     alignItems: 'flex-start',
-    marginBottom: '10px'
+    marginBottom: '10px',
+    paddingBottom: '8px',
+    borderBottom: '1px solid #f1f5f9'
   },
   sectionTitle: {
     margin: 0,
     fontSize: '14px',
     fontWeight: 800,
-    color: '#111827'
+    color: '#0f172a',
+    letterSpacing: '-0.01em'
   },
   helperText: {
     margin: '4px 0 0 0',
     color: '#6b7280',
     fontSize: '11px',
-    lineHeight: 1.35
+    lineHeight: 1.4
   },
+
   grid2: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -142,6 +162,7 @@ export const styles = {
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
     gap: '10px'
   },
+
   field: {
     display: 'grid',
     gap: '4px'
@@ -151,43 +172,49 @@ export const styles = {
     gap: '4px',
     marginTop: '10px'
   },
+
   label: {
     fontWeight: 700,
-    fontSize: '11px',
+    fontSize: '10px',
     color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: '0.03em'
+    letterSpacing: '0.04em'
   },
+
   input: {
     width: '100%',
     padding: '8px 10px',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
-    fontSize: '13px',
-    background: '#fff',
+    fontSize: '12px',
+    background: '#ffffff',
     color: '#111827',
-    minHeight: '34px'
+    minHeight: '34px',
+    boxSizing: 'border-box',
+    outline: 'none'
   },
   inputDisabled: {
     width: '100%',
     padding: '8px 10px',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
-    fontSize: '13px',
+    fontSize: '12px',
     background: '#f3f4f6',
     color: '#6b7280',
     cursor: 'not-allowed',
-    minHeight: '34px'
+    minHeight: '34px',
+    boxSizing: 'border-box'
   },
   inputReadOnly: {
     width: '100%',
     padding: '8px 10px',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
-    fontSize: '13px',
+    fontSize: '12px',
     background: '#f8fafc',
     color: '#475569',
-    minHeight: '34px'
+    minHeight: '34px',
+    boxSizing: 'border-box'
   },
   inputRequired: {
     border: '1px solid #f59e0b',
@@ -197,6 +224,7 @@ export const styles = {
     border: '1px solid #ef4444',
     background: '#fef2f2'
   },
+
   helperError: {
     display: 'block',
     marginTop: '4px',
@@ -204,17 +232,21 @@ export const styles = {
     color: '#b91c1c',
     fontWeight: 600
   },
+
   textarea: {
     width: '100%',
     padding: '9px 10px',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
     resize: 'vertical',
-    fontSize: '13px',
-    minHeight: '78px',
+    fontSize: '12px',
+    minHeight: '76px',
     color: '#111827',
-    background: '#fff'
+    background: '#ffffff',
+    boxSizing: 'border-box',
+    outline: 'none'
   },
+
   checkboxGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -228,8 +260,10 @@ export const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: '8px',
     background: '#fafafa',
-    fontSize: '12px'
+    fontSize: '11px',
+    color: '#334155'
   },
+
   radioGroup: {
     display: 'flex',
     gap: '12px',
@@ -243,6 +277,7 @@ export const styles = {
     fontSize: '12px',
     fontWeight: 600
   },
+
   toggleGroup: {
     display: 'flex',
     gap: '6px',
@@ -252,7 +287,7 @@ export const styles = {
     minWidth: '30px',
     height: '28px',
     padding: '4px 8px',
-    borderRadius: '6px',
+    borderRadius: '7px',
     border: '1px solid #d1d5db',
     background: '#f9fafb',
     cursor: 'pointer',
@@ -278,15 +313,16 @@ export const styles = {
     border: '1px solid #9ca3af',
     color: '#374151'
   },
+
   conditionGroup: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '6px'
   },
   conditionButton: {
-    minWidth: '72px',
+    minWidth: '68px',
     padding: '6px 8px',
-    borderRadius: '7px',
+    borderRadius: '8px',
     border: '1px solid #d1d5db',
     background: '#f9fafb',
     cursor: 'pointer',
@@ -315,9 +351,10 @@ export const styles = {
     border: '1px solid #ef4444',
     color: '#991b1b'
   },
+
   primaryButton: {
-    background: '#111827',
-    color: '#fff',
+    background: '#0f172a',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '8px',
     padding: '8px 12px',
@@ -326,7 +363,7 @@ export const styles = {
     fontSize: '12px'
   },
   secondaryButton: {
-    background: '#fff',
+    background: '#ffffff',
     color: '#111827',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
@@ -345,6 +382,7 @@ export const styles = {
     fontWeight: 700,
     fontSize: '12px'
   },
+
   infoBox: {
     background: '#eff6ff',
     color: '#1d4ed8',
@@ -370,7 +408,7 @@ export const styles = {
     fontWeight: 700,
     fontSize: '12px',
     border: '1px solid transparent',
-    boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)'
   },
   notificationSuccess: {
     background: '#dcfce7',
@@ -387,6 +425,7 @@ export const styles = {
     color: '#991b1b',
     border: '1px solid #fecaca'
   },
+
   generalPhotoGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -396,10 +435,10 @@ export const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: '12px',
     overflow: 'hidden',
-    background: '#fff'
+    background: '#ffffff'
   },
   generalPhotoPreview: {
-    height: '150px',
+    height: '138px',
     background: '#f8fafc',
     display: 'flex',
     alignItems: 'center',
@@ -414,10 +453,10 @@ export const styles = {
     color: '#6b7280'
   },
   silhouetteIcon: {
-    fontSize: '22px'
+    fontSize: '20px'
   },
   silhouetteText: {
-    fontSize: '12px',
+    fontSize: '11px',
     fontWeight: 700
   },
   previewImage: {
@@ -426,7 +465,7 @@ export const styles = {
     objectFit: 'cover'
   },
   generalPhotoFooter: {
-    padding: '10px',
+    padding: '9px',
     display: 'grid',
     gap: '8px'
   },
@@ -436,7 +475,7 @@ export const styles = {
     flexWrap: 'wrap'
   },
   smallButton: {
-    background: '#fff',
+    background: '#ffffff',
     color: '#111827',
     border: '1px solid #d1d5db',
     borderRadius: '8px',
@@ -446,7 +485,7 @@ export const styles = {
     fontSize: '11px'
   },
   smallDangerButton: {
-    background: '#fff',
+    background: '#ffffff',
     color: '#b91c1c',
     border: '1px solid #fecaca',
     borderRadius: '8px',
@@ -455,6 +494,7 @@ export const styles = {
     fontWeight: 700,
     fontSize: '11px'
   },
+
   detailPhotoGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -465,34 +505,35 @@ export const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: '12px',
     overflow: 'hidden',
-    background: '#fff'
+    background: '#ffffff'
   },
   detailPhotoPreview: {
-    height: '150px',
+    height: '138px',
     background: '#f8fafc'
   },
   detailPhotoInfo: {
-    padding: '10px',
+    padding: '9px',
     display: 'grid',
     gap: '8px'
   },
   detailPhotoName: {
-    fontSize: '12px',
+    fontSize: '11px',
     color: '#111827',
     wordBreak: 'break-word'
   },
   emptyPhotoBox: {
     border: '1px dashed #d1d5db',
     borderRadius: '12px',
-    padding: '16px',
+    padding: '14px',
     color: '#6b7280',
     textAlign: 'center',
     fontSize: '12px'
   },
+
   carroceriaWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px'
+    gap: '12px'
   },
   subsectionBlock: {
     display: 'flex',
@@ -501,7 +542,7 @@ export const styles = {
   },
   subsectionTitle: {
     margin: 0,
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 800,
     color: '#0f172a'
   },
@@ -521,7 +562,7 @@ export const styles = {
   },
   damageZoneTitle: {
     margin: 0,
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: 800,
     color: '#0f172a'
   },
@@ -533,10 +574,10 @@ export const styles = {
   damageChip: {
     border: '1px solid #d1d5db',
     borderRadius: '999px',
-    padding: '6px 10px',
+    padding: '6px 9px',
     background: '#ffffff',
     color: '#334155',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: 700,
     cursor: 'pointer'
   },
@@ -545,6 +586,7 @@ export const styles = {
     border: '1px solid #3b82f6',
     color: '#1d4ed8'
   },
+
   tireGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -561,10 +603,11 @@ export const styles = {
   },
   tireCardTitle: {
     margin: 0,
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: 800,
     color: '#0f172a'
   },
+
   validationGrid: {
     display: 'grid',
     gap: '8px'
@@ -593,11 +636,12 @@ export const styles = {
     background: '#fef3c7',
     color: '#92400e'
   },
+
   bottomBar: {
     position: 'sticky',
     bottom: '0',
     background: 'rgba(255,255,255,0.96)',
-    backdropFilter: 'blur(8px)',
+    backdropFilter: 'blur(10px)',
     borderTop: '1px solid #e5e7eb',
     padding: '10px 12px',
     display: 'flex',
@@ -605,7 +649,10 @@ export const styles = {
     gap: '10px',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginTop: '10px'
+    marginTop: '10px',
+    borderBottomLeftRadius: '12px',
+    borderBottomRightRadius: '12px',
+    boxShadow: '0 -8px 20px rgba(15, 23, 42, 0.04)'
   },
   bottomBarText: {
     color: '#4b5563',

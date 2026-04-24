@@ -7,6 +7,7 @@ const usuariosRoutes = require('./routes/usuarios.routes');
 const authRoutes = require('./routes/auth.routes');
 const appraisalRoutes = require('./routes/appraisalRoutes');
 const appraisalPhotoRoutes = require('./routes/appraisalPhotoRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
 
 const app = express();
 
@@ -45,5 +46,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/appraisals', appraisalRoutes);
 app.use('/api/appraisals', appraisalPhotoRoutes);
+app.use('/api/inventario', inventoryRoutes);
 
 module.exports = app;

@@ -8,6 +8,7 @@ import {
   getViewComponent
 } from './config/appViews.jsx';
 
+
 function App() {
   const [usuario, setUsuario] = useState(() => {
     const stored = localStorage.getItem('usuario');
