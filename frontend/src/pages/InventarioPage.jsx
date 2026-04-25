@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getInventory } from '../services/inventoryService';
 import InventoryCard from '../components/inventory/InventoryCard';
+import InventoryDetailDrawer from '../components/inventory/InventoryDetailDrawer';
 
 const formatMoney = (value) => {
   if (value === null || value === undefined || value === '') return '-';
@@ -56,6 +57,8 @@ const getStatusStyle = (status) => {
 
 export default function InventarioPage() {
   const [inventory, setInventory] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+const [openDrawer, setOpenDrawer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -65,28 +68,40 @@ export default function InventarioPage() {
     loadInventory();
   }, []);
 
-  const loadInventory = async () => {
-    try {
-      setLoading(true);
-      setError('');
+    const loadInventory = async (selectedInventoryId = null) => {
+  try {
+    setLoading(true);
+    setError('');
 
-        const handleOpenDetail = (item) => {
-    console.log('Abrir detalle inventario:', item);
-  };
+    const response = await getInventory();
 
-      const response = await getInventory();
-
-      if (!response?.ok) {
-        throw new Error('No se pudo obtener inventario');
-      }
-
-      setInventory(response.data || []);
-    } catch (err) {
-      console.error('Error al cargar inventario:', err);
-      setError(err?.message || 'No se pudo cargar el inventario');
-    } finally {
-      setLoading(false);
+    if (!response?.ok) {
+      throw new Error('No se pudo obtener inventario');
     }
+
+    const updatedInventory = response.data || [];
+    setInventory(updatedInventory);
+
+    if (selectedInventoryId) {
+      const updatedSelected = updatedInventory.find(
+        (item) => Number(item.id) === Number(selectedInventoryId)
+      );
+
+      if (updatedSelected) {
+        setSelectedItem(updatedSelected);
+      }
+    }
+  } catch (err) {
+    console.error('Error al cargar inventario:', err);
+    setError(err?.message || 'No se pudo cargar el inventario');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleOpenDetail = (item) => {
+    setSelectedItem(item);
+    setOpenDrawer(true);
   };
 
   const filteredInventory = useMemo(() => {
@@ -234,6 +249,12 @@ export default function InventarioPage() {
           </div>
         )}
       </div>
+      <InventoryDetailDrawer
+  open={openDrawer}
+  item={selectedItem}
+  onClose={() => setOpenDrawer(false)}
+  onUpdated={() => loadInventory(selectedItem?.id)}
+/>
     </div>
   );
 }
@@ -251,7 +272,9 @@ function KpiCard({ label, value, subtitle, tone = 'default' }) {
       <div style={styles.kpiValue}>{value}</div>
       <div style={styles.kpiLabel}>{label}</div>
       <div style={styles.kpiSubtitle}>{subtitle}</div>
+      
     </div>
+    
   );
 }
 
