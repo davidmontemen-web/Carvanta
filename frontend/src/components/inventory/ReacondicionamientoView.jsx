@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getReconditioningExpenses,
   addReconditioningExpense,
@@ -37,7 +37,7 @@ export default function ReacondicionamientoView({ inventarioId, onDone, onBack }
     observaciones: ''
   });
 
-  const loadGastos = async () => {
+  const loadGastos = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getReconditioningExpenses(inventarioId);
@@ -51,11 +51,11 @@ export default function ReacondicionamientoView({ inventarioId, onDone, onBack }
     } finally {
       setLoading(false);
     }
-  };
+  }, [inventarioId]);
 
   useEffect(() => {
     loadGastos();
-  }, [inventarioId]);
+  }, [loadGastos]);
 
   const total = useMemo(() => {
     return gastos.reduce((acc, item) => acc + (Number(item.costo) || 0), 0);
@@ -401,17 +401,17 @@ function Field({ label, children, wide }) {
 }
 
 const styles = {
-  page: { display: 'grid', gap: '12px' },
+  page: { display: 'grid', gap: '14px' },
   header: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '16px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '22px',
+    padding: '18px',
     display: 'flex',
     justifyContent: 'space-between',
     gap: '14px',
     alignItems: 'flex-start',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)'
+    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)'
   },
   eyebrow: {
     margin: 0,
@@ -445,14 +445,14 @@ const styles = {
   },
   totalCard: {
     background: '#0f172a',
-    borderRadius: '20px',
-    padding: '16px',
+    borderRadius: '22px',
+    padding: '18px',
     color: '#ffffff',
     display: 'flex',
     justifyContent: 'space-between',
     gap: '14px',
     alignItems: 'center',
-    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.18)'
+    boxShadow: '0 16px 34px rgba(15, 23, 42, 0.22)'
   },
   totalLabel: {
     display: 'block',
@@ -482,10 +482,10 @@ const styles = {
   },
   section: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '16px',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)'
+    border: '1px solid #dbe4f0',
+    borderRadius: '22px',
+    padding: '18px',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.05)'
   },
   sectionHeader: {
     display: 'flex',
@@ -511,8 +511,8 @@ const styles = {
     gap: '10px'
   },
   categoryCard: {
-    border: '1px solid #e2e8f0',
-    background: '#f8fafc',
+    border: '1px solid #dbe4f0',
+    background: '#fbfdff',
     borderRadius: '16px',
     padding: '13px',
     display: 'grid',
@@ -522,7 +522,8 @@ const styles = {
   },
   categoryCardActive: {
     background: '#eff6ff',
-    borderColor: '#93c5fd'
+    borderColor: '#93c5fd',
+    boxShadow: '0 10px 22px rgba(37, 99, 235, 0.12)'
   },
   categoryTitle: {
     color: '#0f172a',
@@ -591,12 +592,13 @@ const styles = {
   },
   primaryLightButton: {
     border: 'none',
-    background: '#2563eb',
+    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
     color: '#ffffff',
     borderRadius: '14px',
     padding: '12px 14px',
     fontWeight: 950,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 10px 20px rgba(37, 99, 235, 0.25)'
   },
   emptyBox: {
     background: '#f8fafc',
@@ -612,13 +614,14 @@ const styles = {
     gap: '10px'
   },
   expenseItem: {
-    border: '1px solid #e2e8f0',
-    background: '#f8fafc',
+    border: '1px solid #dbe4f0',
+    background: '#fbfdff',
     borderRadius: '16px',
-    padding: '13px',
+    padding: '14px',
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '14px'
+    gap: '14px',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.04)'
   },
   expenseCategory: {
     display: 'inline-flex',
@@ -667,8 +670,8 @@ const styles = {
     fontWeight: 950
   },
   deleteButton: {
-    border: '1px solid #fecaca',
-    background: '#fef2f2',
+    border: '1px solid #fca5a5',
+    background: '#fff5f5',
     color: '#b91c1c',
     borderRadius: '10px',
     padding: '7px 9px',
@@ -679,7 +682,7 @@ const styles = {
   actions: {
     position: 'sticky',
     bottom: 0,
-    background: 'linear-gradient(180deg, rgba(248,250,252,0.1), #f8fafc 35%)',
+    background: 'linear-gradient(180deg, rgba(248,250,252,0.35), #f8fafc 48%)',
     paddingTop: '14px',
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
@@ -687,12 +690,13 @@ const styles = {
   },
   primaryButton: {
     border: 'none',
-    background: '#0f172a',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
     color: '#ffffff',
     borderRadius: '14px',
     padding: '13px 14px',
     fontWeight: 950,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.22)'
   },
   secondaryButton: {
     border: '1px solid #cbd5e1',
@@ -701,6 +705,7 @@ const styles = {
     borderRadius: '14px',
     padding: '13px 14px',
     fontWeight: 950,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.06)'
   }
 };

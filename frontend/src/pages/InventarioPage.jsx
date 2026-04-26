@@ -16,45 +16,6 @@ const formatMoney = (value) => {
   }).format(numeric);
 };
 
-const formatNumber = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-  const numeric = Number(value);
-  if (Number.isNaN(numeric)) return value;
-  return new Intl.NumberFormat('es-MX').format(numeric);
-};
-
-const getDaysTone = (days) => {
-  if (days <= 15) return styles.daysGood;
-  if (days <= 30) return styles.daysWarning;
-  return styles.daysDanger;
-};
-
-const getStatusLabel = (status) => {
-  const map = {
-    comprado: 'Comprado',
-    en_preparacion: 'En preparación',
-    listo: 'Listo',
-    publicado: 'Publicado',
-    apartado: 'Apartado',
-    vendido: 'Vendido'
-  };
-
-  return map[status] || status || '-';
-};
-
-const getStatusStyle = (status) => {
-  const map = {
-    comprado: styles.statusBought,
-    en_preparacion: styles.statusPreparing,
-    listo: styles.statusReady,
-    publicado: styles.statusPublished,
-    apartado: styles.statusReserved,
-    vendido: styles.statusSold
-  };
-
-  return map[status] || styles.statusDefault;
-};
-
 export default function InventarioPage() {
   const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
