@@ -61,6 +61,8 @@ export default function ReacondicionamientoView({ inventarioId, onDone, onBack }
     return gastos.reduce((acc, item) => acc + (Number(item.costo) || 0), 0);
   }, [gastos]);
 
+  const hasReconditioningData = gastos.length > 0;
+
   const totalPorCategoria = useMemo(() => {
     return categorias.reduce((acc, cat) => {
       acc[cat.key] = gastos
@@ -159,7 +161,9 @@ export default function ReacondicionamientoView({ inventarioId, onDone, onBack }
     }
 
     const confirmed = window.confirm(
-      `¿Confirmas finalizar reacondicionamiento?\n\nCosto total registrado: ${formatMoney(total)}\n\nDespués podrás continuar con Pricing.`
+      hasReconditioningData
+  ? `Este reacondicionamiento ya tiene información registrada.\n\nCosto total: ${formatMoney(total)}\n\n¿Deseas continuar a Pricing?`
+  : `¿Confirmas finalizar reacondicionamiento?\n\nCosto total registrado: ${formatMoney(total)}\n\nDespués podrás continuar con Pricing.`
     );
 
     if (!confirmed) return;
@@ -380,8 +384,8 @@ export default function ReacondicionamientoView({ inventarioId, onDone, onBack }
         </button>
 
         <button type="button" onClick={handleFinish} style={styles.primaryButton}>
-          Finalizar y continuar a Pricing
-        </button>
+  {hasReconditioningData ? 'Editar / continuar a Pricing' : 'Finalizar y continuar a Pricing'}
+</button>
       </div>
     </div>
   );

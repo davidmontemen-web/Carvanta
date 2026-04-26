@@ -36,6 +36,8 @@ export default function PricingView({ inventarioId, onPriceAssigned }) {
 
   const [precioFinal, setPrecioFinal] = useState('');
 
+  const [pricingGuardado, setPricingGuardado] = useState(null);
+
   const loadPricing = async () => {
     try {
       setLoading(true);
@@ -44,10 +46,13 @@ export default function PricingView({ inventarioId, onPriceAssigned }) {
 
       setComparables(data.comparables || []);
       setCalculo(data.calculo || null);
+      setPricingGuardado(data.pricing || null);
 
-      if (!precioFinal && data.calculo?.precioSugerido) {
-        setPrecioFinal(String(data.calculo.precioSugerido));
-      }
+      if (data.pricing?.precio_venta_final) {
+  setPrecioFinal(String(data.pricing.precio_venta_final));
+} else if (!precioFinal && data.calculo?.precioSugerido) {
+  setPrecioFinal(String(data.calculo.precioSugerido));
+}
     } catch (error) {
       console.error('Error cargando pricing:', error);
       alert('Error cargando pricing');
@@ -113,9 +118,11 @@ export default function PricingView({ inventarioId, onPriceAssigned }) {
         return;
       }
 
-      const confirmed = window.confirm(
-  `¿Confirmas asignar este precio de venta?\n\nPrecio final: ${formatMoney(precioFinal)}\n\nEsta acción cambiará la unidad a "Precio asignado".`
+     
+  const confirmed = window.confirm(
+  `${pricingGuardado ? '¿Confirmas editar este pricing?' : '¿Confirmas asignar este precio de venta?'}\n\nPrecio final: ${formatMoney(precioFinal)}\n\nEsta acción ${pricingGuardado ? 'actualizará el pricing existente' : 'cambiará la unidad a "Precio asignado"'}.`
 );
+
 
 if (!confirmed) return;
 
@@ -344,7 +351,11 @@ const response = await assignInventoryPrice(inventarioId, {
             disabled={!hasEnoughComparables || assigningPrice}
             onClick={handleAssignPrice}
           >
-            {assigningPrice ? 'Asignando...' : 'Asignar precio y avanzar'}
+            {assigningPrice
+  ? 'Guardando...'
+  : pricingGuardado
+    ? 'Editar pricing'
+    : 'Asignar precio y avanzar'}
           </button>
         </div>
       </section>

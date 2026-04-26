@@ -3,8 +3,89 @@ import { updateInventoryStatus } from '../../services/inventoryService';
 import PricingView from './PricingView';
 import ReacondicionamientoView from './ReacondicionamientoView';
 
+
+const FLOW = [
+  'comprado',
+  'reacondicionamiento',
+  'precio_asignado',
+  'publicado',
+  'apartado',
+  'vendido'
+];
+
+const NEXT_ACTIONS = {
+  comprado: {
+    next: 'reacondicionamiento',
+    label: 'Iniciar reacondicionamiento',
+    tab: 'reacondicionamiento'
+  },
+  reacondicionamiento: {
+    next: null,
+    label: 'Abrir Pricing',
+    tab: 'pricing'
+  },
+  precio_asignado: {
+    next: 'publicado',
+    label: 'Publicar unidad',
+    tab: 'publicacion'
+  },
+  publicado: {
+    next: 'apartado',
+    label: 'Marcar como apartado',
+    tab: 'resumen'
+  },
+  apartado: {
+    next: 'vendido',
+    label: 'Registrar venta',
+    tab: 'resumen'
+  }
+};
+
+const getSectionMode = ({ tab, estado, costoReacondicionamiento, precioVenta }) => {
+  if (tab === 'resumen' || tab === 'historial') return 'visible';
+
+  if (tab === 'reacondicionamiento') {
+    if (estado === 'comprado') return 'bloqueado';
+    if (['reacondicionamiento'].includes(estado)) return 'editable';
+    return 'finalizado';
+  }
+
+  if (tab === 'pricing') {
+    if (estado === 'comprado') return 'bloqueado';
+
+    if (estado === 'reacondicionamiento') {
+      return costoReacondicionamiento > 0 ? 'editable' : 'bloqueado';
+    }
+
+    if (precioVenta > 0 || ['precio_asignado', 'publicado', 'apartado', 'vendido'].includes(estado)) {
+      return 'finalizado';
+    }
+
+    return 'bloqueado';
+  }
+
+  if (tab === 'publicacion') {
+    if (['precio_asignado'].includes(estado)) return 'editable';
+    if (['publicado', 'apartado', 'vendido'].includes(estado)) return 'finalizado';
+    return 'bloqueado';
+  }
+
+  return 'bloqueado';
+};
+
+const getLockedMessage = (tab) => {
+  const map = {
+    reacondicionamiento: 'Para habilitar Reacondicionamiento, inicia el proceso desde Resumen.',
+    pricing: 'Para habilitar Pricing, primero finaliza Reacondicionamiento con al menos un gasto registrado.',
+    publicacion: 'Para habilitar Publicación, primero debes tener precio asignado.'
+  };
+
+  return map[tab] || 'Esta sección aún no está disponible.';
+};
+
 const formatMoney = (value) => {
   if (value === null || value === undefined || value === '') return '-';
+
   const numeric = Number(value);
   if (Number.isNaN(numeric)) return value;
 
@@ -17,22 +98,23 @@ const formatMoney = (value) => {
 
 const formatNumber = (value) => {
   if (value === null || value === undefined || value === '') return '-';
+
   const numeric = Number(value);
   if (Number.isNaN(numeric)) return value;
+
   return new Intl.NumberFormat('es-MX').format(numeric);
 };
 
 const getStatusLabel = (estado) => {
   const map = {
     comprado: 'Comprado',
-    en_preparacion: 'En preparación',
-    en_taller: 'En taller',
-    en_estetica: 'En estética',
-    listo_para_publicar: 'Listo para publicar',
+    reacondicionamiento: 'Reacondicionamiento',
+    precio_asignado: 'Precio asignado',
     publicado: 'Publicado',
-    vendible: 'Vendible',
     apartado: 'Apartado',
-    vendido: 'Vendido'
+    vendido: 'Vendido',
+    detenido: 'Detenido',
+    no_vendible: 'No vendible'
   };
 
   return map[estado] || estado || '-';
@@ -41,154 +123,105 @@ const getStatusLabel = (estado) => {
 const getStatusStyle = (estado) => {
   const map = {
     comprado: styles.statusBlue,
-    en_preparacion: styles.statusOrange,
-    en_taller: styles.statusOrange,
-    en_estetica: styles.statusPurple,
-    listo_para_publicar: styles.statusGreen,
+    reacondicionamiento: styles.statusOrange,
+    precio_asignado: styles.statusPurple,
     publicado: styles.statusIndigo,
-    vendible: styles.statusGreen,
     apartado: styles.statusAmber,
-    vendido: styles.statusDark
+    vendido: styles.statusDark,
+    detenido: styles.statusRed,
+    no_vendible: styles.statusRed
   };
 
   return map[estado] || styles.statusDefault;
 };
 
-const NEXT_ACTIONS = {
-  comprado: {
-    next: 'reacondicionamiento',
-    label: 'Iniciar reacondicionamiento'
-  },
-  reacondicionamiento: {
-    next: 'precio_asignado',
-    label: 'Finalizar reacondicionamiento y pasar a pricing'
-  },
-  precio_asignado: {
-    next: 'publicado',
-    label: 'Publicar unidad'
-  },
-  publicado: {
-    next: 'apartado',
-    label: 'Marcar como apartado'
-  },
-  apartado: {
-    next: 'vendido',
-    label: 'Registrar venta'
-  }
-};
-
 export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }) {
-  const [precioVenta, setPrecioVenta] = useState('');
-  const [precioMinimo, setPrecioMinimo] = useState('');
-  const [costoReacondicionamiento, setCostoReacondicionamiento] = useState('');
-  const [estado, setEstado] = useState('');
-  const [viewMode, setViewMode] = useState('detail'); // detail | pricing
-
+  const [activeTab, setActiveTab] = useState('resumen');
+  const [estado, setEstado] = useState('comprado');
 
   useEffect(() => {
     if (item) {
-      setPrecioVenta(item.precioVenta || '');
-      setPrecioMinimo(item.precioMinimo || '');
-      setCostoReacondicionamiento(item.costoReacondicionamiento || '');
       setEstado(item.estado || 'comprado');
+      setActiveTab('resumen');
     }
-  }, [item]);
+  }, [item?.id]);
 
   if (!open || !item) return null;
 
   const precioCompra = Number(item.precioCompra) || 0;
-  const reacondicionamiento = Number(costoReacondicionamiento) || 0;
-  const venta = Number(precioVenta) || 0;
-  const costoTotal = precioCompra + reacondicionamiento;
-  const utilidad = venta > 0 ? venta - costoTotal : 0;
-  const margen = venta > 0 ? (utilidad / venta) * 100 : 0;
-
+  const costoReacondicionamiento = Number(item.costoReacondicionamiento) || 0;
+  const precioVenta = Number(item.precioVenta) || 0;
+  const costoTotal = precioCompra + costoReacondicionamiento;
+  const utilidad = precioVenta > 0 ? precioVenta - costoTotal : 0;
+  const margen = precioVenta > 0 ? (utilidad / precioVenta) * 100 : 0;
   const nextAction = NEXT_ACTIONS[estado];
 
-const handleNextStatus = async () => {
-  try {
-    if (!nextAction?.next) return;
-
-    // 👇 CLAVE: interceptar pricing
-    if (estado === 'comprado') {
-  setViewMode('reacondicionamiento');
-  return;
-}
-
-if (estado === 'reacondicionamiento') {
-  setViewMode('pricing');
-  return;
-}
-
-    const confirmed = window.confirm(
-      `¿Confirmas avanzar esta unidad a "${getStatusLabel(nextAction.next)}"?`
-    );
-
-    if (!confirmed) return;
-
-    const response = await updateInventoryStatus(item.id, nextAction.next);
-
-    if (!response?.ok) throw new Error('No se pudo actualizar');
-
-    setEstado(nextAction.next);
-
-    if (onUpdated) await onUpdated();
-
-  } catch (error) {
-    alert('Error al actualizar estado');
-  }
+  const sectionModes = {
+  resumen: 'visible',
+  reacondicionamiento: getSectionMode({
+    tab: 'reacondicionamiento',
+    estado,
+    costoReacondicionamiento,
+    precioVenta
+  }),
+  pricing: getSectionMode({
+    tab: 'pricing',
+    estado,
+    costoReacondicionamiento,
+    precioVenta
+  }),
+  publicacion: getSectionMode({
+    tab: 'publicacion',
+    estado,
+    costoReacondicionamiento,
+    precioVenta
+  }),
+  historial: 'visible'
 };
 
-if (viewMode === 'pricing') {
-  return (
-    <div style={styles.overlay}>
-      <aside style={styles.drawer}>
-        
-        <h2>Pricing Inteligente</h2>
-
-        <button onClick={() => setViewMode('detail')}>
-          ← Volver
-        </button>
-
-        <PricingView
-  inventarioId={item.id}
-  onPriceAssigned={async () => {
+  const handleRefresh = async () => {
     if (typeof onUpdated === 'function') {
       await onUpdated();
     }
+  };
 
-    setViewMode('detail');
-  }}
-/>
+  const handleMainAction = async () => {
+    try {
+      if (!nextAction) return;
 
-      </aside>
-    </div>
-  );
-}
+      if (!nextAction.next) {
+        setActiveTab(nextAction.tab);
+        return;
+      }
 
-if (viewMode === 'reacondicionamiento') {
-  return (
-    <div style={styles.overlay}>
-      <aside style={styles.drawer}>
-        <ReacondicionamientoView
-          inventarioId={item.id}
-          onDone={async () => {
-            if (onUpdated) await onUpdated();
-            setViewMode('detail');
-          }}
-          onBack={() => setViewMode('detail')}
-        />
-      </aside>
-    </div>
-  );
-}
+      const confirmed = window.confirm(
+        `¿Confirmas avanzar esta unidad a "${getStatusLabel(nextAction.next)}"?`
+      );
+
+      if (!confirmed) return;
+
+      const response = await updateInventoryStatus(item.id, nextAction.next);
+
+      if (!response?.ok) {
+        throw new Error('No se pudo actualizar el estado');
+      }
+
+      setEstado(nextAction.next);
+      setActiveTab(nextAction.tab || 'resumen');
+
+      await handleRefresh();
+    } catch (error) {
+      console.error('Error al avanzar flujo:', error);
+      alert(error?.message || 'No se pudo avanzar el flujo.');
+    }
+  };
 
   return (
     <div style={styles.overlay}>
       <aside style={styles.drawer}>
         <div style={styles.topBar}>
           <div>
-            <p style={styles.eyebrow}>Detalle de inventario</p>
+            <p style={styles.eyebrow}>Dashboard de unidad</p>
             <h2 style={styles.title}>
               {[item.marca, item.submarca].filter(Boolean).join(' ') || 'Unidad sin nombre'}
             </h2>
@@ -218,7 +251,10 @@ if (viewMode === 'reacondicionamiento') {
               <span style={{ ...styles.statusBadge, ...getStatusStyle(estado) }}>
                 {getStatusLabel(estado)}
               </span>
-              <span style={styles.daysPill}>{item.diasInventario ?? 0} días</span>
+
+              <span style={styles.daysPill}>
+                {item.diasInventario ?? 0} días
+              </span>
             </div>
 
             <h3 style={styles.vehicleTitle}>
@@ -241,161 +277,210 @@ if (viewMode === 'reacondicionamiento') {
           </div>
         </section>
 
-        <div style={styles.kpiGrid}>
-          <MiniKpi label="Compra" value={formatMoney(precioCompra)} />
-          <MiniKpi label="Costo total" value={formatMoney(costoTotal)} />
-          <MiniKpi label="Venta" value={venta > 0 ? formatMoney(venta) : '-'} />
-          <MiniKpi
-            label="Utilidad"
-            value={venta > 0 ? formatMoney(utilidad) : '-'}
-            tone={utilidad > 0 ? 'success' : 'default'}
-          />
+        <div style={styles.tabs}>
+          {[
+  { key: 'resumen', label: 'Resumen' },
+  { key: 'reacondicionamiento', label: 'Reacondicionamiento' },
+  { key: 'pricing', label: 'Pricing' },
+  { key: 'publicacion', label: 'Publicación' },
+  { key: 'historial', label: 'Historial' }
+].map((tab) => {
+  const mode = sectionModes[tab.key];
+
+  return (
+            
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                ...styles.tab,
+                ...(activeTab === tab.key ? styles.tabActive : {})
+              }}
+            >{tab.label}
+{mode === 'bloqueado' && ' 🔒'}
+{mode === 'finalizado' && ' ✓'}{tab.label}
+            </button>
+            );
+})}
         </div>
 
-        <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Control financiero</h3>
-          <p style={styles.sectionText}>
-            Define precios y costos para calcular utilidad proyectada.
-          </p>
-
-          <div style={styles.formGrid}>
-            <Field label="Precio de compra">
-              <input value={formatMoney(precioCompra)} disabled style={styles.inputDisabled} />
-            </Field>
-
-            <Field label="Reacondicionamiento">
-              <input
-                type="number"
-                value={costoReacondicionamiento}
-                onChange={(e) => setCostoReacondicionamiento(e.target.value)}
-                placeholder="0"
-                style={styles.input}
+        {activeTab === 'resumen' && (
+          <>
+            <div style={styles.kpiGrid}>
+              <MiniKpi label="Compra" value={formatMoney(precioCompra)} />
+              <MiniKpi label="Reacond." value={formatMoney(costoReacondicionamiento)} />
+              <MiniKpi label="Costo total" value={formatMoney(costoTotal)} />
+              <MiniKpi label="Venta" value={precioVenta > 0 ? formatMoney(precioVenta) : '-'} />
+              <MiniKpi
+                label="Utilidad"
+                value={precioVenta > 0 ? formatMoney(utilidad) : '-'}
+                tone={utilidad > 0 ? 'success' : utilidad < 0 ? 'danger' : 'default'}
               />
-            </Field>
-
-            <Field label="Precio de venta">
-              <input
-                type="number"
-                value={precioVenta}
-                onChange={(e) => setPrecioVenta(e.target.value)}
-                placeholder="Ej. 325000"
-                style={styles.input}
+              <MiniKpi
+                label="Margen"
+                value={precioVenta > 0 ? `${margen.toFixed(1)}%` : '-'}
               />
-            </Field>
-
-            <Field label="Precio mínimo">
-              <input
-                type="number"
-                value={precioMinimo}
-                onChange={(e) => setPrecioMinimo(e.target.value)}
-                placeholder="Ej. 310000"
-                style={styles.input}
-              />
-            </Field>
-          </div>
-
-          <div style={styles.profitBox}>
-            <div>
-              <span style={styles.profitLabel}>Margen proyectado</span>
-              <strong style={styles.profitValue}>
-                {venta > 0 ? `${margen.toFixed(1)}%` : '-'}
-              </strong>
             </div>
 
-            <div>
-              <span style={styles.profitLabel}>Utilidad proyectada</span>
-              <strong style={styles.profitValue}>
-                {venta > 0 ? formatMoney(utilidad) : '-'}
-              </strong>
+            <section style={styles.section}>
+              <h3 style={styles.sectionTitle}>Flujo operativo</h3>
+              <p style={styles.sectionText}>
+                Consulta el avance completo de la unidad. El flujo guía la siguiente acción, pero no oculta etapas anteriores.
+              </p>
+
+              <div style={styles.timeline}>
+                {FLOW.map((step) => (
+                  <TimelineItem
+                    key={step}
+                    active={FLOW.indexOf(step) <= FLOW.indexOf(estado)}
+                    label={getStatusLabel(step)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section style={styles.section}>
+              <h3 style={styles.sectionTitle}>Próxima acción recomendada</h3>
+              <p style={styles.sectionText}>
+                {nextAction
+                  ? `Siguiente paso: ${nextAction.label}.`
+                  : 'El flujo principal de esta unidad ya está finalizado o detenido.'}
+              </p>
+
+              <button
+                type="button"
+                onClick={handleMainAction}
+                disabled={!nextAction}
+                style={{
+                  ...styles.primaryButton,
+                  opacity: nextAction ? 1 : 0.55,
+                  cursor: nextAction ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {nextAction ? nextAction.label : 'Sin acción disponible'}
+              </button>
+            </section>
+
+            <section style={styles.section}>
+              <h3 style={styles.sectionTitle}>Checklist comercial</h3>
+
+              <div style={styles.checklist}>
+                <ChecklistItem checked={Boolean(item.foto)} label="Foto principal cargada" />
+                <ChecklistItem checked={costoReacondicionamiento > 0} label="Costo de reacondicionamiento registrado" />
+                <ChecklistItem checked={precioVenta > 0} label="Precio de venta asignado" />
+                <ChecklistItem checked={['publicado', 'apartado', 'vendido'].includes(estado)} label="Publicación iniciada" />
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeTab === 'reacondicionamiento' && (
+  sectionModes.reacondicionamiento === 'bloqueado' ? (
+    <LockedSection
+      title="Reacondicionamiento bloqueado"
+      message={getLockedMessage('reacondicionamiento')}
+      buttonLabel="Ir a Resumen"
+      onClick={() => setActiveTab('resumen')}
+    />
+  ) : (
+    <ReacondicionamientoView
+      inventarioId={item.id}
+      estadoActual={estado}
+      mode={sectionModes.reacondicionamiento}
+      onDone={async () => {
+        if (estado === 'comprado') {
+          const response = await updateInventoryStatus(item.id, 'reacondicionamiento');
+
+          if (!response?.ok) {
+            alert('No se pudo avanzar a reacondicionamiento');
+            return;
+          }
+
+          setEstado('reacondicionamiento');
+        }
+
+        await handleRefresh();
+        setActiveTab('pricing');
+      }}
+      onBack={() => setActiveTab('resumen')}
+    />
+  )
+)}
+
+        {activeTab === 'pricing' && (
+  sectionModes.pricing === 'bloqueado' ? (
+    <LockedSection
+      title="Pricing bloqueado"
+      message={getLockedMessage('pricing')}
+      buttonLabel="Ir a Reacondicionamiento"
+      onClick={() => setActiveTab('reacondicionamiento')}
+    />
+  ) : (
+    <PricingView
+      inventarioId={item.id}
+      mode={sectionModes.pricing}
+      onPriceAssigned={async () => {
+        await handleRefresh();
+        setEstado('precio_asignado');
+        setActiveTab('resumen');
+      }}
+    />
+  )
+)}
+
+        {activeTab === 'publicacion' && (
+  sectionModes.publicacion === 'bloqueado' ? (
+    <LockedSection
+      title="Publicación bloqueada"
+      message={getLockedMessage('publicacion')}
+      buttonLabel="Ir a Pricing"
+      onClick={() => setActiveTab('pricing')}
+    />
+  ) : (
+    <section style={styles.section}>
+      <h3 style={styles.sectionTitle}>Publicación</h3>
+      <p style={styles.sectionText}>
+        Aquí construiremos la experiencia tipo Maxi: generación de anuncio, selección de fotos, canales, links y evidencia de publicación.
+      </p>
+
+      <div style={styles.emptyBox}>
+        Módulo pendiente de construir.
+      </div>
+    </section>
+  )
+)}
+
+        {activeTab === 'historial' && (
+          <section style={styles.section}>
+            <h3 style={styles.sectionTitle}>Historial</h3>
+            <p style={styles.sectionText}>
+              Aquí concentraremos cambios de estado, pricing, gastos, evidencias y movimientos relevantes de la unidad.
+            </p>
+
+            <div style={styles.emptyBox}>
+              Módulo pendiente de construir.
             </div>
-          </div>
-        </section>
-
-        <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Proceso operativo</h3>
-          <p style={styles.sectionText}>
-            Avanza la unidad según su preparación comercial.
-          </p>
-
-          <Field label="Estatus actual">
-            <select
-              value={estado}
-              onChange={(e) => setEstado(e.target.value)}
-              style={styles.input}
-            >
-              <option value="comprado">Comprado</option>
-              <option value="en_preparacion">En preparación</option>
-              <option value="en_taller">En taller</option>
-              <option value="en_estetica">En estética</option>
-              <option value="listo_para_publicar">Listo para publicar</option>
-              <option value="publicado">Publicado</option>
-              <option value="vendible">Vendible</option>
-              <option value="apartado">Apartado</option>
-              <option value="vendido">Vendido</option>
-            </select>
-          </Field>
-
-          <div style={styles.timeline}>
-            <TimelineItem active label="Compra" />
-            <TimelineItem active={estado !== 'comprado'} label="Preparación" />
-            <TimelineItem
-              active={['listo_para_publicar', 'publicado', 'vendible', 'apartado', 'vendido'].includes(estado)}
-              label="Listo"
-            />
-            <TimelineItem
-              active={['publicado', 'vendible', 'apartado', 'vendido'].includes(estado)}
-              label="Publicado"
-            />
-            <TimelineItem
-              active={['vendible', 'apartado', 'vendido'].includes(estado)}
-              label="Vendible"
-            />
-          </div>
-        </section>
-
-        <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Checklist comercial</h3>
-
-          <div style={styles.checklist}>
-            <ChecklistItem checked={venta > 0} label="Precio de venta definido" />
-            <ChecklistItem checked={Boolean(item.foto)} label="Foto principal cargada" />
-            <ChecklistItem checked={estado !== 'comprado'} label="Proceso iniciado" />
-            <ChecklistItem
-              checked={['publicado', 'vendible', 'apartado', 'vendido'].includes(estado)}
-              label="Publicación iniciada"
-            />
-          </div>
-        </section>
-
-        <div style={styles.actions}>
-          <button type="button" style={styles.secondaryButton}>
-            Ver avalúo completo
-          </button>
-
-          <button
-  type="button"
-  style={{
-    ...styles.primaryButton,
-    opacity: nextAction ? 1 : 0.5,
-    cursor: nextAction ? 'pointer' : 'not-allowed'
-  }}
-  onClick={handleNextStatus}
-  disabled={!nextAction}
->
-  {nextAction ? nextAction.label : 'Flujo finalizado'}
-</button>
-        </div>
+          </section>
+        )}
       </aside>
     </div>
   );
 }
 
-function Field({ label, children }) {
+function LockedSection({ title, message, buttonLabel, onClick }) {
   return (
-    <label style={styles.field}>
-      <span style={styles.fieldLabel}>{label}</span>
-      {children}
-    </label>
+    <section style={styles.lockedSection}>
+      <div style={styles.lockIcon}>🔒</div>
+      <h3 style={styles.sectionTitle}>{title}</h3>
+      <p style={styles.sectionText}>{message}</p>
+
+      {buttonLabel && (
+        <button type="button" style={styles.secondaryButton} onClick={onClick}>
+          {buttonLabel}
+        </button>
+      )}
+    </section>
   );
 }
 
@@ -413,7 +498,8 @@ function MiniKpi({ label, value, tone = 'default' }) {
     <div
       style={{
         ...styles.miniKpi,
-        ...(tone === 'success' ? styles.miniKpiSuccess : {})
+        ...(tone === 'success' ? styles.miniKpiSuccess : {}),
+        ...(tone === 'danger' ? styles.miniKpiDanger : {})
       }}
     >
       <span style={styles.miniKpiLabel}>{label}</span>
@@ -469,9 +555,8 @@ const styles = {
     justifyContent: 'flex-end',
     zIndex: 1000
   },
-
   drawer: {
-    width: 'min(760px, 96vw)',
+    width: 'min(860px, 96vw)',
     height: '100vh',
     background: '#f8fafc',
     overflowY: 'auto',
@@ -479,7 +564,6 @@ const styles = {
     padding: '20px',
     boxSizing: 'border-box'
   },
-
   topBar: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -487,7 +571,6 @@ const styles = {
     gap: '16px',
     marginBottom: '12px'
   },
-
   eyebrow: {
     margin: 0,
     color: '#64748b',
@@ -496,22 +579,19 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.08em'
   },
-
   title: {
     margin: '4px 0 0 0',
     color: '#0f172a',
-    fontSize: '26px',
+    fontSize: '28px',
     lineHeight: 1.05,
     fontWeight: 950
   },
-
   subtitle: {
     margin: '6px 0 0 0',
     color: '#475569',
     fontSize: '13px',
     fontWeight: 700
   },
-
   closeButton: {
     width: '38px',
     height: '38px',
@@ -523,26 +603,23 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 900
   },
-
   vehicleHero: {
     display: 'grid',
-    gridTemplateColumns: '240px 1fr',
-    gap: '14px',
+    gridTemplateColumns: '260px 1fr',
+    gap: '16px',
     background: '#ffffff',
     border: '1px solid #e5e7eb',
     borderRadius: '20px',
     padding: '14px',
     boxShadow: '0 12px 30px rgba(15, 23, 42, 0.06)'
   },
-
   photoBox: {
-    width: '240px',
+    width: '260px',
     height: '210px',
     borderRadius: '16px',
     overflow: 'hidden',
     background: '#e2e8f0'
   },
-
   vehicleImage: {
     width: '100%',
     height: '100%',
@@ -550,7 +627,6 @@ const styles = {
     objectPosition: 'center',
     display: 'block'
   },
-
   imagePlaceholder: {
     width: '100%',
     height: '100%',
@@ -559,26 +635,43 @@ const styles = {
     color: '#64748b',
     fontWeight: 800
   },
-
   generalInfoBox: {
     minWidth: 0
   },
-
   statusRow: {
     display: 'flex',
     gap: '8px',
     flexWrap: 'wrap',
     marginBottom: '10px'
   },
-
   statusBadge: {
     display: 'inline-flex',
     padding: '6px 10px',
     borderRadius: '999px',
     fontSize: '12px',
-    fontWeight: 900
+    fontWeight: 900,
+    border: '1px solid transparent'
   },
+  lockedSection: {
+  background: '#ffffff',
+  border: '1px dashed #cbd5e1',
+  borderRadius: '20px',
+  padding: '28px',
+  marginTop: '12px',
+  textAlign: 'center',
+  color: '#334155'
+},
 
+lockIcon: {
+  width: '46px',
+  height: '46px',
+  borderRadius: '999px',
+  display: 'grid',
+  placeItems: 'center',
+  background: '#f1f5f9',
+  margin: '0 auto 12px auto',
+  fontSize: '22px'
+},
   daysPill: {
     display: 'inline-flex',
     padding: '6px 10px',
@@ -589,7 +682,6 @@ const styles = {
     fontSize: '12px',
     fontWeight: 900
   },
-
   vehicleTitle: {
     margin: '0 0 10px 0',
     color: '#0f172a',
@@ -597,27 +689,23 @@ const styles = {
     lineHeight: 1.2,
     fontWeight: 950
   },
-
   infoGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '8px'
   },
-
   infoItem: {
     background: '#f8fafc',
     border: '1px solid #e2e8f0',
     borderRadius: '12px',
     padding: '8px 10px'
   },
-
   infoLabel: {
     display: 'block',
     color: '#64748b',
     fontSize: '11px',
     fontWeight: 800
   },
-
   infoValue: {
     display: 'block',
     marginTop: '3px',
@@ -625,7 +713,6 @@ const styles = {
     fontSize: '13px',
     fontWeight: 900
   },
-
   vinBox: {
     marginTop: '8px',
     background: '#f8fafc',
@@ -633,14 +720,12 @@ const styles = {
     borderRadius: '12px',
     padding: '8px 10px'
   },
-
   vinLabel: {
     display: 'block',
     color: '#64748b',
     fontSize: '11px',
     fontWeight: 800
   },
-
   vinValue: {
     display: 'block',
     marginTop: '3px',
@@ -649,40 +734,63 @@ const styles = {
     fontWeight: 900,
     wordBreak: 'break-all'
   },
-
+  tabs: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '14px',
+    marginBottom: '12px',
+    padding: '8px',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '16px',
+    overflowX: 'auto'
+  },
+  tab: {
+    border: 'none',
+    background: '#f1f5f9',
+    color: '#334155',
+    padding: '9px 12px',
+    borderRadius: '12px',
+    fontWeight: 900,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap'
+  },
+  tabActive: {
+    background: '#0f172a',
+    color: '#ffffff'
+  },
   kpiGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '10px',
-    marginTop: '12px'
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '10px'
   },
-
   miniKpi: {
     background: '#ffffff',
     border: '1px solid #e5e7eb',
     borderRadius: '16px',
     padding: '12px',
     display: 'grid',
-    gap: '4px'
+    gap: '4px',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.03)'
   },
-
   miniKpiSuccess: {
     background: '#ecfdf5',
     borderColor: '#a7f3d0'
   },
-
+  miniKpiDanger: {
+    background: '#fef2f2',
+    borderColor: '#fecaca'
+  },
   miniKpiLabel: {
     color: '#64748b',
     fontSize: '11px',
     fontWeight: 800
   },
-
   miniKpiValue: {
     color: '#0f172a',
-    fontSize: '15px',
+    fontSize: '16px',
     fontWeight: 950
   },
-
   section: {
     background: '#ffffff',
     border: '1px solid #e5e7eb',
@@ -691,104 +799,30 @@ const styles = {
     marginTop: '12px',
     boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)'
   },
-
   sectionTitle: {
     margin: 0,
     color: '#0f172a',
     fontSize: '16px',
     fontWeight: 950
   },
-
   sectionText: {
-    margin: '5px 0 12px 0',
+    margin: '6px 0 12px 0',
     color: '#64748b',
     fontSize: '13px',
     lineHeight: 1.35
   },
-
-  formGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px'
-  },
-
-  field: {
-    display: 'grid',
-    gap: '6px'
-  },
-
-  fieldLabel: {
-    color: '#334155',
-    fontSize: '12px',
-    fontWeight: 900
-  },
-
-  input: {
-    width: '100%',
-    border: '1px solid #cbd5e1',
-    borderRadius: '12px',
-    padding: '11px 12px',
-    color: '#0f172a',
-    background: '#ffffff',
-    fontSize: '14px',
-    fontWeight: 700,
-    outline: 'none',
-    boxSizing: 'border-box'
-  },
-
-  inputDisabled: {
-    width: '100%',
-    border: '1px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '11px 12px',
-    color: '#64748b',
-    background: '#f8fafc',
-    fontSize: '14px',
-    fontWeight: 800,
-    outline: 'none',
-    boxSizing: 'border-box'
-  },
-
-  profitBox: {
-    marginTop: '12px',
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: '16px',
-    padding: '12px',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '12px'
-  },
-
-  profitLabel: {
-    display: 'block',
-    color: '#64748b',
-    fontSize: '12px',
-    fontWeight: 800
-  },
-
-  profitValue: {
-    display: 'block',
-    marginTop: '4px',
-    color: '#0f172a',
-    fontSize: '18px',
-    fontWeight: 950
-  },
-
   timeline: {
     marginTop: '12px',
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
+    gridTemplateColumns: 'repeat(6, 1fr)',
     gap: '8px'
   },
-
   timelineItem: {
     display: 'grid',
     justifyItems: 'center',
     gap: '6px',
     textAlign: 'center'
   },
-
   timelineDot: {
     width: '14px',
     height: '14px',
@@ -796,29 +830,24 @@ const styles = {
     background: '#e2e8f0',
     border: '2px solid #cbd5e1'
   },
-
   timelineDotActive: {
     background: '#2563eb',
     borderColor: '#bfdbfe'
   },
-
   timelineText: {
     color: '#94a3b8',
     fontSize: '11px',
     fontWeight: 800,
     lineHeight: 1.2
   },
-
   timelineTextActive: {
     color: '#0f172a'
   },
-
   checklist: {
     display: 'grid',
     gap: '10px',
     marginTop: '12px'
   },
-
   checkItem: {
     display: 'flex',
     alignItems: 'center',
@@ -827,7 +856,6 @@ const styles = {
     fontSize: '13px',
     fontWeight: 800
   },
-
   checkIcon: {
     width: '22px',
     height: '22px',
@@ -839,27 +867,13 @@ const styles = {
     fontWeight: 950,
     flexShrink: 0
   },
-
   checkIconActive: {
     background: '#dcfce7',
     color: '#15803d'
   },
-
   checkText: {
     lineHeight: 1.25
   },
-
-  actions: {
-    position: 'sticky',
-    bottom: 0,
-    background: 'linear-gradient(180deg, rgba(248,250,252,0.1), #f8fafc 35%)',
-    paddingTop: '14px',
-    marginTop: '14px',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '10px'
-  },
-
   primaryButton: {
     border: 'none',
     background: '#0f172a',
@@ -869,62 +883,53 @@ const styles = {
     fontWeight: 950,
     cursor: 'pointer'
   },
-
-  secondaryButton: {
-    border: '1px solid #cbd5e1',
-    background: '#ffffff',
-    color: '#0f172a',
+  emptyBox: {
+    background: '#f8fafc',
+    border: '1px dashed #cbd5e1',
     borderRadius: '14px',
-    padding: '13px 14px',
-    fontWeight: 950,
-    cursor: 'pointer'
+    padding: '18px',
+    color: '#64748b',
+    fontWeight: 700,
+    textAlign: 'center'
   },
-
   statusBlue: {
     background: '#eff6ff',
     color: '#1d4ed8',
-    border: '1px solid #bfdbfe'
+    borderColor: '#bfdbfe'
   },
-
   statusOrange: {
     background: '#fff7ed',
     color: '#c2410c',
-    border: '1px solid #fed7aa'
+    borderColor: '#fed7aa'
   },
-
   statusPurple: {
     background: '#f5f3ff',
     color: '#6d28d9',
-    border: '1px solid #ddd6fe'
+    borderColor: '#ddd6fe'
   },
-
-  statusGreen: {
-    background: '#ecfdf5',
-    color: '#047857',
-    border: '1px solid #a7f3d0'
-  },
-
   statusIndigo: {
     background: '#eef2ff',
     color: '#4338ca',
-    border: '1px solid #c7d2fe'
+    borderColor: '#c7d2fe'
   },
-
   statusAmber: {
     background: '#fef3c7',
     color: '#92400e',
-    border: '1px solid #fde68a'
+    borderColor: '#fde68a'
   },
-
   statusDark: {
     background: '#f3f4f6',
     color: '#111827',
-    border: '1px solid #d1d5db'
+    borderColor: '#d1d5db'
   },
-
+  statusRed: {
+    background: '#fef2f2',
+    color: '#b91c1c',
+    borderColor: '#fecaca'
+  },
   statusDefault: {
     background: '#f8fafc',
     color: '#334155',
-    border: '1px solid #e2e8f0'
+    borderColor: '#e2e8f0'
   }
 };

@@ -483,14 +483,17 @@ const actualizarAppraisal = async (req, res) => {
     }
 
     if (estatusNuevo === 'comprado' && estatusActual !== 'comprado') {
-      await db.query(
-        `
-        INSERT IGNORE INTO inventario (appraisal_id)
-        VALUES (?)
-        `,
-        [id]
-      );
-    }
+  const valuacionData = valuacion || {};
+  const precioCompra = Number(valuacionData.tomaAutorizada) || 0;
+
+  await db.query(
+    `
+    INSERT IGNORE INTO inventario (appraisal_id, precio_compra)
+    VALUES (?, ?)
+    `,
+    [id, precioCompra]
+  );
+}
 
     const actor = await getActorInfo(req.usuario);
 
