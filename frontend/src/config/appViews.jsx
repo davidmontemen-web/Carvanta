@@ -4,12 +4,14 @@ import VentasPage from '../pages/VentasPage';
 import InventarioPage from '../pages/InventarioPage';
 import UsuariosPage from '../pages/UsuariosPage';
 import MiCuentaPage from '../pages/MiCuentaPage';
+import PublicacionCanalesPage from '../pages/PublicacionCanalesPage';
 
 export const VIEW_KEYS = {
   DASHBOARD: 'dashboard',
   AVALUOS: 'avaluos',
   VENTAS: 'ventas',
   INVENTARIO: 'inventario',
+  PUBLICACION_CONFIG: 'publicacion-config',
   USUARIOS: 'usuarios',
   MI_CUENTA: 'mi-cuenta'
 };
@@ -19,6 +21,7 @@ export const ADMIN_VIEWS = [
   VIEW_KEYS.AVALUOS,
   VIEW_KEYS.VENTAS,
   VIEW_KEYS.INVENTARIO,
+  VIEW_KEYS.PUBLICACION_CONFIG,
   VIEW_KEYS.USUARIOS,
   VIEW_KEYS.MI_CUENTA
 ];
@@ -34,6 +37,7 @@ export const VIEW_TITLES = {
   [VIEW_KEYS.AVALUOS]: 'Avalúos',
   [VIEW_KEYS.VENTAS]: 'Ventas',
   [VIEW_KEYS.INVENTARIO]: 'Inventario',
+  [VIEW_KEYS.PUBLICACION_CONFIG]: 'Configuración publicación',
   [VIEW_KEYS.USUARIOS]: 'Usuarios',
   [VIEW_KEYS.MI_CUENTA]: 'Mi cuenta'
 };
@@ -57,6 +61,8 @@ export const getViewComponent = ({ viewKey, esAdmin, usuario, onLogout }) => {
       return esAdmin ? <VentasPage /> : <DashboardPage />;
     case VIEW_KEYS.INVENTARIO:
       return esAdmin ? <InventarioPage /> : <DashboardPage />;
+    case VIEW_KEYS.PUBLICACION_CONFIG:
+      return esAdmin ? <PublicacionCanalesPage /> : <DashboardPage />;
     case VIEW_KEYS.USUARIOS:
       return esAdmin ? <UsuariosPage onLogout={onLogout} usuario={usuario} /> : <DashboardPage />;
     case VIEW_KEYS.MI_CUENTA:

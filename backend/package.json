@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "check": "node --check app.js && node --check server.js && node --check controllers/usuarios.controller.js && node --check controllers/appraisalController.js"
+    "check": "node --check app.js && node --check server.js && node --check controllers/usuarios.controller.js && node --check controllers/appraisalController.js && node --check controllers/inventoryController.js && node --check routes/inventoryRoutes.js"
   },
   "dependencies": {
     "archiver": "^7.0.1",

@@ -29,6 +29,155 @@ const numberOrZero = (value) => {
 
 const roundMoney = (value) => Math.round(numberOrZero(value));
 
+const PUBLICATION_CHANNELS = ['mercadolibre', 'seminuevos', 'autocosmos', 'facebook'];
+
+const ensurePublicationTables = async () => {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS inventario_publicaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      inventario_id INT NOT NULL,
+      canal VARCHAR(50) NOT NULL,
+      status ENUM('draft','queued','published','failed','paused') NOT NULL DEFAULT 'draft',
+      titulo VARCHAR(255) NULL,
+      descripcion TEXT NULL,
+      external_id VARCHAR(120) NULL,
+      external_url VARCHAR(500) NULL,
+      error_message VARCHAR(500) NULL,
+      payload_snapshot JSON NULL,
+      published_at DATETIME NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_inventario_canal (inventario_id, canal)
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS inventario_publicacion_eventos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      inventario_id INT NOT NULL,
+      publicacion_id INT NULL,
+      canal VARCHAR(50) NULL,
+      tipo VARCHAR(60) NOT NULL,
+      detalle VARCHAR(500) NULL,
+      payload JSON NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS inventario_publicacion_canales_config (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      canal VARCHAR(50) NOT NULL UNIQUE,
+      provider VARCHAR(40) NOT NULL DEFAULT 'webhook',
+      activo TINYINT(1) NOT NULL DEFAULT 0,
+      profile_url VARCHAR(500) NULL,
+      webhook_url VARCHAR(500) NULL,
+      api_key VARCHAR(255) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await db.query(`
+    ALTER TABLE inventario_publicacion_canales_config
+    ADD COLUMN IF NOT EXISTS profile_url VARCHAR(500) NULL AFTER activo
+  `);
+
+  await db.query(`
+    ALTER TABLE inventario_publicacion_canales_config
+    ADD COLUMN IF NOT EXISTS provider VARCHAR(40) NOT NULL DEFAULT 'webhook' AFTER canal
+  `);
+};
+
+const getChannelConfigs = async () => {
+  const [rows] = await db.query(
+    `
+    SELECT canal, provider, activo, profile_url, webhook_url, api_key
+    FROM inventario_publicacion_canales_config
+    `
+  );
+
+  const map = {};
+  rows.forEach((row) => {
+    map[row.canal] = row;
+  });
+  return map;
+};
+
+const publishToChannel = async ({ channel, config, payload }) => {
+  if (!config || !config.activo) {
+    return {
+      ok: false,
+      error: 'Canal no configurado o inactivo'
+    };
+  }
+
+  const provider = config.provider || 'webhook';
+
+  if (provider === 'profile_link_only') {
+    if (!config.profile_url) {
+      return {
+        ok: false,
+        error: 'Canal profile_link_only sin profile_url configurado'
+      };
+    }
+
+    return {
+      ok: true,
+      externalId: `${channel}-profile-${Date.now()}`,
+      externalUrl: config.profile_url,
+      raw: { provider, mode: 'profile_link_only' }
+    };
+  }
+
+  if (!config.webhook_url) {
+    return {
+      ok: false,
+      error: 'Canal sin webhook_url configurado'
+    };
+  }
+
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+
+  if (config.api_key) {
+    headers.Authorization = `Bearer ${config.api_key}`;
+  }
+
+  try {
+    const response = await fetch(config.webhook_url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        canal: channel,
+        ...payload
+      })
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return {
+        ok: false,
+        error: `Error provider (${response.status}): ${text || response.statusText}`
+      };
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return {
+      ok: true,
+      externalId: data?.external_id || data?.id || `${channel}-${Date.now()}`,
+      externalUrl: data?.external_url || data?.url || payload?.profileUrl || null,
+      raw: data
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || 'Error de conexión con provider'
+    };
+  }
+};
+
 const calcularPricing = ({ inventario, comparables }) => {
   const precios = comparables
     .map((item) => numberOrZero(item.precio))
@@ -677,6 +826,473 @@ const eliminarGastoReacondicionamiento = async (req, res) => {
   }
 };
 
+const obtenerPublicacionesInventario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ensurePublicationTables();
+
+    const [inventarioRows] = await db.query(
+      'SELECT id, estado, precio_venta FROM inventario WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (!inventarioRows.length) {
+      return res.status(404).json({ ok: false, error: 'Inventario no encontrado' });
+    }
+
+    const [publicaciones] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicaciones
+      WHERE inventario_id = ?
+      ORDER BY canal ASC
+      `,
+      [id]
+    );
+
+    const [eventos] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicacion_eventos
+      WHERE inventario_id = ?
+      ORDER BY created_at DESC, id DESC
+      LIMIT 80
+      `,
+      [id]
+    );
+
+    const channelConfigs = await getChannelConfigs();
+
+    return res.json({
+      ok: true,
+      inventario: inventarioRows[0],
+      canalesDisponibles: PUBLICATION_CHANNELS,
+      canalesConfig: PUBLICATION_CHANNELS.map((canal) => ({
+        canal,
+        activo: Boolean(channelConfigs[canal]?.activo),
+        provider: channelConfigs[canal]?.provider || 'webhook',
+        configured:
+          channelConfigs[canal]?.provider === 'profile_link_only'
+            ? Boolean(channelConfigs[canal]?.profile_url)
+            : Boolean(channelConfigs[canal]?.webhook_url),
+        profileUrl: channelConfigs[canal]?.profile_url || ''
+      })),
+      publicaciones,
+      eventos
+    });
+  } catch (error) {
+    console.error('Error al obtener publicaciones de inventario:', error);
+    return res.status(500).json({ ok: false, error: 'Error al obtener publicaciones' });
+  }
+};
+
+const publicarInventario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { canales = [], titulo = '', descripcion = '' } = req.body;
+
+    await ensurePublicationTables();
+
+    const canalesValidos = Array.isArray(canales)
+      ? canales.filter((canal) => PUBLICATION_CHANNELS.includes(canal))
+      : [];
+
+    if (!canalesValidos.length) {
+      return res.status(400).json({ ok: false, error: 'Selecciona al menos un canal válido' });
+    }
+
+    const [inventarioRows] = await db.query(
+      'SELECT id, estado, precio_venta FROM inventario WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (!inventarioRows.length) {
+      return res.status(404).json({ ok: false, error: 'Inventario no encontrado' });
+    }
+
+    const inventario = inventarioRows[0];
+    if (!inventario.precio_venta || Number(inventario.precio_venta) <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Debes tener precio de venta asignado antes de publicar'
+      });
+    }
+
+    const resultados = [];
+    const channelConfigs = await getChannelConfigs();
+    let publishedCount = 0;
+
+    for (const canal of canalesValidos) {
+      const payloadSnapshot = JSON.stringify({
+        titulo: titulo || null,
+        descripcion: descripcion || null,
+        precioVenta: inventario.precio_venta
+      });
+
+      const publishResult = await publishToChannel({
+        channel: canal,
+        config: channelConfigs[canal],
+        payload: {
+          inventarioId: Number(id),
+          titulo: titulo || null,
+          descripcion: descripcion || null,
+          precioVenta: inventario.precio_venta,
+          profileUrl: channelConfigs[canal]?.profile_url || null
+        }
+      });
+
+      const finalStatus = publishResult.ok ? 'published' : 'failed';
+      const externalId = publishResult.ok ? publishResult.externalId : null;
+      const externalUrl = publishResult.ok ? publishResult.externalUrl : null;
+      const errorMessage = publishResult.ok ? null : publishResult.error;
+
+      const [result] = await db.query(
+        `
+        INSERT INTO inventario_publicaciones (
+          inventario_id, canal, status, titulo, descripcion, external_id, external_url,
+          error_message, payload_snapshot, published_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          status = VALUES(status),
+          titulo = VALUES(titulo),
+          descripcion = VALUES(descripcion),
+          external_id = VALUES(external_id),
+          external_url = VALUES(external_url),
+          error_message = VALUES(error_message),
+          payload_snapshot = VALUES(payload_snapshot),
+          published_at = VALUES(published_at),
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [
+          id,
+          canal,
+          finalStatus,
+          titulo || null,
+          descripcion || null,
+          externalId,
+          externalUrl,
+          errorMessage,
+          payloadSnapshot,
+          publishResult.ok ? new Date() : null
+        ]
+      );
+
+      const publicationId = result.insertId || null;
+
+      await db.query(
+        `
+        INSERT INTO inventario_publicacion_eventos (
+          inventario_id, publicacion_id, canal, tipo, detalle, payload
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        [
+          id,
+          publicationId,
+          canal,
+          publishResult.ok ? 'published' : 'failed',
+          publishResult.ok
+            ? 'Publicación enviada correctamente al provider'
+            : `Error enviando al provider: ${publishResult.error}`,
+          payloadSnapshot
+        ]
+      );
+
+      resultados.push({
+        canal,
+        status: finalStatus,
+        externalId,
+        externalUrl,
+        error: errorMessage
+      });
+
+      if (publishResult.ok) {
+        publishedCount += 1;
+      }
+    }
+
+    if (publishedCount > 0) {
+      await db.query(
+        `
+        UPDATE inventario
+        SET estado = 'publicado', updated_at = NOW()
+        WHERE id = ? AND estado IN ('precio_asignado', 'publicado')
+        `,
+        [id]
+      );
+    }
+
+    return res.json({
+      ok: publishedCount > 0,
+      message: publishedCount > 0
+        ? 'Publicación procesada'
+        : 'Ningún canal pudo publicarse; revisa configuración de providers',
+      publishedCount,
+      resultados
+    });
+  } catch (error) {
+    console.error('Error al publicar inventario:', error);
+    return res.status(500).json({ ok: false, error: 'Error al publicar inventario' });
+  }
+};
+
+const reintentarPublicacionInventario = async (req, res) => {
+  try {
+    const { id, publicationId } = req.params;
+    await ensurePublicationTables();
+
+    const [rows] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicaciones
+      WHERE id = ? AND inventario_id = ?
+      LIMIT 1
+      `,
+      [publicationId, id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ ok: false, error: 'Publicación no encontrada' });
+    }
+
+    const item = rows[0];
+    const channelConfigs = await getChannelConfigs();
+
+    const publishResult = await publishToChannel({
+      channel: item.canal,
+      config: channelConfigs[item.canal],
+      payload: {
+        inventarioId: Number(id),
+        titulo: item.titulo || null,
+        descripcion: item.descripcion || null
+      }
+    });
+
+    const finalStatus = publishResult.ok ? 'published' : 'failed';
+    const externalId = publishResult.ok ? publishResult.externalId : null;
+    const externalUrl = publishResult.ok ? publishResult.externalUrl : null;
+    const errorMessage = publishResult.ok ? null : publishResult.error;
+
+    await db.query(
+      `
+      UPDATE inventario_publicaciones
+      SET
+        status = ?,
+        external_id = ?,
+        external_url = ?,
+        error_message = ?,
+        published_at = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [
+        finalStatus,
+        externalId,
+        externalUrl,
+        errorMessage,
+        publishResult.ok ? new Date() : null,
+        publicationId
+      ]
+    );
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_eventos (
+        inventario_id, publicacion_id, canal, tipo, detalle
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        publicationId,
+        item.canal,
+        publishResult.ok ? 'retry' : 'retry_failed',
+        publishResult.ok
+          ? 'Se reintentó publicación y quedó publicada'
+          : `Falló reintento de publicación: ${publishResult.error}`
+      ]
+    );
+
+    if (publishResult.ok) {
+      await db.query(
+        `
+        UPDATE inventario
+        SET estado = 'publicado', updated_at = NOW()
+        WHERE id = ? AND estado IN ('precio_asignado', 'publicado')
+        `,
+        [id]
+      );
+    }
+
+    return res.json({
+      ok: publishResult.ok,
+      message: publishResult.ok
+        ? 'Publicación reintentada correctamente'
+        : `No se pudo reintentar publicación: ${publishResult.error}`,
+      publication: {
+        id: Number(publicationId),
+        canal: item.canal,
+        status: finalStatus,
+        externalId,
+        externalUrl,
+        error: errorMessage
+      }
+    });
+  } catch (error) {
+    console.error('Error al reintentar publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al reintentar publicación' });
+  }
+};
+
+const cambiarEstadoPublicacionInventario = async (req, res) => {
+  try {
+    const { id, publicationId } = req.params;
+    const { status } = req.body;
+    await ensurePublicationTables();
+
+    const nextStatus = String(status || '').trim().toLowerCase();
+    if (!['paused', 'published'].includes(nextStatus)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Estado inválido. Usa paused o published'
+      });
+    }
+
+    const [rows] = await db.query(
+      `
+      SELECT id, canal, status
+      FROM inventario_publicaciones
+      WHERE id = ? AND inventario_id = ?
+      LIMIT 1
+      `,
+      [publicationId, id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ ok: false, error: 'Publicación no encontrada' });
+    }
+
+    const current = rows[0];
+
+    await db.query(
+      `
+      UPDATE inventario_publicaciones
+      SET
+        status = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [nextStatus, publicationId]
+    );
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_eventos (
+        inventario_id, publicacion_id, canal, tipo, detalle
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        publicationId,
+        current.canal,
+        nextStatus === 'paused' ? 'paused' : 'resumed',
+        nextStatus === 'paused'
+          ? 'Publicación pausada manualmente'
+          : 'Publicación reactivada manualmente'
+      ]
+    );
+
+    return res.json({
+      ok: true,
+      message: nextStatus === 'paused' ? 'Publicación pausada' : 'Publicación reactivada',
+      publication: {
+        id: Number(publicationId),
+        canal: current.canal,
+        previousStatus: current.status,
+        status: nextStatus
+      }
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado de publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al cambiar estado de publicación' });
+  }
+};
+
+const obtenerConfiguracionPublicacion = async (_req, res) => {
+  try {
+    await ensurePublicationTables();
+    const configs = await getChannelConfigs();
+
+    return res.json({
+      ok: true,
+      canales: PUBLICATION_CHANNELS.map((canal) => ({
+        canal,
+        activo: Boolean(configs[canal]?.activo),
+        provider: configs[canal]?.provider || 'webhook',
+        configured:
+          configs[canal]?.provider === 'profile_link_only'
+            ? Boolean(configs[canal]?.profile_url)
+            : Boolean(configs[canal]?.webhook_url),
+        webhookUrl: configs[canal]?.webhook_url || null
+        ,
+        profileUrl: configs[canal]?.profile_url || null
+      }))
+    });
+  } catch (error) {
+    console.error('Error al obtener configuración de publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al obtener configuración' });
+  }
+};
+
+const guardarConfiguracionPublicacion = async (req, res) => {
+  try {
+    await ensurePublicationTables();
+    const { canal, provider = 'webhook', activo, webhookUrl, apiKey, profileUrl } = req.body;
+
+    if (!PUBLICATION_CHANNELS.includes(canal)) {
+      return res.status(400).json({ ok: false, error: 'Canal inválido' });
+    }
+    if (!['webhook', 'profile_link_only'].includes(provider)) {
+      return res.status(400).json({ ok: false, error: 'provider inválido' });
+    }
+
+    if (webhookUrl && !/^https?:\/\//i.test(webhookUrl)) {
+      return res.status(400).json({ ok: false, error: 'webhookUrl debe iniciar con http/https' });
+    }
+    if (profileUrl && !/^https?:\/\//i.test(profileUrl)) {
+      return res.status(400).json({ ok: false, error: 'profileUrl debe iniciar con http/https' });
+    }
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_canales_config (
+        canal, provider, activo, profile_url, webhook_url, api_key
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        provider = VALUES(provider),
+        activo = VALUES(activo),
+        profile_url = VALUES(profile_url),
+        webhook_url = VALUES(webhook_url),
+        api_key = VALUES(api_key),
+        updated_at = CURRENT_TIMESTAMP
+      `,
+      [canal, provider, activo ? 1 : 0, profileUrl || null, webhookUrl || null, apiKey || null]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Configuración de canal guardada',
+      canal
+    });
+  } catch (error) {
+    console.error('Error al guardar configuración de publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al guardar configuración' });
+  }
+};
+
 module.exports = {
   crearDesdeAvaluo,
   listarInventario,
@@ -687,5 +1303,11 @@ module.exports = {
   asignarPrecioInventario,
   obtenerGastosReacondicionamiento,
 agregarGastoReacondicionamiento,
-eliminarGastoReacondicionamiento
+eliminarGastoReacondicionamiento,
+obtenerPublicacionesInventario,
+publicarInventario,
+reintentarPublicacionInventario,
+cambiarEstadoPublicacionInventario,
+obtenerConfiguracionPublicacion,
+guardarConfiguracionPublicacion
 };

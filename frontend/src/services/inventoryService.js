@@ -93,3 +93,62 @@ export const deleteReconditioningExpense = async (id, gastoId) => {
     normalizeApiError(error, 'Error al eliminar gasto de reacondicionamiento');
   }
 };
+
+export const getInventoryPublications = async (id) => {
+  try {
+    const response = await httpClient.get(`/api/inventario/${id}/publicaciones`);
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al obtener publicaciones del inventario');
+  }
+};
+
+export const publishInventory = async (id, data) => {
+  try {
+    const response = await httpClient.post(`/api/inventario/${id}/publicaciones/publicar`, data);
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al publicar inventario');
+  }
+};
+
+export const retryInventoryPublication = async (id, publicationId) => {
+  try {
+    const response = await httpClient.post(
+      `/api/inventario/${id}/publicaciones/${publicationId}/reintentar`
+    );
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al reintentar publicación');
+  }
+};
+
+export const updateInventoryPublicationStatus = async (id, publicationId, status) => {
+  try {
+    const response = await httpClient.patch(
+      `/api/inventario/${id}/publicaciones/${publicationId}/status`,
+      { status }
+    );
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al actualizar estado de publicación');
+  }
+};
+
+export const getPublicationChannelsConfig = async () => {
+  try {
+    const response = await httpClient.get('/api/inventario/publicaciones/config');
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al obtener configuración de canales');
+  }
+};
+
+export const savePublicationChannelConfig = async (data) => {
+  try {
+    const response = await httpClient.post('/api/inventario/publicaciones/config', data);
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al guardar configuración del canal');
+  }
+};

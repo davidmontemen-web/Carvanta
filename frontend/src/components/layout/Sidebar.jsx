@@ -6,6 +6,7 @@ export default function Sidebar({ usuario, vistaActiva, onCambiarVista }) {
     { key: 'avaluos', label: 'Avalúos', visible: true },
     { key: 'ventas', label: 'Ventas', visible: esAdmin },
     { key: 'inventario', label: 'Inventario', visible: esAdmin },
+    { key: 'publicacion-config', label: 'Config publicación', visible: esAdmin },
     { key: 'usuarios', label: 'Usuarios', visible: esAdmin }
   ];
 
