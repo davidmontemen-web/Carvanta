@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   getInventoryPublications,
   publishInventory,
-  retryInventoryPublication
+  retryInventoryPublication,
+  updateInventoryPublicationStatus
 } from '../../services/inventoryService';
 
 const CHANNEL_LABELS = {
@@ -33,8 +34,13 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
   const [data, setData] = useState(null);
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [form, setForm] = useState({ titulo: '', descripcion: '' });
+  const [notification, setNotification] = useState(null);
 
   const readOnly = mode === 'finalizado';
+  const canPublish =
+    selectedChannels.length > 0 &&
+    String(form.titulo || '').trim().length >= 8 &&
+    String(form.descripcion || '').trim().length >= 25;
 
   const loadData = async () => {
     try {
@@ -52,11 +58,21 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
       }
     } catch (error) {
       console.error('Error cargando publicación:', error);
-      alert(error?.message || 'No se pudo cargar publicación.');
+      setNotification({
+        type: 'error',
+        message: error?.message || 'No se pudo cargar publicación.'
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!notification) return;
+
+    const timer = setTimeout(() => setNotification(null), 3800);
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   useEffect(() => {
     loadData();
@@ -85,7 +101,18 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
   const handlePublish = async () => {
     try {
       if (!selectedChannels.length) {
-        alert('Selecciona al menos un canal.');
+        setNotification({
+          type: 'warning',
+          message: 'Selecciona al menos un canal.'
+        });
+        return;
+      }
+
+      if (!canPublish) {
+        setNotification({
+          type: 'warning',
+          message: 'Completa título y descripción para publicar.'
+        });
         return;
       }
 
@@ -107,10 +134,16 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
         await onPublished();
       }
 
-      alert('Publicación procesada correctamente.');
+      setNotification({
+        type: 'success',
+        message: 'Publicación procesada correctamente.'
+      });
     } catch (error) {
       console.error('Error publicando inventario:', error);
-      alert(error?.message || 'No se pudo publicar.');
+      setNotification({
+        type: 'error',
+        message: error?.message || 'No se pudo publicar.'
+      });
     } finally {
       setSaving(false);
     }
@@ -131,7 +164,33 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
       }
     } catch (error) {
       console.error('Error al reintentar publicación:', error);
-      alert(error?.message || 'No se pudo reintentar publicación.');
+      setNotification({
+        type: 'error',
+        message: error?.message || 'No se pudo reintentar publicación.'
+      });
+    }
+  };
+
+  const handleStatusChange = async (publicationId, status) => {
+    try {
+      const response = await updateInventoryPublicationStatus(inventarioId, publicationId, status);
+
+      if (!response?.ok) {
+        throw new Error(response?.error || 'No se pudo actualizar estado');
+      }
+
+      await loadData();
+
+      setNotification({
+        type: 'success',
+        message: status === 'paused' ? 'Canal pausado correctamente.' : 'Canal reactivado.'
+      });
+    } catch (error) {
+      console.error('Error actualizando estado de publicación:', error);
+      setNotification({
+        type: 'error',
+        message: error?.message || 'No se pudo actualizar estado de publicación.'
+      });
     }
   };
 
@@ -146,6 +205,34 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
         <p style={styles.subtitle}>
           Publica esta unidad en múltiples canales, conserva URL final y seguimiento por canal.
         </p>
+
+        {notification && (
+          <div
+            style={{
+              ...styles.notification,
+              ...(notification.type === 'success' ? styles.notificationSuccess : {}),
+              ...(notification.type === 'warning' ? styles.notificationWarning : {}),
+              ...(notification.type === 'error' ? styles.notificationError : {})
+            }}
+          >
+            {notification.message}
+          </div>
+        )}
+
+        <div style={styles.checklist}>
+          <ChecklistItem
+            ok={selectedChannels.length > 0}
+            label={`Canales seleccionados (${selectedChannels.length})`}
+          />
+          <ChecklistItem
+            ok={String(form.titulo || '').trim().length >= 8}
+            label="Título comercial (mínimo 8 caracteres)"
+          />
+          <ChecklistItem
+            ok={String(form.descripcion || '').trim().length >= 25}
+            label="Descripción comercial (mínimo 25 caracteres)"
+          />
+        </div>
 
         <div style={styles.channelGrid}>
           {canalesDisponibles.map((channel) => {
@@ -193,7 +280,16 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
         </div>
 
         {!readOnly && (
-          <button type="button" style={styles.primaryButton} disabled={saving} onClick={handlePublish}>
+          <button
+            type="button"
+            style={{
+              ...styles.primaryButton,
+              opacity: canPublish ? 1 : 0.55,
+              cursor: canPublish ? 'pointer' : 'not-allowed'
+            }}
+            disabled={saving || !canPublish}
+            onClick={handlePublish}
+          >
             {saving ? 'Publicando...' : 'Publicar en canales seleccionados'}
           </button>
         )}
@@ -235,6 +331,26 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
                       Reintentar
                     </button>
                   ) : null}
+
+                  {status === 'published' && !readOnly ? (
+                    <button
+                      type="button"
+                      style={styles.secondaryButton}
+                      onClick={() => handleStatusChange(item.id, 'paused')}
+                    >
+                      Pausar
+                    </button>
+                  ) : null}
+
+                  {status === 'paused' && !readOnly ? (
+                    <button
+                      type="button"
+                      style={styles.secondaryButton}
+                      onClick={() => handleStatusChange(item.id, 'published')}
+                    >
+                      Reactivar
+                    </button>
+                  ) : null}
                 </div>
               </div>
             );
@@ -261,6 +377,15 @@ export default function PublicacionView({ inventarioId, mode, onPublished }) {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function ChecklistItem({ ok, label }) {
+  return (
+    <div style={styles.checkItem}>
+      <span style={{ ...styles.checkDot, ...(ok ? styles.checkDotOk : {}) }}>{ok ? '✓' : '•'}</span>
+      <span style={styles.checkLabel}>{label}</span>
     </div>
   );
 }
@@ -293,6 +418,59 @@ const styles = {
     color: '#0f172a',
     fontSize: '15px',
     fontWeight: 900
+  },
+  notification: {
+    border: '1px solid transparent',
+    borderRadius: '12px',
+    padding: '9px 10px',
+    fontSize: '12px',
+    fontWeight: 800,
+    marginBottom: '12px'
+  },
+  notificationSuccess: {
+    background: '#ecfdf5',
+    color: '#166534',
+    borderColor: '#86efac'
+  },
+  notificationWarning: {
+    background: '#fff7ed',
+    color: '#9a3412',
+    borderColor: '#fdba74'
+  },
+  notificationError: {
+    background: '#fef2f2',
+    color: '#991b1b',
+    borderColor: '#fecaca'
+  },
+  checklist: {
+    display: 'grid',
+    gap: '6px',
+    marginBottom: '12px'
+  },
+  checkItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '7px'
+  },
+  checkDot: {
+    width: '20px',
+    height: '20px',
+    borderRadius: '999px',
+    display: 'grid',
+    placeItems: 'center',
+    fontWeight: 900,
+    background: '#e2e8f0',
+    color: '#475569',
+    fontSize: '12px'
+  },
+  checkDotOk: {
+    background: '#dcfce7',
+    color: '#166534'
+  },
+  checkLabel: {
+    color: '#334155',
+    fontSize: '12px',
+    fontWeight: 700
   },
   channelGrid: {
     display: 'grid',

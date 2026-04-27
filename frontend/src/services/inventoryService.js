@@ -122,3 +122,15 @@ export const retryInventoryPublication = async (id, publicationId) => {
     normalizeApiError(error, 'Error al reintentar publicación');
   }
 };
+
+export const updateInventoryPublicationStatus = async (id, publicationId, status) => {
+  try {
+    const response = await httpClient.patch(
+      `/api/inventario/${id}/publicaciones/${publicationId}/status`,
+      { status }
+    );
+    return response.data;
+  } catch (error) {
+    normalizeApiError(error, 'Error al actualizar estado de publicación');
+  }
+};

@@ -940,6 +940,81 @@ const reintentarPublicacionInventario = async (req, res) => {
   }
 };
 
+const cambiarEstadoPublicacionInventario = async (req, res) => {
+  try {
+    const { id, publicationId } = req.params;
+    const { status } = req.body;
+    await ensurePublicationTables();
+
+    const nextStatus = String(status || '').trim().toLowerCase();
+    if (!['paused', 'published'].includes(nextStatus)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Estado inválido. Usa paused o published'
+      });
+    }
+
+    const [rows] = await db.query(
+      `
+      SELECT id, canal, status
+      FROM inventario_publicaciones
+      WHERE id = ? AND inventario_id = ?
+      LIMIT 1
+      `,
+      [publicationId, id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ ok: false, error: 'Publicación no encontrada' });
+    }
+
+    const current = rows[0];
+
+    await db.query(
+      `
+      UPDATE inventario_publicaciones
+      SET
+        status = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [nextStatus, publicationId]
+    );
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_eventos (
+        inventario_id, publicacion_id, canal, tipo, detalle
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        publicationId,
+        current.canal,
+        nextStatus === 'paused' ? 'paused' : 'resumed',
+        nextStatus === 'paused'
+          ? 'Publicación pausada manualmente'
+          : 'Publicación reactivada manualmente'
+      ]
+    );
+
+    return res.json({
+      ok: true,
+      message: nextStatus === 'paused' ? 'Publicación pausada' : 'Publicación reactivada',
+      publication: {
+        id: Number(publicationId),
+        canal: current.canal,
+        previousStatus: current.status,
+        status: nextStatus
+      }
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado de publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al cambiar estado de publicación' });
+  }
+};
+
 module.exports = {
   crearDesdeAvaluo,
   listarInventario,
@@ -953,5 +1028,6 @@ agregarGastoReacondicionamiento,
 eliminarGastoReacondicionamiento,
 obtenerPublicacionesInventario,
 publicarInventario,
-reintentarPublicacionInventario
+reintentarPublicacionInventario,
+cambiarEstadoPublicacionInventario
 };

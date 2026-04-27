@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { updateInventoryStatus } from '../../services/inventoryService';
+import { getInventoryPublications, updateInventoryStatus } from '../../services/inventoryService';
 import PricingView from './PricingView';
 import ReacondicionamientoView from './ReacondicionamientoView';
 import PublicacionView from './PublicacionView';
@@ -106,6 +106,13 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat('es-MX').format(numeric);
 };
 
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('es-MX');
+};
+
 const getStatusLabel = (estado) => {
   const map = {
     comprado: 'Comprado',
@@ -139,6 +146,8 @@ const getStatusStyle = (estado) => {
 export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }) {
   const [activeTab, setActiveTab] = useState('resumen');
   const [estado, setEstado] = useState('comprado');
+  const [publicationEvents, setPublicationEvents] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -147,11 +156,9 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
     }
   }, [item]);
 
-  if (!open || !item) return null;
-
-  const precioCompra = Number(item.precioCompra) || 0;
-  const costoReacondicionamiento = Number(item.costoReacondicionamiento) || 0;
-  const precioVenta = Number(item.precioVenta) || 0;
+  const precioCompra = Number(item?.precioCompra) || 0;
+  const costoReacondicionamiento = Number(item?.costoReacondicionamiento) || 0;
+  const precioVenta = Number(item?.precioVenta) || 0;
   const costoTotal = precioCompra + costoReacondicionamiento;
   const utilidad = precioVenta > 0 ? precioVenta - costoTotal : 0;
   const margen = precioVenta > 0 ? (utilidad / precioVenta) * 100 : 0;
@@ -185,6 +192,32 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
       await onUpdated();
     }
   };
+
+  const loadPublicationHistory = async () => {
+    try {
+      setHistoryLoading(true);
+      const response = await getInventoryPublications(item.id);
+
+      if (!response?.ok) {
+        throw new Error(response?.error || 'No se pudo cargar historial de publicación');
+      }
+
+      setPublicationEvents(response.eventos || []);
+    } catch (error) {
+      console.error('Error cargando historial de publicación:', error);
+      setPublicationEvents([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!item?.id || activeTab !== 'historial') return;
+    loadPublicationHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, item?.id]);
+
+  if (!open || !item) return null;
 
   const handleMainAction = async () => {
     try {
@@ -455,12 +488,26 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
           <section style={styles.section}>
             <h3 style={styles.sectionTitle}>Historial</h3>
             <p style={styles.sectionText}>
-              Aquí concentraremos cambios de estado, pricing, gastos, evidencias y movimientos relevantes de la unidad.
+              Bitácora operativa de publicación (eventos y cambios de estado por canal).
             </p>
 
-            <div style={styles.emptyBox}>
-              Módulo pendiente de construir.
-            </div>
+            {historyLoading ? (
+              <div style={styles.emptyBox}>Cargando historial...</div>
+            ) : !publicationEvents.length ? (
+              <div style={styles.emptyBox}>Sin eventos de publicación registrados.</div>
+            ) : (
+              <div style={styles.historyList}>
+                {publicationEvents.map((event) => (
+                  <div key={event.id} style={styles.historyItem}>
+                    <strong style={styles.historyType}>{event.tipo || 'evento'}</strong>
+                    <span style={styles.historyMeta}>
+                      {event.canal || 'general'} · {formatDateTime(event.created_at)}
+                    </span>
+                    <p style={styles.historyDetail}>{event.detalle || '-'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </aside>
@@ -910,6 +957,35 @@ lockIcon: {
     color: '#64748b',
     fontWeight: 700,
     textAlign: 'center'
+  },
+  historyList: {
+    display: 'grid',
+    gap: '8px',
+    marginTop: '10px'
+  },
+  historyItem: {
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '10px'
+  },
+  historyType: {
+    display: 'block',
+    color: '#0f172a',
+    fontSize: '12px',
+    fontWeight: 900
+  },
+  historyMeta: {
+    display: 'block',
+    marginTop: '2px',
+    color: '#64748b',
+    fontSize: '11px'
+  },
+  historyDetail: {
+    margin: '5px 0 0 0',
+    color: '#334155',
+    fontSize: '12px',
+    lineHeight: 1.35
   },
   statusBlue: {
     background: '#eff6ff',

@@ -61,5 +61,9 @@ router.post(
   '/:id/publicaciones/:publicationId/reintentar',
   inventoryController.reintentarPublicacionInventario
 );
+router.patch(
+  '/:id/publicaciones/:publicationId/status',
+  inventoryController.cambiarEstadoPublicacionInventario
+);
 
 module.exports = router;
