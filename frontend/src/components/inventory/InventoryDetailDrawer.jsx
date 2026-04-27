@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { updateInventoryStatus } from '../../services/inventoryService';
+import { getInventoryPublications, updateInventoryStatus } from '../../services/inventoryService';
 import PricingView from './PricingView';
 import ReacondicionamientoView from './ReacondicionamientoView';
+import PublicacionView from './PublicacionView';
 
 
 const FLOW = [
@@ -105,6 +106,13 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat('es-MX').format(numeric);
 };
 
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('es-MX');
+};
+
 const getStatusLabel = (estado) => {
   const map = {
     comprado: 'Comprado',
@@ -138,19 +146,19 @@ const getStatusStyle = (estado) => {
 export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }) {
   const [activeTab, setActiveTab] = useState('resumen');
   const [estado, setEstado] = useState('comprado');
+  const [publicationEvents, setPublicationEvents] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
       setEstado(item.estado || 'comprado');
       setActiveTab('resumen');
     }
-  }, [item?.id]);
+  }, [item]);
 
-  if (!open || !item) return null;
-
-  const precioCompra = Number(item.precioCompra) || 0;
-  const costoReacondicionamiento = Number(item.costoReacondicionamiento) || 0;
-  const precioVenta = Number(item.precioVenta) || 0;
+  const precioCompra = Number(item?.precioCompra) || 0;
+  const costoReacondicionamiento = Number(item?.costoReacondicionamiento) || 0;
+  const precioVenta = Number(item?.precioVenta) || 0;
   const costoTotal = precioCompra + costoReacondicionamiento;
   const utilidad = precioVenta > 0 ? precioVenta - costoTotal : 0;
   const margen = precioVenta > 0 ? (utilidad / precioVenta) * 100 : 0;
@@ -184,6 +192,32 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
       await onUpdated();
     }
   };
+
+  const loadPublicationHistory = async () => {
+    try {
+      setHistoryLoading(true);
+      const response = await getInventoryPublications(item.id);
+
+      if (!response?.ok) {
+        throw new Error(response?.error || 'No se pudo cargar historial de publicación');
+      }
+
+      setPublicationEvents(response.eventos || []);
+    } catch (error) {
+      console.error('Error cargando historial de publicación:', error);
+      setPublicationEvents([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!item?.id || activeTab !== 'historial') return;
+    loadPublicationHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, item?.id]);
+
+  if (!open || !item) return null;
 
   const handleMainAction = async () => {
     try {
@@ -279,30 +313,30 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
 
         <div style={styles.tabs}>
           {[
-  { key: 'resumen', label: 'Resumen' },
-  { key: 'reacondicionamiento', label: 'Reacondicionamiento' },
-  { key: 'pricing', label: 'Pricing' },
-  { key: 'publicacion', label: 'Publicación' },
-  { key: 'historial', label: 'Historial' }
-].map((tab) => {
-  const mode = sectionModes[tab.key];
+            { key: 'resumen', label: 'Resumen' },
+            { key: 'reacondicionamiento', label: 'Reacondicionamiento' },
+            { key: 'pricing', label: 'Pricing' },
+            { key: 'publicacion', label: 'Publicación' },
+            { key: 'historial', label: 'Historial' }
+          ].map((tab) => {
+            const mode = sectionModes[tab.key];
+            const statusIcon = mode === 'bloqueado' ? '🔒' : mode === 'finalizado' ? '✓' : null;
 
-  return (
-            
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                ...styles.tab,
-                ...(activeTab === tab.key ? styles.tabActive : {})
-              }}
-            >{tab.label}
-{mode === 'bloqueado' && ' 🔒'}
-{mode === 'finalizado' && ' ✓'}{tab.label}
-            </button>
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  ...styles.tab,
+                  ...(activeTab === tab.key ? styles.tabActive : {})
+                }}
+              >
+                <span>{tab.label}</span>
+                {statusIcon ? <span style={styles.tabIcon}>{statusIcon}</span> : null}
+              </button>
             );
-})}
+          })}
         </div>
 
         {activeTab === 'resumen' && (
@@ -438,16 +472,15 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
       onClick={() => setActiveTab('pricing')}
     />
   ) : (
-    <section style={styles.section}>
-      <h3 style={styles.sectionTitle}>Publicación</h3>
-      <p style={styles.sectionText}>
-        Aquí construiremos la experiencia tipo Maxi: generación de anuncio, selección de fotos, canales, links y evidencia de publicación.
-      </p>
-
-      <div style={styles.emptyBox}>
-        Módulo pendiente de construir.
-      </div>
-    </section>
+    <PublicacionView
+      inventarioId={item.id}
+      mode={sectionModes.publicacion}
+      onPublished={async () => {
+        await handleRefresh();
+        setEstado('publicado');
+        setActiveTab('historial');
+      }}
+    />
   )
 )}
 
@@ -455,12 +488,26 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
           <section style={styles.section}>
             <h3 style={styles.sectionTitle}>Historial</h3>
             <p style={styles.sectionText}>
-              Aquí concentraremos cambios de estado, pricing, gastos, evidencias y movimientos relevantes de la unidad.
+              Bitácora operativa de publicación (eventos y cambios de estado por canal).
             </p>
 
-            <div style={styles.emptyBox}>
-              Módulo pendiente de construir.
-            </div>
+            {historyLoading ? (
+              <div style={styles.emptyBox}>Cargando historial...</div>
+            ) : !publicationEvents.length ? (
+              <div style={styles.emptyBox}>Sin eventos de publicación registrados.</div>
+            ) : (
+              <div style={styles.historyList}>
+                {publicationEvents.map((event) => (
+                  <div key={event.id} style={styles.historyItem}>
+                    <strong style={styles.historyType}>{event.tipo || 'evento'}</strong>
+                    <span style={styles.historyMeta}>
+                      {event.canal || 'general'} · {formatDateTime(event.created_at)}
+                    </span>
+                    <p style={styles.historyDetail}>{event.detalle || '-'}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </aside>
@@ -550,7 +597,7 @@ const styles = {
     position: 'fixed',
     inset: 0,
     background: 'rgba(15, 23, 42, 0.55)',
-    backdropFilter: 'blur(2px)',
+    backdropFilter: 'blur(6px)',
     display: 'flex',
     justifyContent: 'flex-end',
     zIndex: 1000
@@ -558,10 +605,10 @@ const styles = {
   drawer: {
     width: 'min(860px, 96vw)',
     height: '100vh',
-    background: '#f8fafc',
+    background: 'linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%)',
     overflowY: 'auto',
     boxShadow: '-24px 0 50px rgba(15, 23, 42, 0.25)',
-    padding: '20px',
+    padding: '22px',
     boxSizing: 'border-box'
   },
   topBar: {
@@ -596,22 +643,23 @@ const styles = {
     width: '38px',
     height: '38px',
     borderRadius: '12px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid #dbe4f0',
     background: '#ffffff',
     color: '#0f172a',
     fontSize: '18px',
     cursor: 'pointer',
-    fontWeight: 900
+    fontWeight: 900,
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)'
   },
   vehicleHero: {
     display: 'grid',
     gridTemplateColumns: '260px 1fr',
     gap: '16px',
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '14px',
-    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.06)'
+    border: '1px solid #dbe4f0',
+    borderRadius: '22px',
+    padding: '16px',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.08)'
   },
   photoBox: {
     width: '260px',
@@ -640,7 +688,7 @@ const styles = {
   },
   statusRow: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
     flexWrap: 'wrap',
     marginBottom: '10px'
   },
@@ -739,25 +787,33 @@ lockIcon: {
     gap: '8px',
     marginTop: '14px',
     marginBottom: '12px',
-    padding: '8px',
+    padding: '10px',
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '16px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '18px',
     overflowX: 'auto'
   },
   tab: {
-    border: 'none',
-    background: '#f1f5f9',
+    border: '1px solid #e2e8f0',
+    background: '#f8fafc',
     color: '#334155',
     padding: '9px 12px',
     borderRadius: '12px',
     fontWeight: 900,
     cursor: 'pointer',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   tabActive: {
     background: '#0f172a',
-    color: '#ffffff'
+    color: '#ffffff',
+    borderColor: '#0f172a'
+  },
+  tabIcon: {
+    fontSize: '12px',
+    lineHeight: 1
   },
   kpiGrid: {
     display: 'grid',
@@ -766,7 +822,7 @@ lockIcon: {
   },
   miniKpi: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
+    border: '1px solid #dbe4f0',
     borderRadius: '16px',
     padding: '12px',
     display: 'grid',
@@ -797,7 +853,7 @@ lockIcon: {
     borderRadius: '20px',
     padding: '16px',
     marginTop: '12px',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)'
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.05)'
   },
   sectionTitle: {
     margin: 0,
@@ -876,11 +932,21 @@ lockIcon: {
   },
   primaryButton: {
     border: 'none',
-    background: '#0f172a',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
     color: '#ffffff',
     borderRadius: '14px',
     padding: '13px 14px',
     fontWeight: 950,
+    cursor: 'pointer',
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.22)'
+  },
+  secondaryButton: {
+    border: '1px solid #cbd5e1',
+    background: '#ffffff',
+    color: '#0f172a',
+    borderRadius: '14px',
+    padding: '11px 14px',
+    fontWeight: 900,
     cursor: 'pointer'
   },
   emptyBox: {
@@ -891,6 +957,35 @@ lockIcon: {
     color: '#64748b',
     fontWeight: 700,
     textAlign: 'center'
+  },
+  historyList: {
+    display: 'grid',
+    gap: '8px',
+    marginTop: '10px'
+  },
+  historyItem: {
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '10px'
+  },
+  historyType: {
+    display: 'block',
+    color: '#0f172a',
+    fontSize: '12px',
+    fontWeight: 900
+  },
+  historyMeta: {
+    display: 'block',
+    marginTop: '2px',
+    color: '#64748b',
+    fontSize: '11px'
+  },
+  historyDetail: {
+    margin: '5px 0 0 0',
+    color: '#334155',
+    fontSize: '12px',
+    lineHeight: 1.35
   },
   statusBlue: {
     background: '#eff6ff',

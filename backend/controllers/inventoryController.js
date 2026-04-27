@@ -29,6 +29,42 @@ const numberOrZero = (value) => {
 
 const roundMoney = (value) => Math.round(numberOrZero(value));
 
+const PUBLICATION_CHANNELS = ['mercadolibre', 'seminuevos', 'autocosmos', 'facebook'];
+
+const ensurePublicationTables = async () => {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS inventario_publicaciones (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      inventario_id INT NOT NULL,
+      canal VARCHAR(50) NOT NULL,
+      status ENUM('draft','queued','published','failed','paused') NOT NULL DEFAULT 'draft',
+      titulo VARCHAR(255) NULL,
+      descripcion TEXT NULL,
+      external_id VARCHAR(120) NULL,
+      external_url VARCHAR(500) NULL,
+      error_message VARCHAR(500) NULL,
+      payload_snapshot JSON NULL,
+      published_at DATETIME NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_inventario_canal (inventario_id, canal)
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS inventario_publicacion_eventos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      inventario_id INT NOT NULL,
+      publicacion_id INT NULL,
+      canal VARCHAR(50) NULL,
+      tipo VARCHAR(60) NOT NULL,
+      detalle VARCHAR(500) NULL,
+      payload JSON NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+};
+
 const calcularPricing = ({ inventario, comparables }) => {
   const precios = comparables
     .map((item) => numberOrZero(item.precio))
@@ -677,6 +713,308 @@ const eliminarGastoReacondicionamiento = async (req, res) => {
   }
 };
 
+const obtenerPublicacionesInventario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ensurePublicationTables();
+
+    const [inventarioRows] = await db.query(
+      'SELECT id, estado, precio_venta FROM inventario WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (!inventarioRows.length) {
+      return res.status(404).json({ ok: false, error: 'Inventario no encontrado' });
+    }
+
+    const [publicaciones] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicaciones
+      WHERE inventario_id = ?
+      ORDER BY canal ASC
+      `,
+      [id]
+    );
+
+    const [eventos] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicacion_eventos
+      WHERE inventario_id = ?
+      ORDER BY created_at DESC, id DESC
+      LIMIT 80
+      `,
+      [id]
+    );
+
+    return res.json({
+      ok: true,
+      inventario: inventarioRows[0],
+      canalesDisponibles: PUBLICATION_CHANNELS,
+      publicaciones,
+      eventos
+    });
+  } catch (error) {
+    console.error('Error al obtener publicaciones de inventario:', error);
+    return res.status(500).json({ ok: false, error: 'Error al obtener publicaciones' });
+  }
+};
+
+const publicarInventario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { canales = [], titulo = '', descripcion = '' } = req.body;
+
+    await ensurePublicationTables();
+
+    const canalesValidos = Array.isArray(canales)
+      ? canales.filter((canal) => PUBLICATION_CHANNELS.includes(canal))
+      : [];
+
+    if (!canalesValidos.length) {
+      return res.status(400).json({ ok: false, error: 'Selecciona al menos un canal válido' });
+    }
+
+    const [inventarioRows] = await db.query(
+      'SELECT id, estado, precio_venta FROM inventario WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    if (!inventarioRows.length) {
+      return res.status(404).json({ ok: false, error: 'Inventario no encontrado' });
+    }
+
+    const inventario = inventarioRows[0];
+    if (!inventario.precio_venta || Number(inventario.precio_venta) <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Debes tener precio de venta asignado antes de publicar'
+      });
+    }
+
+    const resultados = [];
+
+    for (const canal of canalesValidos) {
+      const externalId = `${canal}-${id}-${Date.now()}`;
+      const externalUrl = `https://${canal}.com/unidad/${id}`;
+
+      const payloadSnapshot = JSON.stringify({
+        titulo: titulo || null,
+        descripcion: descripcion || null,
+        precioVenta: inventario.precio_venta
+      });
+
+      const [result] = await db.query(
+        `
+        INSERT INTO inventario_publicaciones (
+          inventario_id, canal, status, titulo, descripcion, external_id, external_url,
+          error_message, payload_snapshot, published_at
+        )
+        VALUES (?, ?, 'published', ?, ?, ?, ?, NULL, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+          status = 'published',
+          titulo = VALUES(titulo),
+          descripcion = VALUES(descripcion),
+          external_id = VALUES(external_id),
+          external_url = VALUES(external_url),
+          error_message = NULL,
+          payload_snapshot = VALUES(payload_snapshot),
+          published_at = NOW(),
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [id, canal, titulo || null, descripcion || null, externalId, externalUrl, payloadSnapshot]
+      );
+
+      const publicationId = result.insertId || null;
+
+      await db.query(
+        `
+        INSERT INTO inventario_publicacion_eventos (
+          inventario_id, publicacion_id, canal, tipo, detalle, payload
+        )
+        VALUES (?, ?, ?, 'published', 'Publicación simulada creada correctamente', ?)
+        `,
+        [id, publicationId, canal, payloadSnapshot]
+      );
+
+      resultados.push({
+        canal,
+        status: 'published',
+        externalId,
+        externalUrl
+      });
+    }
+
+    await db.query(
+      `
+      UPDATE inventario
+      SET estado = 'publicado', updated_at = NOW()
+      WHERE id = ? AND estado IN ('precio_asignado', 'publicado')
+      `,
+      [id]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Publicación procesada',
+      resultados
+    });
+  } catch (error) {
+    console.error('Error al publicar inventario:', error);
+    return res.status(500).json({ ok: false, error: 'Error al publicar inventario' });
+  }
+};
+
+const reintentarPublicacionInventario = async (req, res) => {
+  try {
+    const { id, publicationId } = req.params;
+    await ensurePublicationTables();
+
+    const [rows] = await db.query(
+      `
+      SELECT *
+      FROM inventario_publicaciones
+      WHERE id = ? AND inventario_id = ?
+      LIMIT 1
+      `,
+      [publicationId, id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ ok: false, error: 'Publicación no encontrada' });
+    }
+
+    const item = rows[0];
+    const externalId = `${item.canal}-${id}-${Date.now()}`;
+    const externalUrl = `https://${item.canal}.com/unidad/${id}`;
+
+    await db.query(
+      `
+      UPDATE inventario_publicaciones
+      SET
+        status = 'published',
+        external_id = ?,
+        external_url = ?,
+        error_message = NULL,
+        published_at = NOW(),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [externalId, externalUrl, publicationId]
+    );
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_eventos (
+        inventario_id, publicacion_id, canal, tipo, detalle
+      )
+      VALUES (?, ?, ?, 'retry', 'Se reintentó publicación y quedó publicada')
+      `,
+      [id, publicationId, item.canal]
+    );
+
+    await db.query(
+      `
+      UPDATE inventario
+      SET estado = 'publicado', updated_at = NOW()
+      WHERE id = ? AND estado IN ('precio_asignado', 'publicado')
+      `,
+      [id]
+    );
+
+    return res.json({
+      ok: true,
+      message: 'Publicación reintentada correctamente',
+      publication: {
+        id: Number(publicationId),
+        canal: item.canal,
+        status: 'published',
+        externalId,
+        externalUrl
+      }
+    });
+  } catch (error) {
+    console.error('Error al reintentar publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al reintentar publicación' });
+  }
+};
+
+const cambiarEstadoPublicacionInventario = async (req, res) => {
+  try {
+    const { id, publicationId } = req.params;
+    const { status } = req.body;
+    await ensurePublicationTables();
+
+    const nextStatus = String(status || '').trim().toLowerCase();
+    if (!['paused', 'published'].includes(nextStatus)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Estado inválido. Usa paused o published'
+      });
+    }
+
+    const [rows] = await db.query(
+      `
+      SELECT id, canal, status
+      FROM inventario_publicaciones
+      WHERE id = ? AND inventario_id = ?
+      LIMIT 1
+      `,
+      [publicationId, id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ ok: false, error: 'Publicación no encontrada' });
+    }
+
+    const current = rows[0];
+
+    await db.query(
+      `
+      UPDATE inventario_publicaciones
+      SET
+        status = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [nextStatus, publicationId]
+    );
+
+    await db.query(
+      `
+      INSERT INTO inventario_publicacion_eventos (
+        inventario_id, publicacion_id, canal, tipo, detalle
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        publicationId,
+        current.canal,
+        nextStatus === 'paused' ? 'paused' : 'resumed',
+        nextStatus === 'paused'
+          ? 'Publicación pausada manualmente'
+          : 'Publicación reactivada manualmente'
+      ]
+    );
+
+    return res.json({
+      ok: true,
+      message: nextStatus === 'paused' ? 'Publicación pausada' : 'Publicación reactivada',
+      publication: {
+        id: Number(publicationId),
+        canal: current.canal,
+        previousStatus: current.status,
+        status: nextStatus
+      }
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado de publicación:', error);
+    return res.status(500).json({ ok: false, error: 'Error al cambiar estado de publicación' });
+  }
+};
+
 module.exports = {
   crearDesdeAvaluo,
   listarInventario,
@@ -687,5 +1025,9 @@ module.exports = {
   asignarPrecioInventario,
   obtenerGastosReacondicionamiento,
 agregarGastoReacondicionamiento,
-eliminarGastoReacondicionamiento
+eliminarGastoReacondicionamiento,
+obtenerPublicacionesInventario,
+publicarInventario,
+reintentarPublicacionInventario,
+cambiarEstadoPublicacionInventario
 };

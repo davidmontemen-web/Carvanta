@@ -65,7 +65,7 @@ const SectionCard = ({ title, subtitle, children, right }) => (
   </section>
 );
 
-export default function AppraisalDetailModal({ abierto, appraisal, onClose }) {
+export default function AppraisalDetailModal({ abierto, appraisal, onClose, onSaved }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -488,4 +488,3 @@ async function handleConfirmPurchase() {
     </>
   );
 }
-

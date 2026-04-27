@@ -55,4 +55,15 @@ router.delete(
   inventoryController.eliminarGastoReacondicionamiento
 );
 
+router.get('/:id/publicaciones', inventoryController.obtenerPublicacionesInventario);
+router.post('/:id/publicaciones/publicar', inventoryController.publicarInventario);
+router.post(
+  '/:id/publicaciones/:publicationId/reintentar',
+  inventoryController.reintentarPublicacionInventario
+);
+router.patch(
+  '/:id/publicaciones/:publicationId/status',
+  inventoryController.cambiarEstadoPublicacionInventario
+);
+
 module.exports = router;
