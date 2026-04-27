@@ -2,16 +2,16 @@ export const styles = {
   workspace: {
     display: 'grid',
     gridTemplateColumns: '220px 1fr',
-    gap: '12px',
+    gap: '16px',
     alignItems: 'start'
   },
 
   sidebar: {
     background: '#ffffff',
-    borderRadius: '14px',
-    padding: '12px',
-    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
-    border: '1px solid #e5e7eb',
+    borderRadius: '18px',
+    padding: '14px',
+    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)',
+    border: '1px solid #dbe4f0',
     position: 'sticky',
     top: '12px',
     alignSelf: 'start'
@@ -46,12 +46,12 @@ export const styles = {
     gap: '8px',
     width: '100%',
     padding: '8px 10px',
-    borderRadius: '10px',
-    border: '1px solid #e5e7eb',
-    background: '#ffffff',
+    borderRadius: '12px',
+    border: '1px solid #dbe4f0',
+    background: '#fbfdff',
     color: '#334155',
     fontSize: '11px',
-    fontWeight: 700,
+    fontWeight: 800,
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'all 0.18s ease'
@@ -81,15 +81,15 @@ export const styles = {
 
   main: {
     display: 'grid',
-    gap: '10px'
+    gap: '12px'
   },
 
   heroCard: {
     background: '#ffffff',
-    borderRadius: '14px',
-    padding: '12px 14px',
-    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.04)',
-    border: '1px solid #e5e7eb',
+    borderRadius: '18px',
+    padding: '14px 16px',
+    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)',
+    border: '1px solid #dbe4f0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -119,14 +119,14 @@ export const styles = {
 
   sectionCard: {
     background: '#ffffff',
-    borderRadius: '14px',
-    padding: '12px',
-    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.035)',
-    border: '1px solid #e5e7eb'
+    borderRadius: '18px',
+    padding: '14px',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.06)',
+    border: '1px solid #dbe4f0'
   },
   sectionCardActive: {
-    border: '1px solid #d8e0ea',
-    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.05)'
+    border: '1px solid #bfdbfe',
+    boxShadow: '0 14px 26px rgba(37, 99, 235, 0.12)'
   },
 
   sectionHeader: {
@@ -134,9 +134,9 @@ export const styles = {
     justifyContent: 'space-between',
     gap: '10px',
     alignItems: 'flex-start',
-    marginBottom: '10px',
-    paddingBottom: '8px',
-    borderBottom: '1px solid #f1f5f9'
+    marginBottom: '12px',
+    paddingBottom: '10px',
+    borderBottom: '1px solid #eaf0f7'
   },
   sectionTitle: {
     margin: 0,
@@ -183,37 +183,37 @@ export const styles = {
 
   input: {
     width: '100%',
-    padding: '8px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    padding: '10px 12px',
+    border: '1px solid #cbd5e1',
+    borderRadius: '10px',
     fontSize: '12px',
     background: '#ffffff',
     color: '#111827',
-    minHeight: '34px',
+    minHeight: '38px',
     boxSizing: 'border-box',
     outline: 'none'
   },
   inputDisabled: {
     width: '100%',
-    padding: '8px 10px',
+    padding: '10px 12px',
     border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    borderRadius: '10px',
     fontSize: '12px',
     background: '#f3f4f6',
     color: '#6b7280',
     cursor: 'not-allowed',
-    minHeight: '34px',
+    minHeight: '38px',
     boxSizing: 'border-box'
   },
   inputReadOnly: {
     width: '100%',
-    padding: '8px 10px',
+    padding: '10px 12px',
     border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    borderRadius: '10px',
     fontSize: '12px',
     background: '#f8fafc',
     color: '#475569',
-    minHeight: '34px',
+    minHeight: '38px',
     boxSizing: 'border-box'
   },
   inputRequired: {
@@ -235,9 +235,9 @@ export const styles = {
 
   textarea: {
     width: '100%',
-    padding: '9px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    padding: '10px 12px',
+    border: '1px solid #cbd5e1',
+    borderRadius: '10px',
     resize: 'vertical',
     fontSize: '12px',
     minHeight: '76px',
@@ -287,9 +287,9 @@ export const styles = {
     minWidth: '30px',
     height: '28px',
     padding: '4px 8px',
-    borderRadius: '7px',
-    border: '1px solid #d1d5db',
-    background: '#f9fafb',
+    borderRadius: '9px',
+    border: '1px solid #cbd5e1',
+    background: '#f8fafc',
     cursor: 'pointer',
     fontSize: '11px',
     fontWeight: 700,
@@ -322,9 +322,9 @@ export const styles = {
   conditionButton: {
     minWidth: '68px',
     padding: '6px 8px',
-    borderRadius: '8px',
-    border: '1px solid #d1d5db',
-    background: '#f9fafb',
+    borderRadius: '10px',
+    border: '1px solid #cbd5e1',
+    background: '#f8fafc',
     cursor: 'pointer',
     fontSize: '11px',
     fontWeight: 700,
@@ -353,24 +353,26 @@ export const styles = {
   },
 
   primaryButton: {
-    background: '#0f172a',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '8px',
-    padding: '8px 12px',
+    borderRadius: '10px',
+    padding: '10px 14px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px'
+    fontSize: '12px',
+    boxShadow: '0 10px 20px rgba(15, 23, 42, 0.22)'
   },
   secondaryButton: {
     background: '#ffffff',
     color: '#111827',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    padding: '8px 12px',
+    border: '1px solid #cbd5e1',
+    borderRadius: '10px',
+    padding: '10px 14px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px'
+    fontSize: '12px',
+    boxShadow: '0 8px 16px rgba(15, 23, 42, 0.06)'
   },
   disabledButton: {
     background: '#e5e7eb',
@@ -432,8 +434,8 @@ export const styles = {
     gap: '10px'
   },
   generalPhotoCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '14px',
     overflow: 'hidden',
     background: '#ffffff'
   },
@@ -502,8 +504,8 @@ export const styles = {
     marginTop: '10px'
   },
   detailPhotoCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '14px',
     overflow: 'hidden',
     background: '#ffffff'
   },
@@ -552,10 +554,10 @@ export const styles = {
     gap: '10px'
   },
   damageZoneCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '10px',
-    background: '#f8fafc'
+    border: '1px solid #dbe4f0',
+    borderRadius: '14px',
+    padding: '12px',
+    background: '#fbfdff'
   },
   damageZoneHeader: {
     marginBottom: '8px'
@@ -593,9 +595,9 @@ export const styles = {
     gap: '10px'
   },
   tireCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '10px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '14px',
+    padding: '12px',
     background: '#ffffff',
     display: 'flex',
     flexDirection: 'column',
@@ -617,9 +619,9 @@ export const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '10px',
-    border: '1px solid #e5e7eb',
-    borderRadius: '10px',
-    background: '#fafafa'
+    border: '1px solid #dbe4f0',
+    borderRadius: '12px',
+    background: '#fbfdff'
   },
   statusPill: {
     display: 'inline-block',
@@ -642,7 +644,7 @@ export const styles = {
     bottom: '0',
     background: 'rgba(255,255,255,0.96)',
     backdropFilter: 'blur(10px)',
-    borderTop: '1px solid #e5e7eb',
+    borderTop: '1px solid #dbe4f0',
     padding: '10px 12px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -650,9 +652,9 @@ export const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: '10px',
-    borderBottomLeftRadius: '12px',
-    borderBottomRightRadius: '12px',
-    boxShadow: '0 -8px 20px rgba(15, 23, 42, 0.04)'
+    borderBottomLeftRadius: '14px',
+    borderBottomRightRadius: '14px',
+    boxShadow: '0 -10px 24px rgba(15, 23, 42, 0.08)'
   },
   bottomBarText: {
     color: '#4b5563',

@@ -389,7 +389,7 @@ function MetricCard({ label, value, tone = 'default' }) {
 const styles = {
   page: {
     display: 'grid',
-    gap: '12px'
+    gap: '14px'
   },
   loadingBox: {
     background: '#ffffff',
@@ -401,10 +401,10 @@ const styles = {
   },
   headerCard: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '16px',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)',
+    border: '1px solid #dbe4f0',
+    borderRadius: '22px',
+    padding: '18px',
+    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.06)',
     display: 'flex',
     justifyContent: 'space-between',
     gap: '14px',
@@ -435,7 +435,7 @@ const styles = {
     display: 'inline-flex',
     whiteSpace: 'nowrap',
     borderRadius: '999px',
-    padding: '7px 10px',
+    padding: '8px 12px',
     fontSize: '12px',
     fontWeight: 900,
     border: '1px solid transparent'
@@ -453,16 +453,16 @@ const styles = {
   metricsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '10px'
+    gap: '12px'
   },
   metricCard: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '16px',
-    padding: '13px',
+    border: '1px solid #dbe4f0',
+    borderRadius: '18px',
+    padding: '14px',
     display: 'grid',
     gap: '5px',
-    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.03)'
+    boxShadow: '0 10px 20px rgba(15, 23, 42, 0.05)'
   },
   metricPrimary: {
     background: '#eff6ff',
@@ -480,10 +480,10 @@ const styles = {
   },
   section: {
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '20px',
-    padding: '16px',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)'
+    border: '1px solid #dbe4f0',
+    borderRadius: '22px',
+    padding: '18px',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.05)'
   },
   sectionHeader: {
     display: 'flex',
@@ -520,7 +520,7 @@ const styles = {
   },
   input: {
     width: '100%',
-    border: '1px solid #cbd5e1',
+    border: '1px solid #dbe4f0',
     borderRadius: '12px',
     padding: '10px 11px',
     color: '#0f172a',
@@ -531,10 +531,10 @@ const styles = {
     boxSizing: 'border-box'
   },
   secondaryButton: {
-    border: '1px solid #cbd5e1',
-    background: '#ffffff',
+    border: '1px solid #dbe4f0',
+    background: '#fbfdff',
     color: '#0f172a',
-    borderRadius: '14px',
+    borderRadius: '16px',
     padding: '12px 14px',
     fontWeight: 950,
     cursor: 'pointer'
@@ -544,7 +544,7 @@ const styles = {
     height: '34px',
     display: 'grid',
     placeItems: 'center',
-    borderRadius: '12px',
+    borderRadius: '14px',
     background: '#f8fafc',
     border: '1px solid #e2e8f0',
     color: '#0f172a'
@@ -559,7 +559,10 @@ const styles = {
     textAlign: 'center'
   },
   tableWrapper: {
-    overflowX: 'auto'
+    overflowX: 'auto',
+    border: '1px solid #e2e8f0',
+    borderRadius: '14px',
+    background: '#ffffff'
   },
   table: {
     width: '100%',
@@ -573,7 +576,8 @@ const styles = {
     fontSize: '11px',
     fontWeight: 900,
     textTransform: 'uppercase',
-    borderBottom: '1px solid #e5e7eb'
+    borderBottom: '1px solid #e2e8f0',
+    background: '#f8fafc'
   },
   tr: {
     borderBottom: '1px solid #f1f5f9'
@@ -593,13 +597,13 @@ const styles = {
     textDecoration: 'none'
   },
   assignCard: {
-    background: '#0f172a',
-    borderRadius: '20px',
-    padding: '16px',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    borderRadius: '22px',
+    padding: '18px',
     color: '#ffffff',
     display: 'grid',
     gap: '14px',
-    boxShadow: '0 14px 30px rgba(15, 23, 42, 0.18)'
+    boxShadow: '0 16px 34px rgba(15, 23, 42, 0.22)'
   },
   assignTitle: {
     margin: '4px 0 0 0',
@@ -614,7 +618,7 @@ const styles = {
   priceInput: {
     width: '100%',
     border: '1px solid #334155',
-    borderRadius: '14px',
+    borderRadius: '16px',
     padding: '12px 14px',
     color: '#ffffff',
     background: '#1e293b',
@@ -627,7 +631,7 @@ const styles = {
     border: 'none',
     background: '#ffffff',
     color: '#0f172a',
-    borderRadius: '14px',
+    borderRadius: '16px',
     padding: '12px 16px',
     fontWeight: 950,
     cursor: 'pointer',
