@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { updateInventoryStatus } from '../../services/inventoryService';
 import PricingView from './PricingView';
 import ReacondicionamientoView from './ReacondicionamientoView';
+import PublicacionView from './PublicacionView';
 
 
 const FLOW = [
@@ -438,16 +439,15 @@ export default function InventoryDetailDrawer({ open, item, onClose, onUpdated }
       onClick={() => setActiveTab('pricing')}
     />
   ) : (
-    <section style={styles.section}>
-      <h3 style={styles.sectionTitle}>Publicación</h3>
-      <p style={styles.sectionText}>
-        Aquí construiremos la experiencia tipo Maxi: generación de anuncio, selección de fotos, canales, links y evidencia de publicación.
-      </p>
-
-      <div style={styles.emptyBox}>
-        Módulo pendiente de construir.
-      </div>
-    </section>
+    <PublicacionView
+      inventarioId={item.id}
+      mode={sectionModes.publicacion}
+      onPublished={async () => {
+        await handleRefresh();
+        setEstado('publicado');
+        setActiveTab('historial');
+      }}
+    />
   )
 )}
 
