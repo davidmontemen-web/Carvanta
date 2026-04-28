@@ -31,6 +31,27 @@ const roundMoney = (value) => Math.round(numberOrZero(value));
 
 const PUBLICATION_CHANNELS = ['mercadolibre', 'seminuevos', 'autocosmos', 'facebook'];
 
+const ensureColumnExists = async ({ table, column, definition }) => {
+  const [rows] = await db.query(
+    `
+    SELECT 1
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = ?
+      AND COLUMN_NAME = ?
+    LIMIT 1
+    `,
+    [table, column]
+  );
+
+  if (!rows.length) {
+    await db.query(`
+      ALTER TABLE ${table}
+      ADD COLUMN ${definition}
+    `);
+  }
+};
+
 const ensurePublicationTables = async () => {
   await db.query(`
     CREATE TABLE IF NOT EXISTS inventario_publicaciones (
@@ -78,15 +99,17 @@ const ensurePublicationTables = async () => {
     )
   `);
 
-  await db.query(`
-    ALTER TABLE inventario_publicacion_canales_config
-    ADD COLUMN IF NOT EXISTS profile_url VARCHAR(500) NULL AFTER activo
-  `);
+  await ensureColumnExists({
+    table: 'inventario_publicacion_canales_config',
+    column: 'profile_url',
+    definition: 'profile_url VARCHAR(500) NULL AFTER activo'
+  });
 
-  await db.query(`
-    ALTER TABLE inventario_publicacion_canales_config
-    ADD COLUMN IF NOT EXISTS provider VARCHAR(40) NOT NULL DEFAULT 'webhook' AFTER canal
-  `);
+  await ensureColumnExists({
+    table: 'inventario_publicacion_canales_config',
+    column: 'provider',
+    definition: "provider VARCHAR(40) NOT NULL DEFAULT 'webhook' AFTER canal"
+  });
 };
 
 const getChannelConfigs = async () => {
