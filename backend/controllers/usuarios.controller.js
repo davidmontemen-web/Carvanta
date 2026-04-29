@@ -1,6 +1,32 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
+const ensureUsuariosRoleSchema = async () => {
+  const [rows] = await db.query(
+    `
+    SELECT COLUMN_TYPE, IS_NULLABLE
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'usuarios'
+      AND COLUMN_NAME = 'rol'
+    LIMIT 1
+    `
+  );
+
+  if (!rows.length) return;
+
+  const columnType = String(rows[0].COLUMN_TYPE || '').toLowerCase();
+  if (!columnType.includes('tecnico_servicio')) {
+    const isNullable = String(rows[0].IS_NULLABLE || '').toUpperCase() === 'YES';
+    await db.query(
+      `
+      ALTER TABLE usuarios
+      MODIFY COLUMN rol ENUM('administrador','valuador','tecnico_servicio') ${isNullable ? 'NULL' : 'NOT NULL'}
+      `
+    );
+  }
+};
+
 const listarUsuarios = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -26,6 +52,7 @@ const listarUsuarios = async (req, res) => {
 
 const crearUsuario = async (req, res) => {
   try {
+    await ensureUsuariosRoleSchema();
     const { nombre, apellido, email, password, rol } = req.body;
 
     if (!nombre || !apellido || !email || !password || !rol) {
