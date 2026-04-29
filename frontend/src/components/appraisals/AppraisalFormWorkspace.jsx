@@ -591,6 +591,7 @@ export default function AppraisalFormWorkspace({
   const [form, setForm] = useState(normalizedInitialData);
   const [uploading, setUploading] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [popupMessage, setPopupMessage] = useState(null);
   const [activeSection, setActiveSection] = useState('encabezado');
   const currentRole = String(usuario?.rol || '').toLowerCase();
   const isManagerRole = ['administrador', 'gerente_avaluos', 'gerente'].includes(currentRole);
@@ -963,7 +964,10 @@ const handleAnioChange = (value) => {
 
   const handleSaveAppraisal = async () => {
   if (!isManagerRole) {
-    showNotification('warning', 'Solo gerencia puede validar el avalúo completo y confirmar precio.');
+    setPopupMessage({
+      title: 'Acción restringida',
+      message: 'Solo gerencia puede validar el avalúo completo y confirmar precio.'
+    });
     return;
   }
   if (!ensureHeaderBeforeAnySave()) return;
@@ -990,6 +994,10 @@ const handleAnioChange = (value) => {
   : 'fotosGenerales';
 
     scrollToSection(firstMissingSection);
+    setPopupMessage({
+      title: 'Faltan datos por completar',
+      message: `No se puede guardar el avalúo. Falta completar: ${warnings.join(' | ')}`
+    });
     showNotification(
       'warning',
       `No se puede guardar el avalúo. Falta completar: ${warnings.join(' | ')}`
@@ -1352,6 +1360,17 @@ const renderNeumaticoCard = (positionKey, label) => {
 
   return (
     <div style={styles.workspace}>
+      {popupMessage && (
+        <div style={styles.popupOverlay} onClick={() => setPopupMessage(null)}>
+          <div style={styles.popupCard} onClick={(e) => e.stopPropagation()}>
+            <h3 style={styles.popupTitle}>{popupMessage.title}</h3>
+            <p style={styles.popupText}>{popupMessage.message}</p>
+            <button type="button" style={styles.primaryButton} onClick={() => setPopupMessage(null)}>
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
       <aside style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
           <h2 style={styles.sidebarTitle}>Expediente de avalúo</h2>

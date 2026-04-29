@@ -1,4 +1,37 @@
 export const styles = {
+  popupOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(15, 23, 42, 0.48)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '16px',
+    zIndex: 90
+  },
+  popupCard: {
+    width: 'min(540px, 100%)',
+    background: '#fff',
+    border: '1px solid #dbe4f0',
+    borderRadius: '16px',
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.2)',
+    padding: '18px',
+    display: 'grid',
+    gap: '12px'
+  },
+  popupTitle: {
+    margin: 0,
+    color: '#0f172a',
+    fontSize: '18px',
+    fontWeight: 900
+  },
+  popupText: {
+    margin: 0,
+    color: '#334155',
+    lineHeight: 1.5,
+    fontSize: '13px',
+    whiteSpace: 'pre-wrap'
+  },
   workspace: {
     display: 'grid',
     gridTemplateColumns: '220px 1fr',
