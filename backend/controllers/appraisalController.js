@@ -132,6 +132,18 @@ const ensureAppraisalWorkflowColumns = async () => {
   });
 };
 
+const getUserDisplayNameById = async (userId) => {
+  if (!userId) return null;
+  const [rows] = await db.query(
+    `SELECT nombre, apellido FROM usuarios WHERE id = ? LIMIT 1`,
+    [userId]
+  );
+  if (!rows.length) return `Usuario ${userId}`;
+  const row = rows[0];
+  const fullName = `${row.nombre || ''} ${row.apellido || ''}`.trim();
+  return fullName || `Usuario ${userId}`;
+};
+
 // ==============================
 // MAPEADOR
 // ==============================
@@ -170,6 +182,8 @@ const mapAppraisalRow = async (row) => {
       url: buildPhotoUrl(p.file_path)
     }));
 
+  const gerenteValidadoNombre = await getUserDisplayNameById(row.gerente_validado_por);
+
   return {
     id: row.id,
     folio: row.folio,
@@ -189,6 +203,7 @@ const mapAppraisalRow = async (row) => {
     valuacion: parseJSONColumn(row.valuacion_json),
     validacionGerente: {
       validadoPor: row.gerente_validado_por || null,
+      validadoNombre: gerenteValidadoNombre || null,
       validadoAt: row.gerente_validado_at || null,
       observaciones: row.gerente_validacion_observaciones || ''
     },

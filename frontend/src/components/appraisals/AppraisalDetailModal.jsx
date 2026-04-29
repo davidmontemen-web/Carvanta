@@ -253,11 +253,17 @@ async function handleConfirmPurchase() {
               <div style={styles.summaryGrid}>
                 <DetailItem
                   label="Validado por"
-                  value={toDisplayValue(appraisal.validacionGerente?.validadoPor)}
+                  value={toDisplayValue(
+                    appraisal.validacionGerente?.validadoNombre || appraisal.validacionGerente?.validadoPor
+                  )}
                 />
                 <DetailItem
                   label="Fecha validación"
                   value={formatDate(appraisal.validacionGerente?.validadoAt)}
+                />
+                <DetailItem
+                  label="Estatus validación"
+                  value={appraisal.validacionGerente?.validadoAt ? 'Validado por gerencia' : 'Pendiente'}
                 />
               </div>
               <div style={styles.commentBox}>
