@@ -96,6 +96,42 @@ const getActorInfo = async (usuario) => {
   }
 };
 
+const ensureColumnExists = async ({ table, column, definition }) => {
+  const [rows] = await db.query(
+    `
+    SELECT 1
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = ?
+      AND COLUMN_NAME = ?
+    LIMIT 1
+    `,
+    [table, column]
+  );
+
+  if (!rows.length) {
+    await db.query(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
+  }
+};
+
+const ensureAppraisalWorkflowColumns = async () => {
+  await ensureColumnExists({
+    table: 'appraisals',
+    column: 'gerente_validado_por',
+    definition: 'gerente_validado_por INT NULL'
+  });
+  await ensureColumnExists({
+    table: 'appraisals',
+    column: 'gerente_validado_at',
+    definition: 'gerente_validado_at DATETIME NULL'
+  });
+  await ensureColumnExists({
+    table: 'appraisals',
+    column: 'gerente_validacion_observaciones',
+    definition: 'gerente_validacion_observaciones VARCHAR(600) NULL'
+  });
+};
+
 // ==============================
 // MAPEADOR
 // ==============================
@@ -151,6 +187,11 @@ const mapAppraisalRow = async (row) => {
     sistemaElectrico: parseJSONColumn(row.sistema_electrico_json),
     fugasMotor: parseJSONColumn(row.fugas_motor_json),
     valuacion: parseJSONColumn(row.valuacion_json),
+    validacionGerente: {
+      validadoPor: row.gerente_validado_por || null,
+      validadoAt: row.gerente_validado_at || null,
+      observaciones: row.gerente_validacion_observaciones || ''
+    },
     fotosGenerales,
     fotosDetalle
   };
@@ -162,6 +203,7 @@ const mapAppraisalRow = async (row) => {
 
 const listarAppraisals = async (req, res) => {
   try {
+    await ensureAppraisalWorkflowColumns();
     const [rows] = await db.query(
       `SELECT * FROM appraisals ORDER BY fecha_actualizacion DESC`
     );
@@ -187,6 +229,7 @@ const listarAppraisals = async (req, res) => {
 
 const obtenerAppraisalPorId = async (req, res) => {
   try {
+    await ensureAppraisalWorkflowColumns();
     const { id } = req.params;
 
     const [rows] = await db.query(
@@ -383,6 +426,7 @@ const crearAppraisal = async (req, res) => {
 
 const actualizarAppraisal = async (req, res) => {
   try {
+    await ensureAppraisalWorkflowColumns();
     const { id } = req.params;
 
     const {
@@ -400,11 +444,12 @@ const actualizarAppraisal = async (req, res) => {
       carroceria,
       sistemaElectrico,
       fugasMotor,
-      valuacion
+      valuacion,
+      validacionGerente
     } = req.body;
 
     const [rows] = await db.query(
-      `SELECT id, estatus FROM appraisals WHERE id = ? LIMIT 1`,
+      `SELECT id, estatus, carroceria_json, sistema_electrico_json, fugas_motor_json FROM appraisals WHERE id = ? LIMIT 1`,
       [id]
     );
 
@@ -416,6 +461,9 @@ const actualizarAppraisal = async (req, res) => {
     }
 
     const estatusActual = rows[0].estatus;
+    const currentCarroceria = parseJSONColumn(rows[0].carroceria_json);
+    const currentSistemaElectrico = parseJSONColumn(rows[0].sistema_electrico_json);
+    const currentFugasMotor = parseJSONColumn(rows[0].fugas_motor_json);
     const estatusNuevo = estatus || 'borrador';
     const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
     const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
@@ -433,6 +481,39 @@ const actualizarAppraisal = async (req, res) => {
         error: 'No puedes editar un avalúo completo'
       });
     }
+
+    const rol = String(req.usuario?.rol || '').toLowerCase();
+    const isManagerRole = ['administrador', 'gerente_avaluos', 'gerente'].includes(rol);
+    const isTechnicalRole = ['tecnico_servicio', 'tecnico'].includes(rol);
+
+    const technicalChanged =
+      JSON.stringify(currentCarroceria) !== JSON.stringify(carroceria || {}) ||
+      JSON.stringify(currentSistemaElectrico) !== JSON.stringify(sistemaElectrico || {}) ||
+      JSON.stringify(currentFugasMotor) !== JSON.stringify(fugasMotor || {});
+
+    if (technicalChanged && !isTechnicalRole && !isManagerRole) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Solo técnico de servicio o gerencia puede editar bloques técnicos'
+      });
+    }
+
+    if (estatusNuevo === 'completo' && !isManagerRole) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Solo gerencia puede marcar el avalúo como completo'
+      });
+    }
+
+    const managerValidationBy = isManagerRole && estatusNuevo === 'completo'
+      ? Number(req.usuario?.id) || null
+      : null;
+    const managerValidationAt = isManagerRole && estatusNuevo === 'completo'
+      ? new Date()
+      : null;
+    const managerValidationNotes = isManagerRole && estatusNuevo === 'completo'
+      ? String(validacionGerente?.observaciones || '').trim() || null
+      : null;
 
     const [updateResult] = await db.query(
       `
@@ -452,7 +533,10 @@ const actualizarAppraisal = async (req, res) => {
         carroceria_json = ?,
         sistema_electrico_json = ?,
         fugas_motor_json = ?,
-        valuacion_json = ?
+        valuacion_json = ?,
+        gerente_validado_por = ?,
+        gerente_validado_at = ?,
+        gerente_validacion_observaciones = ?
       WHERE id = ?
       `,
       [
@@ -471,6 +555,9 @@ const actualizarAppraisal = async (req, res) => {
         safeJSON(sistemaElectrico),
         safeJSON(fugasMotor),
         safeJSON(valuacion),
+        managerValidationBy,
+        managerValidationAt,
+        managerValidationNotes,
         id
       ]
     );
@@ -510,6 +597,15 @@ const actualizarAppraisal = async (req, res) => {
         usuario: actor,
         accion: 'STATUS_CHANGED',
         detalle: `Estatus cambiado de ${estatusActual} a ${estatusNuevo}`
+      });
+    }
+
+    if (managerValidationBy) {
+      await logHistory({
+        appraisalId: Number(id),
+        usuario: actor,
+        accion: 'MANAGER_VALIDATED',
+        detalle: `Gerencia validó avalúo completo${managerValidationNotes ? `: ${managerValidationNotes}` : ''}`
       });
     }
 
