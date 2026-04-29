@@ -249,6 +249,25 @@ async function handleConfirmPurchase() {
               </div>
             </SectionCard>
 
+            <SectionCard title="Validación gerencial" subtitle="Control de autorización final del avalúo.">
+              <div style={styles.summaryGrid}>
+                <DetailItem
+                  label="Validado por"
+                  value={toDisplayValue(appraisal.validacionGerente?.validadoPor)}
+                />
+                <DetailItem
+                  label="Fecha validación"
+                  value={formatDate(appraisal.validacionGerente?.validadoAt)}
+                />
+              </div>
+              <div style={styles.commentBox}>
+                <span style={styles.commentLabel}>Observaciones de gerencia</span>
+                <p style={styles.commentText}>
+                  {toDisplayValue(appraisal.validacionGerente?.observaciones)}
+                </p>
+              </div>
+            </SectionCard>
+
             <SectionCard title="Generales del vehículo" subtitle="Información base capturada para valuación.">
               <div style={styles.dataGrid}>
                 <DetailItem label="Marca" value={toDisplayValue(appraisal.generales?.marca)} />

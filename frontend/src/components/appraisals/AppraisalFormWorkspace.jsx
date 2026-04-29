@@ -605,6 +605,12 @@ export default function AppraisalFormWorkspace({
     return !['carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
   };
 
+  const getRoleFriendlyName = () => {
+    if (isManagerRole) return 'Gerencia';
+    if (isTechnicalRole) return 'Técnico de servicio';
+    return 'Asesor';
+  };
+
   const sectionRefs = useRef({});
 const generalInputRefs = useRef({});
 const detailInputRef = useRef(null);
@@ -637,6 +643,12 @@ const registerSectionRef = (key, el) => {
 }, [form]);
 
   const scrollToSection = (key) => {
+    if (!canEditSection(key) && ['carroceria', 'sistemaElectrico', 'fugasMotor', 'valuacion'].includes(key)) {
+      setPopupMessage({
+        title: 'Sección restringida por rol',
+        message: `${getRoleFriendlyName()} no puede editar esta sección. Solo el perfil autorizado puede capturarla.`
+      });
+    }
     setActiveSection(key);
     sectionRefs.current[key]?.scrollIntoView({
       behavior: 'smooth',
