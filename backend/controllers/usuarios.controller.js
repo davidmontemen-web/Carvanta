@@ -35,7 +35,7 @@ const crearUsuario = async (req, res) => {
       });
     }
 
-    if (!['administrador', 'valuador'].includes(rol)) {
+    if (!['administrador', 'valuador', 'tecnico_servicio'].includes(rol)) {
       return res.status(400).json({
         ok: false,
         error: 'Rol no válido'

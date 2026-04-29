@@ -113,6 +113,7 @@ export default function ModalUsuario({ abierto, onClose, onGuardar }) {
                 style={styles.input}
               >
                 <option value="valuador">Valuador</option>
+                <option value="tecnico_servicio">Técnico de servicio</option>
                 <option value="administrador">Administrador</option>
               </select>
             </div>

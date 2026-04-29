@@ -112,6 +112,7 @@ export default function UsuariosPage() {
           <option value="todos">Todos los roles</option>
           <option value="administrador">Administrador</option>
           <option value="valuador">Valuador</option>
+          <option value="tecnico_servicio">Técnico de servicio</option>
         </select>
 
         <select
@@ -159,6 +160,8 @@ export default function UsuariosPage() {
                         className={`usuarios-badge ${
                           item.rol === 'administrador'
                             ? 'usuarios-badge-admin'
+                            : item.rol === 'tecnico_servicio'
+                            ? 'usuarios-badge-tecnico'
                             : 'usuarios-badge-valuador'
                         }`}
                       >
