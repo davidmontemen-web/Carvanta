@@ -539,6 +539,7 @@ export default function AppraisalsPage({ usuario }) {
       <AppraisalFormWorkspace
         mode={mode}
         initialData={selectedAppraisal}
+        usuario={usuario}
         onBack={handleBackToList}
         onSaveDraft={handleSaveDraft}
         onSaveIncomplete={handleSaveDraft}

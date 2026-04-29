@@ -576,6 +576,7 @@ function AppraisalSection({
 export default function AppraisalFormWorkspace({
   mode,
   initialData,
+  usuario,
   onBack,
   onSaveDraft,
   onMarkComplete,
@@ -591,6 +592,17 @@ export default function AppraisalFormWorkspace({
   const [uploading, setUploading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [activeSection, setActiveSection] = useState('encabezado');
+  const currentRole = String(usuario?.rol || '').toLowerCase();
+  const isManagerRole = ['administrador', 'gerente_avaluos', 'gerente'].includes(currentRole);
+  const isTechnicalRole = ['tecnico_servicio', 'tecnico'].includes(currentRole);
+
+  const canEditSection = (sectionKey) => {
+    if (isManagerRole) return true;
+    if (isTechnicalRole) {
+      return ['fotosDetalle', 'carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
+    }
+    return !['carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
+  };
 
   const sectionRefs = useRef({});
 const generalInputRefs = useRef({});
@@ -950,6 +962,10 @@ const handleAnioChange = (value) => {
   
 
   const handleSaveAppraisal = async () => {
+  if (!isManagerRole) {
+    showNotification('warning', 'Solo gerencia puede validar el avalúo completo y confirmar precio.');
+    return;
+  }
   if (!ensureHeaderBeforeAnySave()) return;
 
   if (!validation.canComplete) {
@@ -1040,7 +1056,7 @@ const handleAnioChange = (value) => {
     );
   };
 
-  const renderField = (label, value, onChange, type = 'text', placeholder = '') => (
+  const renderField = (label, value, onChange, type = 'text', placeholder = '', disabled = false) => (
   <div style={styles.field}>
     <label style={styles.label}>{label}</label>
     <input
@@ -1049,11 +1065,12 @@ const handleAnioChange = (value) => {
       onChange={onChange}
       placeholder={placeholder}
       style={styles.input}
+      disabled={disabled}
     />
   </div>
 );
 
-const renderYesNoField = (label, value, onChange) => (
+const renderYesNoField = (label, value, onChange, disabled = false) => (
   <div style={styles.field}>
     <label style={styles.label}>{label}</label>
 
@@ -1061,6 +1078,7 @@ const renderYesNoField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('si')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'si' ? styles.toggleYesActive : {})
@@ -1072,6 +1090,7 @@ const renderYesNoField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('no')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'no' ? styles.toggleNoActive : {})
@@ -1083,7 +1102,7 @@ const renderYesNoField = (label, value, onChange) => (
   </div>
 );
 
-const renderYesNoNAField = (label, value, onChange) => (
+const renderYesNoNAField = (label, value, onChange, disabled = false) => (
   <div style={styles.field}>
     <label style={styles.label}>{label}</label>
 
@@ -1091,6 +1110,7 @@ const renderYesNoNAField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('si')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'si' ? styles.toggleYesActive : {})
@@ -1103,6 +1123,7 @@ const renderYesNoNAField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('no')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'no' ? styles.toggleNoActive : {})
@@ -1115,6 +1136,7 @@ const renderYesNoNAField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('na')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'na' ? styles.toggleNAActive : {})
@@ -1127,7 +1149,7 @@ const renderYesNoNAField = (label, value, onChange) => (
   </div>
 );
 
-const renderConditionField = (label, value, onChange) => (
+const renderConditionField = (label, value, onChange, disabled = false) => (
   <div style={styles.field}>
     <label style={styles.label}>{label}</label>
 
@@ -1135,6 +1157,7 @@ const renderConditionField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('excelente')}
+        disabled={disabled}
         style={{
           ...styles.conditionButton,
           ...(value === 'excelente' ? styles.conditionExcellent : {})
@@ -1146,6 +1169,7 @@ const renderConditionField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('bueno')}
+        disabled={disabled}
         style={{
           ...styles.conditionButton,
           ...(value === 'bueno' ? styles.conditionGood : {})
@@ -1157,6 +1181,7 @@ const renderConditionField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('regular')}
+        disabled={disabled}
         style={{
           ...styles.conditionButton,
           ...(value === 'regular' ? styles.conditionRegular : {})
@@ -1168,6 +1193,7 @@ const renderConditionField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('malo')}
+        disabled={disabled}
         style={{
           ...styles.conditionButton,
           ...(value === 'malo' ? styles.conditionBad : {})
@@ -1179,7 +1205,7 @@ const renderConditionField = (label, value, onChange) => (
   </div>
 );
 
-const renderTechnicalStatusField = (label, value, onChange) => (
+const renderTechnicalStatusField = (label, value, onChange, disabled = false) => (
   <div style={styles.field}>
     <label style={styles.label}>{label}</label>
 
@@ -1187,6 +1213,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('ok')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'ok' ? styles.toggleYesActive : {})
@@ -1199,6 +1226,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('detalle')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'detalle' ? styles.toggleNoActive : {})
@@ -1211,6 +1239,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
       <button
         type="button"
         onClick={() => onChange('na')}
+        disabled={disabled}
         style={{
           ...styles.toggleButton,
           ...(value === 'na' ? styles.toggleNAActive : {})
@@ -1222,7 +1251,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
     </div>
   </div>
 );
-  const renderTextarea = (label, value, onChange, placeholder = '') => (
+  const renderTextarea = (label, value, onChange, placeholder = '', disabled = false) => (
   <div style={styles.fieldFull}>
     <label style={styles.label}>{label}</label>
     <textarea
@@ -1231,6 +1260,7 @@ const renderTechnicalStatusField = (label, value, onChange) => (
       placeholder={placeholder}
       style={styles.textarea}
       rows={4}
+      disabled={disabled}
     />
   </div>
 );
@@ -1422,6 +1452,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormGeneralesSection
+  isReadOnly={!canEditSection('generales')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1438,6 +1469,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormDocumentacionSection
+  isReadOnly={!canEditSection('documentacion')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1449,6 +1481,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormInteriorSection
+  isReadOnly={!canEditSection('interior')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1460,6 +1493,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormFotosGeneralesSection
+  isReadOnly={!canEditSection('fotosGenerales')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1475,6 +1509,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
 <AppraisalFormFotosDetalleSection
+  isReadOnly={!canEditSection('fotosDetalle')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1488,6 +1523,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormCarroceriaSection
+  isReadOnly={!canEditSection('carroceria')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1502,6 +1538,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormSistemaElectricoSection
+  isReadOnly={!canEditSection('sistemaElectrico')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1513,6 +1550,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormFugasMotorSection
+  isReadOnly={!canEditSection('fugasMotor')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1524,6 +1562,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
           <AppraisalFormValuacionSection
+  isReadOnly={!canEditSection('valuacion')}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}
@@ -1535,6 +1574,7 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
 
 <AppraisalFormRevisionFinalSection
+  managerCanValidate={isManagerRole}
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
   renderSectionStatus={renderSectionStatus}

@@ -9,7 +9,8 @@ export default function AppraisalFormCarroceriaSection({
   renderNeumaticoCard,
   renderTextarea,
   form,
-  updateSectionField
+  updateSectionField,
+  isReadOnly = false
 }) {
   const sectionKey = 'carroceria';
 
@@ -33,7 +34,7 @@ export default function AppraisalFormCarroceriaSection({
         {renderSectionStatus(sectionKey)}
       </div>
 
-      <div style={styles.carroceriaWrapper}>
+      <fieldset style={styles.carroceriaWrapper} disabled={isReadOnly}>
         <div style={styles.subsectionBlock}>
           <h4 style={styles.subsectionTitle}>Carrocería por zonas</h4>
           <p style={styles.helperText}>
@@ -62,9 +63,10 @@ export default function AppraisalFormCarroceriaSection({
           'Comentarios',
           form.carroceria.observaciones,
           (e) => updateSectionField('carroceria', 'observaciones', e.target.value),
-          'Ej. Costado izquierdo con abolladura ligera y llanta delantera derecha desgastada'
+          'Ej. Costado izquierdo con abolladura ligera y llanta delantera derecha desgastada',
+          isReadOnly
         )}
-      </div>
+      </fieldset>
     </section>
   );
 }

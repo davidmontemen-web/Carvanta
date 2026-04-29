@@ -10,7 +10,8 @@ export default function AppraisalFormFotosGeneralesSection({
   handleGeneralPhotoChange,
   handleGeneralPhotoClick,
   isBusy,
-  removeGeneralPhoto
+  removeGeneralPhoto,
+  isReadOnly = false
 }) {
   const sectionKey = 'fotosGenerales';
 
@@ -53,11 +54,12 @@ export default function AppraisalFormFotosGeneralesSection({
                 capture="environment"
                 style={{ display: 'none' }}
                 onChange={(e) => handleGeneralPhotoChange(slot.key, e)}
+                disabled={isReadOnly}
               />
 
               <div
                 style={styles.generalPhotoPreview}
-                onClick={() => handleGeneralPhotoClick(slot.key)}
+                onClick={() => !isReadOnly && handleGeneralPhotoClick(slot.key)}
               >
                 {photo?.preview ? (
                   <img src={photo.preview} alt={slot.label} style={styles.previewImage} />
@@ -76,7 +78,7 @@ export default function AppraisalFormFotosGeneralesSection({
                     type="button"
                     style={styles.smallButton}
                     onClick={() => handleGeneralPhotoClick(slot.key)}
-                    disabled={isBusy}
+                    disabled={isBusy || isReadOnly}
                   >
                     {photo ? 'Reemplazar' : 'Capturar'}
                   </button>
@@ -86,7 +88,7 @@ export default function AppraisalFormFotosGeneralesSection({
                       type="button"
                       style={styles.smallDangerButton}
                       onClick={() => removeGeneralPhoto(slot.key)}
-                      disabled={isBusy}
+                      disabled={isBusy || isReadOnly}
                     >
                       Quitar
                     </button>

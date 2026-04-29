@@ -6,7 +6,8 @@ export default function AppraisalFormValuacionSection({
   form,
   formatMoneyDisplay,
   handleValuacionNumberChange,
-  renderTextarea
+  renderTextarea,
+  isReadOnly = false
 }) {
   const sectionKey = 'valuacion';
 
@@ -37,6 +38,7 @@ export default function AppraisalFormValuacionSection({
             placeholder="Ej. 180000"
             style={styles.input}
             inputMode="numeric"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -49,6 +51,7 @@ export default function AppraisalFormValuacionSection({
             placeholder="Ej. 220000"
             style={styles.input}
             inputMode="numeric"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -71,6 +74,7 @@ export default function AppraisalFormValuacionSection({
             placeholder="Ej. 15000"
             style={styles.input}
             inputMode="numeric"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -83,6 +87,7 @@ export default function AppraisalFormValuacionSection({
             placeholder="Ej. 190000"
             style={styles.input}
             inputMode="numeric"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -90,7 +95,8 @@ export default function AppraisalFormValuacionSection({
           'Comentarios',
           form.valuacion.comentarios,
           (e) => handleValuacionNumberChange('comentarios', e.target.value, true),
-          'Ej. Se ajusta valor por detalle en carrocería y condición de neumáticos'
+          'Ej. Se ajusta valor por detalle en carrocería y condición de neumáticos',
+          isReadOnly
         )}
       </div>
     </section>

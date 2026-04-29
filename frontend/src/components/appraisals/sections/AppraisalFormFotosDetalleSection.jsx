@@ -8,7 +8,8 @@ export default function AppraisalFormFotosDetalleSection({
   ensureHeaderBeforeUpload,
   isBusy,
   form,
-  removeDetailPhoto
+  removeDetailPhoto,
+  isReadOnly = false
 }) {
   const sectionKey = 'fotosDetalle';
 
@@ -38,6 +39,7 @@ export default function AppraisalFormFotosDetalleSection({
         multiple
         style={{ display: 'none' }}
         onChange={handleAddDetailPhotos}
+        disabled={isReadOnly}
       />
 
       <button
@@ -47,7 +49,7 @@ export default function AppraisalFormFotosDetalleSection({
           if (!ensureHeaderBeforeUpload()) return;
           detailInputRef.current?.click();
         }}
-        disabled={isBusy}
+        disabled={isBusy || isReadOnly}
       >
         + Agregar fotos de detalle
       </button>
@@ -72,7 +74,7 @@ export default function AppraisalFormFotosDetalleSection({
                   type="button"
                   style={styles.smallDangerButton}
                   onClick={() => removeDetailPhoto(index)}
-                  disabled={isBusy}
+                  disabled={isBusy || isReadOnly}
                 >
                   Eliminar
                 </button>

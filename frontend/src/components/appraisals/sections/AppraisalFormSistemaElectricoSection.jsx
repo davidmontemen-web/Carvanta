@@ -6,7 +6,8 @@ export default function AppraisalFormSistemaElectricoSection({
   form,
   renderYesNoNAField,
   renderTextarea,
-  updateSectionField
+  updateSectionField,
+  isReadOnly = false
 }) {
   const sectionKey = 'sistemaElectrico';
 
@@ -27,10 +28,10 @@ export default function AppraisalFormSistemaElectricoSection({
         {renderSectionStatus(sectionKey)}
       </div>
 
-      <div style={styles.grid2}>
+      <fieldset style={styles.grid2} disabled={isReadOnly}>
         {renderYesNoNAField('Espejos eléctricos', form.sistemaElectrico.espejosElectricos, (val) =>
           updateSectionField('sistemaElectrico', 'espejosElectricos', val)
-        )}
+        , isReadOnly)}
         {renderYesNoNAField('Bolsas de aire', form.sistemaElectrico.bolsasAire, (val) =>
           updateSectionField('sistemaElectrico', 'bolsasAire', val)
         )}
@@ -105,9 +106,10 @@ export default function AppraisalFormSistemaElectricoSection({
           'Comentarios',
           form.sistemaElectrico.comentarios,
           (e) => updateSectionField('sistemaElectrico', 'comentarios', e.target.value),
-          'Ej. Aire acondicionado no enfría y check engine activo'
+          'Ej. Aire acondicionado no enfría y check engine activo',
+          isReadOnly
         )}
-      </div>
+      </fieldset>
     </section>
   );
 }

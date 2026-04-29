@@ -6,7 +6,8 @@ export default function AppraisalFormFugasMotorSection({
   form,
   renderTechnicalStatusField,
   renderTextarea,
-  updateSectionField
+  updateSectionField,
+  isReadOnly = false
 }) {
   const sectionKey = 'fugasMotor';
 
@@ -27,7 +28,7 @@ export default function AppraisalFormFugasMotorSection({
         {renderSectionStatus(sectionKey)}
       </div>
 
-      <div style={styles.grid2}>
+      <fieldset style={styles.grid2} disabled={isReadOnly}>
         {renderTechnicalStatusField('Motor', form.fugasMotor.motor, (val) =>
           updateSectionField('fugasMotor', 'motor', val)
         )}
@@ -72,9 +73,10 @@ export default function AppraisalFormFugasMotorSection({
           'Comentarios',
           form.fugasMotor.comentarios,
           (e) => updateSectionField('fugasMotor', 'comentarios', e.target.value),
-          'Ej. Ligera fuga en dirección hidráulica y soportes de motor con desgaste visible'
+          'Ej. Ligera fuga en dirección hidráulica y soportes de motor con desgaste visible',
+          isReadOnly
         )}
-      </div>
+      </fieldset>
     </section>
   );
 }
