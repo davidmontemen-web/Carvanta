@@ -312,6 +312,17 @@ async function handleConfirmPurchase() {
               </div>
             </SectionCard>
 
+            <AppraisalDetailPhotosSection
+  appraisal={appraisal}
+  styles={styles}
+  generalPhotos={generalPhotos}
+  detailPhotos={detailPhotos}
+  generalPhotoLabels={generalPhotoLabels}
+  onDownloadZip={downloadZip}
+  onOpenPreview={setPreviewImage}
+  onDownloadPhoto={downloadPhoto}
+/>
+
             <SectionCard title="Carrocería y neumáticos" subtitle="Hallazgos por zona y condición de neumáticos/rines.">
               <div style={styles.twoColumnLayout}>
                 <div style={styles.subCard}>
@@ -448,17 +459,6 @@ async function handleConfirmPurchase() {
                 <p style={styles.commentText}>{toDisplayValue(appraisal.valuacion?.comentarios)}</p>
               </div>
             </SectionCard>
-
-            <AppraisalDetailPhotosSection
-  appraisal={appraisal}
-  styles={styles}
-  generalPhotos={generalPhotos}
-  detailPhotos={detailPhotos}
-  generalPhotoLabels={generalPhotoLabels}
-  onDownloadZip={downloadZip}
-  onOpenPreview={setPreviewImage}
-  onDownloadPhoto={downloadPhoto}
-/>
 
 <AppraisalDetailHistorySection
   styles={styles}

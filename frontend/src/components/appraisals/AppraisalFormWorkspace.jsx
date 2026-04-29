@@ -69,12 +69,12 @@ const sections = [
   { key: 'generales', label: 'Generales del vehículo' },
   { key: 'documentacion', label: 'Documentación' },
   { key: 'interior', label: 'Aspecto físico interior' },
+  { key: 'fotosGenerales', label: 'Fotos generales' },
+  { key: 'fotosDetalle', label: 'Fotos de detalle' },
   { key: 'carroceria', label: 'Carrocería y neumáticos' },
   { key: 'sistemaElectrico', label: 'Sistema eléctrico' },
   { key: 'fugasMotor', label: 'Fugas y motor' },
   { key: 'valuacion', label: 'Valuación' },
-  { key: 'fotosGenerales', label: 'Fotos generales' },
-  { key: 'fotosDetalle', label: 'Fotos de detalle' },
   { key: 'revisionFinal', label: 'Revisión final' }
 ];
 
@@ -1459,6 +1459,34 @@ const renderNeumaticoCard = (positionKey, label) => {
   updateSectionField={updateSectionField}
 />
 
+          <AppraisalFormFotosGeneralesSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  validation={validation}
+  generalPhotoSlots={generalPhotoSlots}
+  form={form}
+  generalInputRefs={generalInputRefs}
+  handleGeneralPhotoChange={handleGeneralPhotoChange}
+  handleGeneralPhotoClick={handleGeneralPhotoClick}
+  isBusy={isBusy}
+  removeGeneralPhoto={removeGeneralPhoto}
+/>
+
+<AppraisalFormFotosDetalleSection
+  activeSection={activeSection}
+  registerSectionRef={registerSectionRef}
+  renderSectionStatus={renderSectionStatus}
+  styles={styles}
+  detailInputRef={detailInputRef}
+  handleAddDetailPhotos={handleAddDetailPhotos}
+  ensureHeaderBeforeUpload={ensureHeaderBeforeUpload}
+  isBusy={isBusy}
+  form={form}
+  removeDetailPhoto={removeDetailPhoto}
+/>
+
           <AppraisalFormCarroceriaSection
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
@@ -1506,34 +1534,6 @@ const renderNeumaticoCard = (positionKey, label) => {
   renderTextarea={renderTextarea}
 />
 
-          <AppraisalFormFotosGeneralesSection
-  activeSection={activeSection}
-  registerSectionRef={registerSectionRef}
-  renderSectionStatus={renderSectionStatus}
-  styles={styles}
-  validation={validation}
-  generalPhotoSlots={generalPhotoSlots}
-  form={form}
-  generalInputRefs={generalInputRefs}
-  handleGeneralPhotoChange={handleGeneralPhotoChange}
-  handleGeneralPhotoClick={handleGeneralPhotoClick}
-  isBusy={isBusy}
-  removeGeneralPhoto={removeGeneralPhoto}
-/>
-
-<AppraisalFormFotosDetalleSection
-  activeSection={activeSection}
-  registerSectionRef={registerSectionRef}
-  renderSectionStatus={renderSectionStatus}
-  styles={styles}
-  detailInputRef={detailInputRef}
-  handleAddDetailPhotos={handleAddDetailPhotos}
-  ensureHeaderBeforeUpload={ensureHeaderBeforeUpload}
-  isBusy={isBusy}
-  form={form}
-  removeDetailPhoto={removeDetailPhoto}
-/>
-
 <AppraisalFormRevisionFinalSection
   activeSection={activeSection}
   registerSectionRef={registerSectionRef}
@@ -1573,4 +1573,3 @@ const renderNeumaticoCard = (positionKey, label) => {
     </div>
   );
 }
-
