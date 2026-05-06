@@ -135,6 +135,16 @@ const ensureAppraisalWorkflowColumns = async () => {
     column: 'avance_porcentaje',
     definition: 'avance_porcentaje INT NOT NULL DEFAULT 0'
   });
+  await db.query(`
+    ALTER TABLE appraisals
+    MODIFY COLUMN estatus ENUM(
+      'borrador',
+      'completo',
+      'incompleto',
+      'pendiente_validacion',
+      'comprado'
+    ) NOT NULL DEFAULT 'borrador'
+  `);
 };
 
 const ensureFollowupsTable = async () => {
@@ -387,6 +397,7 @@ const crearFollowupAppraisal = async (req, res) => {
 
 const crearAppraisal = async (req, res) => {
   try {
+    await ensureAppraisalWorkflowColumns();
     const {
       id,
       folio,
