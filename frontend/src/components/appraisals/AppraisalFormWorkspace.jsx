@@ -148,7 +148,7 @@ const createEmptyForm = () => ({
   vehiculoInteres: '',
   fechaAvaluo: getTodayLocalDate(),
   fechaActualizacion: getTodayLocalDate(),
-  estatus: 'borrador',
+  estatus: 'incompleto',
   asesorVentas: '',
   isPersisted: false,
   generales: {
@@ -795,13 +795,13 @@ const handleAnioChange = (value) => {
   const persistDraftIfNeeded = async () => {
     const payload = {
       ...buildPayload(),
-      estatus: 'borrador'
+      estatus: 'incompleto'
     };
 
     const result = await onSaveDraft(payload);
 
     if (!result?.ok || !result?.appraisal) {
-      throw new Error('No se pudo guardar el borrador');
+      throw new Error('No se pudo guardar el avance');
     }
 
     const normalizedSaved = normalizeInitialData({
@@ -945,7 +945,7 @@ const handleAnioChange = (value) => {
   try {
     const payload = {
       ...buildPayload(),
-      estatus: 'borrador'
+      estatus: 'incompleto'
     };
 
     const result = await onSaveDraft(payload);
@@ -953,7 +953,7 @@ const handleAnioChange = (value) => {
     if (!result?.ok || !result?.appraisal) {
       showNotification(
         'error',
-        result?.message || 'No se pudo guardar el borrador. Revisa la información e intenta nuevamente.'
+        result?.message || 'No se pudo guardar el avance. Revisa la información e intenta nuevamente.'
       );
       return;
     }
@@ -965,10 +965,10 @@ const handleAnioChange = (value) => {
       })
     );
 
-    showNotification('success', 'Borrador guardado correctamente.');
+    showNotification('success', 'Avance guardado correctamente.');
   } catch (error) {
     console.error(error);
-    showNotification('error', 'Ocurrió un error al guardar el borrador.');
+    showNotification('error', 'Ocurrió un error al guardar el avance.');
   }
 };
 
@@ -978,7 +978,7 @@ const handleAnioChange = (value) => {
   if (!isManagerRole) {
     setPopupMessage({
       title: 'Acción restringida',
-      message: 'Solo gerencia puede validar el avalúo completo y confirmar precio.'
+      message: 'Solo gerencia puede confirmar la compra.'
     });
     return;
   }
@@ -1020,7 +1020,7 @@ const handleAnioChange = (value) => {
   try {
     const payload = {
       ...buildPayload(),
-      estatus: 'completo'
+      estatus: 'pendiente_validacion'
     };
 
     if (typeof onMarkComplete !== 'function') {
@@ -1045,7 +1045,7 @@ const handleAnioChange = (value) => {
       })
     );
 
-    showNotification('success', 'Avalúo guardado correctamente.');
+    showNotification('success', 'Avalúo enviado a validación.');
   } catch (error) {
     console.error(error);
     showNotification('error', 'Ocurrió un error al guardar el avalúo.');
@@ -1414,7 +1414,7 @@ const renderNeumaticoCard = (positionKey, label) => {
           <div>
             <h1 style={styles.formTitle}>{form.folio || 'Avalúo sin folio'}</h1>
             <p style={styles.formMeta}>
-              Cliente: {form.clienteNombre || '-'} · Estatus actual: {form.estatus || 'borrador'}
+              Cliente: {form.clienteNombre || '-'} · Estatus actual: {form.estatus || 'incompleto'}
             </p>
           </div>
 
@@ -1427,7 +1427,7 @@ const renderNeumaticoCard = (positionKey, label) => {
   onClick={handleSaveDraft}
   disabled={saving || uploading}
 >
-  {saving ? 'Guardando...' : 'Guardar borrador'}
+  {saving ? 'Guardando...' : 'Guardar avance'}
 </button>
 
 
@@ -1438,7 +1438,7 @@ const renderNeumaticoCard = (positionKey, label) => {
   onClick={handleSaveAppraisal}
   disabled={isBusy}
 >
-  {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Guardar avalúo'}
+  {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Enviar a validación'}
 </button>
           </div>
         </div>
@@ -1617,8 +1617,8 @@ const renderNeumaticoCard = (positionKey, label) => {
         <div style={styles.bottomBar}>
           <div style={styles.bottomBarText}>
             {validation.canComplete
-              ? 'El avalúo ya cumple con lo requerido para guardarse como completo.'
-              : 'Todavía faltan campos o evidencias para guardarlo como avalúo completo.'}
+              ? 'El avalúo ya cumple con lo requerido para enviarse a validación.'
+              : 'Todavía faltan campos o evidencias para enviarlo a validación.'}
           </div>
 
           <div style={styles.topbarActions}>
@@ -1628,7 +1628,7 @@ const renderNeumaticoCard = (positionKey, label) => {
               onClick={handleSaveDraft}
               disabled={isBusy}
             >
-              {saving ? 'Guardando...' : 'Guardar borrador'}
+              {saving ? 'Guardando...' : 'Guardar avance'}
             </button>
             <button
               type="button"
@@ -1636,7 +1636,7 @@ const renderNeumaticoCard = (positionKey, label) => {
               onClick={handleSaveAppraisal}
               disabled={isBusy}
             >
-              {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Guardar avalúo'}
+              {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Enviar a validación'}
             </button>
           </div>
         </div>

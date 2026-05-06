@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { downloadAppraisalPhotosZip } from '../../services/appraisalPhotoService';
 import {
   getAppraisalHistory,
+  getAppraisalFollowups,
+  createAppraisalFollowup,
   downloadAppraisalPdf,
   updateAppraisal
 } from '../../services/appraisalService';
@@ -31,8 +33,8 @@ import { styles } from './AppraisalDetailModal.styles';
 
 const renderStatusBadge = (status) => {
   const map = {
-  borrador: styles.badgeDraft,
-  completo: styles.badgeSuccess,
+  incompleto: styles.badgeDraft,
+  pendiente_validacion: styles.badgeSuccess,
   comprado: styles.badgeWarning
 };
 
@@ -68,6 +70,7 @@ const SectionCard = ({ title, subtitle, children, right }) => (
 export default function AppraisalDetailModal({ abierto, appraisal, onClose, onSaved }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [history, setHistory] = useState([]);
+  const [followups, setFollowups] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const generalPhotos = useMemo(() => {
@@ -93,18 +96,23 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose, onSa
 
     let cancelled = false;
 
-    const loadHistory = async () => {
+    const loadData = async () => {
       try {
         setHistoryLoading(true);
-        const response = await getAppraisalHistory(appraisal.id);
+        const [historyResponse, followupsResponse] = await Promise.all([
+          getAppraisalHistory(appraisal.id),
+          getAppraisalFollowups(appraisal.id)
+        ]);
 
         if (!cancelled) {
-          setHistory(response?.data || []);
+          setHistory(historyResponse?.data || []);
+          setFollowups(followupsResponse?.data || []);
         }
       } catch (error) {
         console.error('Error al cargar historial:', error);
         if (!cancelled) {
           setHistory([]);
+          setFollowups([]);
         }
       } finally {
         if (!cancelled) {
@@ -113,7 +121,7 @@ export default function AppraisalDetailModal({ abierto, appraisal, onClose, onSa
       }
     };
 
-    loadHistory();
+    loadData();
 
     return () => {
       cancelled = true;
@@ -219,6 +227,22 @@ async function handleConfirmPurchase() {
   }
 }
 
+async function handleAddFollowup() {
+  const tipo = window.prompt('Tipo de seguimiento (llamada/whatsapp/cita):', 'llamada');
+  if (tipo === null) return;
+  const comentario = window.prompt('Comentario (obligatorio):', '');
+  if (!comentario || !comentario.trim()) {
+    alert('El comentario es obligatorio.');
+    return;
+  }
+  const proximaAccion = window.prompt('Próxima acción (opcional):', '') || '';
+  const prioridad = window.prompt('Prioridad (baja/media/alta):', 'media') || 'media';
+  const detalle = `[${tipo}] ${comentario.trim()}${proximaAccion ? ` | Próxima acción: ${proximaAccion}` : ''} | Prioridad: ${prioridad}`;
+  await createAppraisalFollowup(appraisal.id, { comentario: detalle });
+  const response = await getAppraisalFollowups(appraisal.id);
+  setFollowups(response?.data || []);
+}
+
 
 
   const carroceriaZonas = appraisal.carroceria?.zonas || {};
@@ -246,6 +270,7 @@ async function handleConfirmPurchase() {
                 <DetailItem label="Fecha de avalúo" value={formatDate(appraisal.fechaAvaluo)} />
                 <DetailItem label="Asesor" value={toDisplayValue(appraisal.asesorVentas)} />
                 <DetailItem label="Fecha de actualización" value={formatDate(appraisal.fechaActualizacion)} />
+                <DetailItem label="Avance" value={`${Number(appraisal.avancePorcentaje || 0)}%`} />
               </div>
             </SectionCard>
 
@@ -485,11 +510,13 @@ async function handleConfirmPurchase() {
               </div>
             </SectionCard>
 
-<AppraisalDetailHistorySection
-  styles={styles}
-  historyLoading={historyLoading}
-  history={history}
-  formatHistoryDateTime={formatHistoryDateTime}
+            <AppraisalDetailHistorySection
+              styles={styles}
+              historyLoading={historyLoading}
+              history={history}
+              followups={followups}
+              onAddFollowup={handleAddFollowup}
+              formatHistoryDateTime={formatHistoryDateTime}
   formatHistoryAction={formatHistoryAction}
   getHistoryAccent={getHistoryAccent}
   toDisplayValue={toDisplayValue}

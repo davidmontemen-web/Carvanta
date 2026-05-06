@@ -1,11 +1,11 @@
 export const getSuccessMessageByStatus = (status) => {
   switch (status) {
-    case 'borrador':
-      return 'Avalúo guardado como borrador';
     case 'incompleto':
       return 'Avalúo guardado como incompleto';
-    case 'completo':
-      return 'Avalúo marcado como completo correctamente';
+    case 'pendiente_validacion':
+      return 'Avalúo enviado a validación';
+    case 'comprado':
+      return 'Compra confirmada';
     default:
       return 'Avalúo guardado correctamente';
   }
@@ -43,15 +43,15 @@ export const sanitizeAppraisalBeforeSave = (data, formatDateFn) => {
 
 export const getTotals = (appraisals) => {
   const total = appraisals.length;
-  const borradores = appraisals.filter((item) => item.estatus === 'borrador').length;
   const incompletos = appraisals.filter((item) => item.estatus === 'incompleto').length;
-  const completos = appraisals.filter((item) => item.estatus === 'completo').length;
+  const pendientesValidacion = appraisals.filter((item) => item.estatus === 'pendiente_validacion').length;
+  const comprados = appraisals.filter((item) => item.estatus === 'comprado').length;
 
   return {
     total,
-    borradores,
     incompletos,
-    completos
+    pendientesValidacion,
+    comprados
   };
 };
 

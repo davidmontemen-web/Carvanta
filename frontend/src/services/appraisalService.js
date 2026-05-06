@@ -1,13 +1,23 @@
 import httpClient from './httpClient';
 import { normalizeApiError, sanitizeAppraisalPayload } from './serviceUtils';
 
+export const normalizeAppraisalStatus = (status) => {
+  const value = String(status || '').trim().toLowerCase();
+  if (!value || value === 'borrador') return 'incompleto';
+  if (value === 'completo') return 'pendiente_validacion';
+  return value;
+};
+
 export const getAppraisals = async () => {
   try {
     const response = await httpClient.get('/api/appraisals');
 
     return {
       ok: true,
-      data: response.data.appraisals || []
+      data: (response.data.appraisals || []).map((item) => ({
+        ...item,
+        estatus: normalizeAppraisalStatus(item.estatus)
+      }))
     };
   } catch (error) {
     normalizeApiError(error, 'Error al obtener avalúos');
@@ -20,7 +30,10 @@ export const getAppraisalById = async (id) => {
 
     return {
       ok: true,
-      data: response.data.appraisal
+      data: {
+        ...response.data.appraisal,
+        estatus: normalizeAppraisalStatus(response.data.appraisal?.estatus)
+      }
     };
   } catch (error) {
     normalizeApiError(error, 'Error al obtener avalúo');
@@ -98,5 +111,23 @@ export const marcarComoComprado = async (id, dataActual) => {
     };
   } catch (error) {
     normalizeApiError(error, 'Error al confirmar compra');
+  }
+};
+
+export const getAppraisalFollowups = async (id) => {
+  try {
+    const response = await httpClient.get(`/api/appraisals/${id}/followups`);
+    return { ok: true, data: response.data.followups || [] };
+  } catch (error) {
+    normalizeApiError(error, 'Error al obtener seguimientos comerciales');
+  }
+};
+
+export const createAppraisalFollowup = async (id, data) => {
+  try {
+    const response = await httpClient.post(`/api/appraisals/${id}/followups`, data);
+    return { ok: true, data: response.data };
+  } catch (error) {
+    normalizeApiError(error, 'Error al crear seguimiento comercial');
   }
 };

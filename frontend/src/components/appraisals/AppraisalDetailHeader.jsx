@@ -7,7 +7,7 @@ export default function AppraisalDetailHeader({
   styles
 }) {
   const canSendToInventory =
-    appraisal?.estatus === 'completo' && typeof onConfirmPurchase === 'function';
+    appraisal?.estatus === 'pendiente_validacion' && typeof onConfirmPurchase === 'function';
 
   return (
     <div style={styles.hero}>
@@ -36,7 +36,7 @@ export default function AppraisalDetailHeader({
             }}
             onClick={onConfirmPurchase}
           >
-            Pasar a inventario
+            Confirmar compra / pasar a inventario
           </button>
         )}
 

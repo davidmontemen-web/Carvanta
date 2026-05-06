@@ -51,12 +51,14 @@ function KpiCard({ label, value, subtitle, tone = 'default' }) {
 }
 
 function StatusBadge({ status }) {
-  const normalized = (status || 'borrador').toLowerCase();
+  const normalized = (status || 'incompleto').toLowerCase();
 
   const config =
-    normalized === 'completo'
-      ? { label: 'Completo', style: styles.badgeComplete }
-      : { label: 'Borrador', style: styles.badgeDraft };
+    normalized === 'pendiente_validacion'
+      ? { label: 'Pendiente validación', style: styles.badgeComplete }
+      : normalized === 'comprado'
+      ? { label: 'Comprado', style: styles.badgeInfo }
+      : { label: 'Incompleto', style: styles.badgeDraft };
 
   return <span style={{ ...styles.badge, ...config.style }}>{config.label}</span>;
 }
@@ -150,7 +152,7 @@ const getRelativeTone = (status, value) => {
   const now = new Date();
   const diffHours = (now.getTime() - date.getTime()) / 36e5;
 
-  if ((status || '').toLowerCase() === 'completo') return styles.relativeSuccess;
+  if ((status || '').toLowerCase() === 'comprado') return styles.relativeSuccess;
   if (diffHours > 48) return styles.relativeDanger;
   if (diffHours > 24) return styles.relativeWarning;
 
@@ -218,9 +220,9 @@ const extractVehicleToBuy = (appraisal) => {
 };
 
 const getProgressByAppraisal = (appraisal) => {
-  const status = (appraisal?.estatus || 'borrador').toLowerCase();
-
-  if (status === 'completo') return 100;
+  const status = (appraisal?.estatus || 'incompleto').toLowerCase();
+  if (typeof appraisal?.avancePorcentaje === 'number') return appraisal.avancePorcentaje;
+  if (status === 'comprado') return 100;
 
   let score = 15;
 
@@ -261,9 +263,9 @@ const getProgressByAppraisal = (appraisal) => {
 };
 
 const requiresAttention = (appraisal) => {
-  const status = (appraisal?.estatus || 'borrador').toLowerCase();
+  const status = (appraisal?.estatus || 'incompleto').toLowerCase();
 
-  if (status !== 'borrador') return false;
+  if (status !== 'incompleto') return false;
   if (!isValidDate(appraisal?.fechaActualizacion)) return true;
 
   const lastUpdate = new Date(appraisal.fechaActualizacion);
@@ -372,8 +374,9 @@ export default function AppraisalsPage({ usuario }) {
   const totals = useMemo(
     () => ({
       total: rawTotals.total || 0,
-      borradores: rawTotals.borradores || 0,
-      completos: rawTotals.completos || 0
+      incompletos: rawTotals.incompletos || 0,
+      pendientesValidacion: rawTotals.pendientesValidacion || 0,
+      comprados: rawTotals.comprados || 0
     }),
     [rawTotals]
   );
@@ -390,8 +393,9 @@ export default function AppraisalsPage({ usuario }) {
 
   const tabItems = [
     { key: 'todos', label: 'Todos', count: totals.total },
-    { key: 'borrador', label: 'Borradores', count: totals.borradores },
-    { key: 'completo', label: 'Completos', count: totals.completos }
+    { key: 'incompleto', label: 'Incompletos', count: totals.incompletos },
+    { key: 'pendiente_validacion', label: 'Pend. validación', count: totals.pendientesValidacion },
+    { key: 'comprado', label: 'Comprados', count: totals.comprados }
   ];
 
   const clearFilters = () => {
@@ -527,11 +531,11 @@ export default function AppraisalsPage({ usuario }) {
   };
 
   const handleSaveDraft = async (data) => {
-    return await saveAppraisalWithStatus(data, 'borrador');
+    return await saveAppraisalWithStatus(data, 'incompleto');
   };
 
   const handleSaveComplete = async (data) => {
-    return await saveAppraisalWithStatus(data, 'completo');
+    return await saveAppraisalWithStatus(data, 'pendiente_validacion');
   };
 
   if (mode === 'create' || mode === 'edit') {
@@ -575,14 +579,14 @@ export default function AppraisalsPage({ usuario }) {
       <div style={styles.kpiGrid}>
         <KpiCard label="Total" value={totals.total} subtitle="Todos los avalúos" tone="default" />
         <KpiCard
-          label="Borradores"
-          value={totals.borradores}
+          label="Incompletos"
+          value={totals.incompletos}
           subtitle="Pendientes de captura"
           tone="warning"
         />
         <KpiCard
-          label="Completos"
-          value={totals.completos}
+          label="Pendientes validación"
+          value={totals.pendientesValidacion}
           subtitle="Listos para operar"
           tone="success"
         />
@@ -650,8 +654,9 @@ export default function AppraisalsPage({ usuario }) {
             disabled={quickTab !== 'todos'}
           >
             <option value="todos">Todos los estados</option>
-            <option value="borrador">Borrador</option>
-            <option value="completo">Completo</option>
+            <option value="incompleto">Incompleto</option>
+            <option value="pendiente_validacion">Pendiente validación</option>
+            <option value="comprado">Comprado</option>
           </select>
 
           <select
@@ -798,6 +803,9 @@ export default function AppraisalsPage({ usuario }) {
                               onClick={() => handleEdit(item)}
                             >
                               Editar
+                            </button>
+                            <button style={styles.actionButton} onClick={() => handleView(item)}>
+                              Agregar seguimiento
                             </button>
                           </div>
                         </td>
@@ -1186,6 +1194,10 @@ const styles = {
   badgeComplete: {
     background: '#dcfce7',
     color: '#166534'
+  },
+  badgeInfo: {
+    background: '#dbeafe',
+    color: '#1d4ed8'
   },
   attentionTag: {
     width: 'fit-content',

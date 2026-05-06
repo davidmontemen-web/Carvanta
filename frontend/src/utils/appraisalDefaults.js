@@ -21,7 +21,7 @@ export const getEmptyAppraisal = (usuario) => ({
   fechaAvaluo: new Date().toLocaleDateString('en-CA'),
   fechaActualizacion: null,
 
-  estatus: 'borrador',
+  estatus: 'incompleto',
 
   asesorVentas: usuario
     ? `${usuario.nombre} ${usuario.apellido}`

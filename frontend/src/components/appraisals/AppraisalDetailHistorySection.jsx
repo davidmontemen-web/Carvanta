@@ -16,17 +16,16 @@ export default function AppraisalDetailHistorySection({
   styles,
   historyLoading,
   history,
+  followups,
+  onAddFollowup,
   formatHistoryDateTime,
   formatHistoryAction,
   getHistoryAccent,
   toDisplayValue
 }) {
   return (
-    <LocalSectionCard
-      title="Historial"
-      subtitle="Bitácora real de cambios del expediente."
-      styles={styles}
-    >
+    <>
+    <LocalSectionCard title="Historial del sistema" subtitle="Bitácora real de cambios del expediente." styles={styles}>
       {historyLoading ? (
         <p style={styles.emptyText}>Cargando historial...</p>
       ) : history.length ? (
@@ -70,5 +69,23 @@ export default function AppraisalDetailHistorySection({
         <p style={styles.emptyText}>Sin historial.</p>
       )}
     </LocalSectionCard>
+    <LocalSectionCard title="Seguimiento comercial" subtitle="Registro de contactos y próximos pasos." styles={styles}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <button style={styles.secondaryButton} onClick={onAddFollowup}>Agregar seguimiento</button>
+      </div>
+      {followups?.length ? (
+        <div style={styles.historyList}>
+          {followups.map((item) => (
+            <div key={`f-${item.id}`} style={styles.historyCard}>
+              <div style={styles.historyTopRow}>
+                <span style={styles.historyDate}>{formatHistoryDateTime(item.created_at)}</span>
+              </div>
+              <div style={styles.historyDetailText}>{toDisplayValue(item.comentario)}</div>
+            </div>
+          ))}
+        </div>
+      ) : <p style={styles.emptyText}>Sin seguimientos.</p>}
+    </LocalSectionCard>
+    </>
   );
 }
