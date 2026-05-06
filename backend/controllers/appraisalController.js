@@ -130,6 +130,45 @@ const ensureAppraisalWorkflowColumns = async () => {
     column: 'gerente_validacion_observaciones',
     definition: 'gerente_validacion_observaciones VARCHAR(600) NULL'
   });
+  await ensureColumnExists({
+    table: 'appraisals',
+    column: 'avance_porcentaje',
+    definition: 'avance_porcentaje INT NOT NULL DEFAULT 0'
+  });
+};
+
+const ensureFollowupsTable = async () => {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS appraisal_followups (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      appraisal_id BIGINT NOT NULL,
+      comentario VARCHAR(600) NOT NULL,
+      creado_por INT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_followups_appraisal (appraisal_id)
+    )
+  `);
+};
+
+const normalizeAppraisalStatus = (status) => {
+  const value = String(status || '').trim().toLowerCase();
+  if (!value || value === 'borrador') return 'incompleto';
+  if (value === 'completo') return 'pendiente_validacion';
+  return value;
+};
+
+const calculateProgressPercentage = (payload = {}) => {
+  const sections = [
+    payload.generales,
+    payload.documentacion,
+    payload.interior,
+    payload.carroceria,
+    payload.sistemaElectrico,
+    payload.fugasMotor,
+    payload.valuacion
+  ];
+  const completed = sections.filter((section) => Object.keys(section || {}).length > 0).length;
+  return Math.round((completed / sections.length) * 100);
 };
 
 const getUserDisplayNameById = async (userId) => {
@@ -193,6 +232,7 @@ const mapAppraisalRow = async (row) => {
     fechaAvaluo: row.fecha_avaluo,
     fechaActualizacion: row.fecha_actualizacion,
     estatus: row.estatus,
+    avancePorcentaje: Number(row.avance_porcentaje) || 0,
     asesorVentas: row.asesor_ventas,
     generales: parseJSONColumn(row.generales_json),
     documentacion: parseJSONColumn(row.documentacion_json),
@@ -300,6 +340,47 @@ const obtenerHistorialAppraisal = async (req, res) => {
   }
 };
 
+const obtenerFollowupsAppraisal = async (req, res) => {
+  try {
+    await ensureFollowupsTable();
+    const { id } = req.params;
+    const [rows] = await db.query(
+      `SELECT * FROM appraisal_followups WHERE appraisal_id = ? ORDER BY created_at DESC, id DESC`,
+      [id]
+    );
+    res.json({ ok: true, followups: rows });
+  } catch (error) {
+    console.error('Error al obtener seguimientos:', error);
+    res.status(500).json({ ok: false, error: 'Error al obtener seguimientos' });
+  }
+};
+
+const crearFollowupAppraisal = async (req, res) => {
+  try {
+    await ensureFollowupsTable();
+    const { id } = req.params;
+    const comentario = String(req.body?.comentario || '').trim();
+    if (!comentario) {
+      return res.status(400).json({ ok: false, error: 'El comentario es obligatorio' });
+    }
+    await db.query(
+      `INSERT INTO appraisal_followups (appraisal_id, comentario, creado_por) VALUES (?, ?, ?)`,
+      [id, comentario, req.usuario?.id || null]
+    );
+    const actor = await getActorInfo(req.usuario);
+    await logHistory({
+      appraisalId: Number(id),
+      usuario: actor,
+      accion: 'FOLLOWUP_CREATED',
+      detalle: comentario
+    });
+    return res.json({ ok: true, message: 'Seguimiento agregado' });
+  } catch (error) {
+    console.error('Error al crear seguimiento:', error);
+    res.status(500).json({ ok: false, error: 'Error al crear seguimiento' });
+  }
+};
+
 // ==============================
 // CREAR
 // ==============================
@@ -325,8 +406,18 @@ const crearAppraisal = async (req, res) => {
       valuacion
     } = req.body;
 
+    const normalizedStatus = normalizeAppraisalStatus(estatus);
     const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
     const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
+    const avancePorcentaje = calculateProgressPercentage({
+      generales,
+      documentacion,
+      interior,
+      carroceria,
+      sistemaElectrico,
+      fugasMotor,
+      valuacion
+    });
 
     if (
       !id ||
@@ -373,9 +464,10 @@ const crearAppraisal = async (req, res) => {
         sistema_electrico_json,
         fugas_motor_json,
         valuacion_json,
-        creado_por
+        creado_por,
+        avance_porcentaje
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -385,7 +477,7 @@ const crearAppraisal = async (req, res) => {
         vehiculoInteres,
         fechaAvaluoFormateada,
         fechaActualizacionMysql,
-        estatus || 'borrador',
+        normalizedStatus,
         asesorVentas || null,
         safeJSON(generales),
         safeJSON(documentacion),
@@ -394,7 +486,8 @@ const crearAppraisal = async (req, res) => {
         safeJSON(sistemaElectrico),
         safeJSON(fugasMotor),
         safeJSON(valuacion),
-        req.usuario?.id || null
+        req.usuario?.id || null,
+        avancePorcentaje
       ]
     );
 
@@ -411,7 +504,7 @@ const crearAppraisal = async (req, res) => {
       appraisalId: id,
       usuario: actor,
       accion: 'CREATED',
-      detalle: `Avalúo creado con estatus ${estatus || 'borrador'}`
+      detalle: `Avalúo creado con estatus ${normalizedStatus}`
     });
 
     res.json({
@@ -479,7 +572,7 @@ const actualizarAppraisal = async (req, res) => {
     const currentCarroceria = parseJSONColumn(rows[0].carroceria_json);
     const currentSistemaElectrico = parseJSONColumn(rows[0].sistema_electrico_json);
     const currentFugasMotor = parseJSONColumn(rows[0].fugas_motor_json);
-    const estatusNuevo = estatus || 'borrador';
+    const estatusNuevo = normalizeAppraisalStatus(estatus);
     const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
     const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
 
@@ -490,10 +583,10 @@ const actualizarAppraisal = async (req, res) => {
       });
     }
 
-    if (estatusActual === 'completo' && req.usuario?.rol !== 'administrador') {
+    if (estatusActual === 'comprado' && req.usuario?.rol !== 'administrador') {
       return res.status(403).json({
         ok: false,
-        error: 'No puedes editar un avalúo completo'
+        error: 'No puedes editar un avalúo comprado'
       });
     }
 
@@ -513,22 +606,31 @@ const actualizarAppraisal = async (req, res) => {
       });
     }
 
-    if (estatusNuevo === 'completo' && !isManagerRole) {
+    if (estatusNuevo === 'comprado' && (estatusActual !== 'pendiente_validacion' || !isManagerRole)) {
       return res.status(403).json({
         ok: false,
-        error: 'Solo gerencia puede marcar el avalúo como completo'
+        error: 'Solo gerencia puede confirmar compra desde pendiente de validación'
       });
     }
 
-    const managerValidationBy = isManagerRole && estatusNuevo === 'completo'
+    const managerValidationBy = isManagerRole && estatusNuevo === 'comprado'
       ? Number(req.usuario?.id) || null
       : null;
-    const managerValidationAt = isManagerRole && estatusNuevo === 'completo'
+    const managerValidationAt = isManagerRole && estatusNuevo === 'comprado'
       ? new Date()
       : null;
-    const managerValidationNotes = isManagerRole && estatusNuevo === 'completo'
+    const managerValidationNotes = isManagerRole && estatusNuevo === 'comprado'
       ? String(validacionGerente?.observaciones || '').trim() || null
       : null;
+    const avancePorcentaje = calculateProgressPercentage({
+      generales,
+      documentacion,
+      interior,
+      carroceria,
+      sistemaElectrico,
+      fugasMotor,
+      valuacion
+    });
 
     const [updateResult] = await db.query(
       `
@@ -549,6 +651,7 @@ const actualizarAppraisal = async (req, res) => {
         sistema_electrico_json = ?,
         fugas_motor_json = ?,
         valuacion_json = ?,
+        avance_porcentaje = ?,
         gerente_validado_por = ?,
         gerente_validado_at = ?,
         gerente_validacion_observaciones = ?
@@ -570,6 +673,7 @@ const actualizarAppraisal = async (req, res) => {
         safeJSON(sistemaElectrico),
         safeJSON(fugasMotor),
         safeJSON(valuacion),
+        avancePorcentaje,
         managerValidationBy,
         managerValidationAt,
         managerValidationNotes,
@@ -620,16 +724,16 @@ const actualizarAppraisal = async (req, res) => {
         appraisalId: Number(id),
         usuario: actor,
         accion: 'MANAGER_VALIDATED',
-        detalle: `Gerencia validó avalúo completo${managerValidationNotes ? `: ${managerValidationNotes}` : ''}`
+        detalle: `Gerencia validó compra${managerValidationNotes ? `: ${managerValidationNotes}` : ''}`
       });
     }
 
-    if (estatusActual === 'completo' && req.usuario?.rol === 'administrador') {
+    if (estatusActual === 'comprado' && req.usuario?.rol === 'administrador') {
       await logHistory({
         appraisalId: Number(id),
         usuario: actor,
         accion: 'COMPLETED_RECORD_EDITED',
-        detalle: 'Un administrador editó un avalúo completo'
+        detalle: 'Un administrador editó un avalúo comprado'
       });
     }
 
@@ -660,6 +764,8 @@ module.exports = {
   listarAppraisals,
   obtenerAppraisalPorId,
   obtenerHistorialAppraisal,
+  obtenerFollowupsAppraisal,
+  crearFollowupAppraisal,
   crearAppraisal,
   actualizarAppraisal
 };
