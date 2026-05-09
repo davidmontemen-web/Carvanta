@@ -139,9 +139,9 @@ const ensureAppraisalWorkflowColumns = async () => {
     ALTER TABLE appraisals
     MODIFY COLUMN estatus ENUM(
       'borrador',
-      'completo',
       'incompleto',
       'pendiente_validacion',
+      'completo',
       'comprado'
     ) NOT NULL DEFAULT 'borrador'
   `);
@@ -163,7 +163,6 @@ const ensureFollowupsTable = async () => {
 const normalizeAppraisalStatus = (status) => {
   const value = String(status || '').trim().toLowerCase();
   if (!value || value === 'borrador') return 'incompleto';
-  if (value === 'completo') return 'pendiente_validacion';
   return value;
 };
 
@@ -617,7 +616,7 @@ const actualizarAppraisal = async (req, res) => {
       });
     }
 
-    if (estatusNuevo === 'comprado' && (estatusActual !== 'pendiente_validacion' || !isManagerRole)) {
+    if (estatusNuevo === 'comprado' && (estatusActual !== 'completo' || !isManagerRole)) {
       return res.status(403).json({
         ok: false,
         error: 'Solo gerencia puede confirmar compra desde pendiente de validación'
