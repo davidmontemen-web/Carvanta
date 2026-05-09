@@ -65,17 +65,17 @@ const formatMoneyDisplay = (value) => {
 };
 
 const sections = [
-  { key: 'encabezado', label: 'Encabezado' },
-  { key: 'generales', label: 'Generales del vehículo' },
-  { key: 'documentacion', label: 'Documentación' },
-  { key: 'interior', label: 'Aspecto físico interior' },
-  { key: 'fotosGenerales', label: 'Fotos generales' },
-  { key: 'fotosDetalle', label: 'Fotos de detalle' },
-  { key: 'carroceria', label: 'Carrocería y neumáticos' },
-  { key: 'sistemaElectrico', label: 'Sistema eléctrico' },
-  { key: 'fugasMotor', label: 'Fugas y motor' },
-  { key: 'valuacion', label: 'Valuación' },
-  { key: 'revisionFinal', label: 'Revisión final' }
+  { key: 'encabezado', label: 'Encabezado', subtitle: 'Datos base del expediente' },
+  { key: 'generales', label: 'Generales del vehículo', subtitle: 'Identificación de unidad' },
+  { key: 'documentacion', label: 'Documentación', subtitle: 'Control documental' },
+  { key: 'interior', label: 'Aspecto físico interior', subtitle: 'Condición interior' },
+  { key: 'fotosGenerales', label: 'Fotos generales', subtitle: 'Evidencia exterior' },
+  { key: 'fotosDetalle', label: 'Fotos de detalle', subtitle: 'Daños y particulares' },
+  { key: 'carroceria', label: 'Carrocería y neumáticos', subtitle: 'Lámina, pintura, llantas' },
+  { key: 'sistemaElectrico', label: 'Sistema eléctrico', subtitle: 'Componentes eléctricos' },
+  { key: 'fugasMotor', label: 'Fugas y motor', subtitle: 'Mecánica y fluidos' },
+  { key: 'valuacion', label: 'Valuación', subtitle: 'Parámetros comerciales' },
+  { key: 'revisionFinal', label: 'Revisión final', subtitle: 'Checklist de cierre' }
 ];
 
 const generalPhotoSlots = [
@@ -593,6 +593,7 @@ export default function AppraisalFormWorkspace({
   const [notification, setNotification] = useState(null);
   const [popupMessage, setPopupMessage] = useState(null);
   const [activeSection, setActiveSection] = useState('encabezado');
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const currentRole = String(usuario?.rol || '').toLowerCase();
   const isManagerRole = ['administrador', 'gerente_avaluos', 'gerente'].includes(currentRole);
   const isTechnicalRole = ['tecnico_servicio', 'tecnico'].includes(currentRole);
@@ -625,6 +626,13 @@ const registerSectionRef = (key, el) => {
   useEffect(() => {
     setForm(normalizedInitialData);
   }, [normalizedInitialData]);
+
+  useEffect(() => {
+    const updateLayout = () => setIsCompactLayout(window.innerWidth < 1100);
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
 
   useEffect(() => {
   if (!notification) return;
@@ -1369,9 +1377,14 @@ const renderNeumaticoCard = (positionKey, label) => {
 };
 
   const isBusy = saving || uploading;
+  const completedSectionCount = sections.filter((section) => {
+    const statusNode = renderSectionStatus(section.key);
+    return statusNode?.props?.children === 'Completo';
+  }).length;
+  const visualProgress = Math.round((completedSectionCount / sections.length) * 100);
 
   return (
-    <div style={styles.workspace}>
+    <div style={{ ...styles.workspace, ...(isCompactLayout ? { gridTemplateColumns: '1fr' } : {}) }}>
       {popupMessage && (
         <div style={styles.popupOverlay} onClick={() => setPopupMessage(null)}>
           <div style={styles.popupCard} onClick={(e) => e.stopPropagation()}>
@@ -1383,16 +1396,23 @@ const renderNeumaticoCard = (positionKey, label) => {
           </div>
         </div>
       )}
-      <aside style={styles.sidebar}>
+      <aside style={{ ...styles.sidebar, ...(isCompactLayout ? { position: 'static' } : {}) }}>
         <div style={styles.sidebarHeader}>
-          <h2 style={styles.sidebarTitle}>Expediente de avalúo</h2>
-          <p style={styles.sidebarText}>
-            {mode === 'create' ? 'Nuevo avalúo' : 'Editar avalúo'}
-          </p>
+          <h2 style={styles.sidebarTitle}>Flujo de avalúo</h2>
+          <p style={styles.sidebarText}>{mode === 'create' ? 'Nuevo expediente' : 'Edición activa'}</p>
+          <div style={styles.sidebarProgressWrap}>
+            <div style={styles.sidebarProgressTop}>
+              <span>Avance visual</span>
+              <strong>{visualProgress}%</strong>
+            </div>
+            <div style={styles.sidebarProgressBar}>
+              <div style={{ ...styles.sidebarProgressFill, width: `${visualProgress}%` }} />
+            </div>
+          </div>
         </div>
 
         <div style={styles.sectionNav}>
-          {sections.map((section) => (
+          {sections.map((section, idx) => (
             <button
               key={section.key}
               type="button"
@@ -1402,7 +1422,13 @@ const renderNeumaticoCard = (positionKey, label) => {
               }}
               onClick={() => scrollToSection(section.key)}
             >
-              <span>{section.label}</span>
+              <div style={styles.sectionButtonBody}>
+                <span style={styles.sectionButtonIndex}>{String(idx + 1).padStart(2, '0')}</span>
+                <div>
+                  <div>{section.label}</div>
+                  <small style={styles.sectionButtonSubtitle}>{section.subtitle}</small>
+                </div>
+              </div>
               {renderSectionStatus(section.key)}
             </button>
           ))}
@@ -1415,6 +1441,9 @@ const renderNeumaticoCard = (positionKey, label) => {
             <h1 style={styles.formTitle}>{form.folio || 'Avalúo sin folio'}</h1>
             <p style={styles.formMeta}>
               Cliente: {form.clienteNombre || '-'} · Estatus actual: {form.estatus || 'incompleto'}
+            </p>
+            <p style={styles.heroSubmeta}>
+              Vehículo de interés: {form.vehiculoInteres || '-'} · Rol activo: {getRoleFriendlyName()}
             </p>
           </div>
 

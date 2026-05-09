@@ -34,29 +34,29 @@ export const styles = {
   },
   workspace: {
     display: 'grid',
-    gridTemplateColumns: '220px 1fr',
-    gap: '16px',
+    gridTemplateColumns: '320px 1fr',
+    gap: '18px',
     alignItems: 'start'
   },
 
   sidebar: {
     background: '#ffffff',
-    borderRadius: '18px',
-    padding: '14px',
+    borderRadius: '20px',
+    padding: '16px',
     boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)',
-    border: '1px solid #dbe4f0',
+    border: '1px solid #e2e8f0',
     position: 'sticky',
     top: '12px',
     alignSelf: 'start'
   },
   sidebarHeader: {
-    marginBottom: '12px',
-    paddingBottom: '10px',
+    marginBottom: '14px',
+    paddingBottom: '14px',
     borderBottom: '1px solid #eef2f7'
   },
   sidebarTitle: {
     margin: 0,
-    fontSize: '15px',
+    fontSize: '18px',
     color: '#0f172a',
     fontWeight: 800,
     letterSpacing: '-0.02em'
@@ -64,13 +64,13 @@ export const styles = {
   sidebarText: {
     margin: '4px 0 0 0',
     color: '#64748b',
-    fontSize: '11px',
+    fontSize: '12px',
     lineHeight: 1.4
   },
 
   sectionNav: {
     display: 'grid',
-    gap: '7px'
+    gap: '9px'
   },
   sectionButton: {
     display: 'flex',
@@ -78,19 +78,19 @@ export const styles = {
     justifyContent: 'space-between',
     gap: '8px',
     width: '100%',
-    padding: '8px 10px',
-    borderRadius: '12px',
+    padding: '10px 12px',
+    borderRadius: '14px',
     border: '1px solid #dbe4f0',
     background: '#fbfdff',
     color: '#334155',
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: 800,
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'all 0.18s ease'
   },
   sectionButtonActive: {
-    background: '#0f172a',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
     border: '1px solid #0f172a',
     color: '#ffffff',
     boxShadow: '0 8px 16px rgba(15, 23, 42, 0.14)'
@@ -114,24 +114,27 @@ export const styles = {
 
   main: {
     display: 'grid',
-    gap: '12px'
+    gap: '14px'
   },
 
   heroCard: {
     background: '#ffffff',
-    borderRadius: '18px',
-    padding: '14px 16px',
+    borderRadius: '20px',
+    padding: '16px 18px',
     boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)',
-    border: '1px solid #dbe4f0',
+    border: '1px solid #e2e8f0',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: '12px',
-    marginBottom: '6px'
+    marginBottom: '4px',
+    position: 'sticky',
+    top: 8,
+    zIndex: 10
   },
   formTitle: {
     margin: 0,
-    fontSize: '18px',
+    fontSize: '21px',
     color: '#0f172a',
     lineHeight: 1.05,
     fontWeight: 800,
@@ -140,7 +143,7 @@ export const styles = {
   formMeta: {
     margin: '4px 0 0 0',
     color: '#64748b',
-    fontSize: '11px',
+    fontSize: '12px',
     lineHeight: 1.4
   },
   topbarActions: {
@@ -152,10 +155,10 @@ export const styles = {
 
   sectionCard: {
     background: '#ffffff',
-    borderRadius: '18px',
-    padding: '14px',
+    borderRadius: '20px',
+    padding: '16px',
     boxShadow: '0 12px 24px rgba(15, 23, 42, 0.06)',
-    border: '1px solid #dbe4f0'
+    border: '1px solid #e2e8f0'
   },
   sectionCardActive: {
     border: '1px solid #bfdbfe',
@@ -218,8 +221,8 @@ export const styles = {
     width: '100%',
     padding: '10px 12px',
     border: '1px solid #cbd5e1',
-    borderRadius: '10px',
-    fontSize: '12px',
+    borderRadius: '12px',
+    fontSize: '13px',
     background: '#ffffff',
     color: '#111827',
     minHeight: '38px',
@@ -270,9 +273,9 @@ export const styles = {
     width: '100%',
     padding: '10px 12px',
     border: '1px solid #cbd5e1',
-    borderRadius: '10px',
+    borderRadius: '12px',
     resize: 'vertical',
-    fontSize: '12px',
+    fontSize: '13px',
     minHeight: '76px',
     color: '#111827',
     background: '#ffffff',
@@ -389,22 +392,22 @@ export const styles = {
     background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
     color: '#ffffff',
     border: 'none',
-    borderRadius: '10px',
+    borderRadius: '12px',
     padding: '10px 14px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px',
+    fontSize: '13px',
     boxShadow: '0 10px 20px rgba(15, 23, 42, 0.22)'
   },
   secondaryButton: {
     background: '#ffffff',
     color: '#111827',
     border: '1px solid #cbd5e1',
-    borderRadius: '10px',
+    borderRadius: '12px',
     padding: '10px 14px',
     cursor: 'pointer',
     fontWeight: 700,
-    fontSize: '12px',
+    fontSize: '13px',
     boxShadow: '0 8px 16px rgba(15, 23, 42, 0.06)'
   },
   disabledButton: {
@@ -685,13 +688,68 @@ export const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: '10px',
-    borderBottomLeftRadius: '14px',
-    borderBottomRightRadius: '14px',
+    borderBottomLeftRadius: '18px',
+    borderBottomRightRadius: '18px',
     boxShadow: '0 -10px 24px rgba(15, 23, 42, 0.08)'
   },
   bottomBarText: {
     color: '#4b5563',
     fontWeight: 600,
     fontSize: '12px'
+  },
+  heroSubmeta: {
+    margin: '4px 0 0 0',
+    color: '#475569',
+    fontSize: '12px',
+    lineHeight: 1.45
+  },
+  sidebarProgressWrap: {
+    marginTop: 10,
+    display: 'grid',
+    gap: 6
+  },
+  sidebarProgressTop: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: 700
+  },
+  sidebarProgressBar: {
+    width: '100%',
+    height: 8,
+    borderRadius: 999,
+    background: '#e2e8f0',
+    overflow: 'hidden'
+  },
+  sidebarProgressFill: {
+    height: '100%',
+    borderRadius: 999,
+    background: 'linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%)'
+  },
+  sectionButtonBody: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10
+  },
+  sectionButtonIndex: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#e2e8f0',
+    color: '#0f172a',
+    fontSize: 10,
+    fontWeight: 800
+  },
+  sectionButtonSubtitle: {
+    display: 'block',
+    marginTop: 2,
+    color: '#64748b',
+    fontSize: 10,
+    fontWeight: 600
   }
 };
