@@ -210,7 +210,8 @@ export const styles = {
   fieldFull: {
     display: 'grid',
     gap: '4px',
-    marginTop: '10px'
+    marginTop: '10px',
+    gridColumn: '1 / -1'
   },
 
   label: {
@@ -347,12 +348,12 @@ export const styles = {
     borderColor: '#cbd5e1'
   },
   binarySegment: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    display: 'inline-flex',
     gap: 8
   },
   binaryOption: {
-    minHeight: 44,
+    minHeight: 40,
+    minWidth: 84,
     borderRadius: 12,
     border: '1px solid #cbd5e1',
     background: '#f8fafc',
