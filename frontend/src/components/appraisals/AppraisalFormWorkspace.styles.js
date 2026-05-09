@@ -443,12 +443,28 @@ export const styles = {
   conditionGroup: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '6px'
+    gap: '8px'
+  },
+  conditionRow: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(170px, 1fr) auto auto',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 0 14px 0',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  conditionLabelWrap: {
+    minWidth: 0
+  },
+  conditionStatusWrap: {
+    display: 'flex',
+    justifyContent: 'flex-start'
   },
   conditionButton: {
-    minWidth: '68px',
-    padding: '6px 8px',
-    borderRadius: '10px',
+    minWidth: '92px',
+    minHeight: '40px',
+    padding: '6px 12px',
+    borderRadius: '12px',
     border: '1px solid #cbd5e1',
     background: '#f8fafc',
     cursor: 'pointer',

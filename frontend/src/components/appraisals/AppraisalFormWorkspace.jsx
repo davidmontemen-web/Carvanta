@@ -1215,8 +1215,10 @@ const renderYesNoNAField = (label, value, onChange, disabled = false) => (
 );
 
 const renderConditionField = (label, value, onChange, disabled = false) => (
-  <div style={styles.field}>
-    <label style={styles.label}>{label}</label>
+  <div style={styles.conditionRow}>
+    <div style={styles.conditionLabelWrap}>
+      <label style={styles.label}>{label}</label>
+    </div>
 
     <div style={styles.conditionGroup}>
       <button
@@ -1266,6 +1268,19 @@ const renderConditionField = (label, value, onChange, disabled = false) => (
       >
         Malo
       </button>
+    </div>
+
+    <div style={styles.conditionStatusWrap}>
+      <span
+        style={{
+          ...styles.binaryStatusPill,
+          ...(value
+            ? styles.binaryStatusYes
+            : styles.binaryStatusPending)
+        }}
+      >
+        {value ? 'Capturado' : 'Pendiente'}
+      </span>
     </div>
   </div>
 );
