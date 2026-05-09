@@ -47,7 +47,10 @@ export const styles = {
     border: '1px solid #e2e8f0',
     position: 'sticky',
     top: '12px',
-    alignSelf: 'start'
+    alignSelf: 'start',
+    height: 'calc(100vh - 24px)',
+    maxHeight: 'calc(100vh - 24px)',
+    overflowY: 'auto'
   },
   sidebarHeader: {
     marginBottom: '14px',

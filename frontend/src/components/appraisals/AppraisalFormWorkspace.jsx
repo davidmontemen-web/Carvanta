@@ -1061,12 +1061,28 @@ const handleAnioChange = (value) => {
 };
 
   const renderSectionStatus = (key) => {
+    const carroceriaReady =
+      validation.missingCarroceriaCompleteFields.length === 0;
+    const interiorReady = validation.missingInteriorFields.length === 0;
+    const fugasReady = validation.missingFugasMotorFields.length === 0;
+    const documentacionReady =
+      Object.values(form.documentacion || {}).filter((value) => hasValue(value)).length >= 4;
+    const sistemaElectricoReady =
+      Object.values(form.sistemaElectrico || {}).filter((value) => hasValue(value)).length >= 8;
+    const revisionReady = validation.canComplete;
+
     const map = {
       encabezado: validation.requiredHeader,
       generales: validation.requiredGenerales,
+      documentacion: documentacionReady,
+      interior: interiorReady,
       valuacion: validation.requiredValuacion,
       fotosGenerales: validation.requiredPhotos,
-      fotosDetalle: validation.requiredPhotos
+      fotosDetalle: validation.requiredPhotos,
+      carroceria: carroceriaReady,
+      sistemaElectrico: sistemaElectricoReady,
+      fugasMotor: fugasReady,
+      revisionFinal: revisionReady
     };
 
     if (!(key in map)) return null;
@@ -1396,7 +1412,14 @@ const renderNeumaticoCard = (positionKey, label) => {
           </div>
         </div>
       )}
-      <aside style={{ ...styles.sidebar, ...(isCompactLayout ? { position: 'static' } : {}) }}>
+      <aside
+        style={{
+          ...styles.sidebar,
+          ...(isCompactLayout
+            ? { position: 'static', height: 'auto', maxHeight: 'none', overflow: 'visible' }
+            : {})
+        }}
+      >
         <div style={styles.sidebarHeader}>
           <h2 style={styles.sidebarTitle}>Flujo de avalúo</h2>
           <p style={styles.sidebarText}>{mode === 'create' ? 'Nuevo expediente' : 'Edición activa'}</p>
