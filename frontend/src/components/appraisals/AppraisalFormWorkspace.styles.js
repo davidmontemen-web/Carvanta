@@ -317,6 +317,70 @@ export const styles = {
     fontSize: '12px',
     fontWeight: 600
   },
+  binaryFieldHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 8
+  },
+  binaryStatusPill: {
+    fontSize: 10,
+    fontWeight: 800,
+    padding: '3px 8px',
+    borderRadius: 999,
+    border: '1px solid transparent'
+  },
+  binaryStatusYes: {
+    background: '#dcfce7',
+    color: '#166534',
+    borderColor: '#86efac'
+  },
+  binaryStatusNo: {
+    background: '#fee2e2',
+    color: '#991b1b',
+    borderColor: '#fca5a5'
+  },
+  binaryStatusPending: {
+    background: '#f1f5f9',
+    color: '#475569',
+    borderColor: '#cbd5e1'
+  },
+  binarySegment: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8
+  },
+  binaryOption: {
+    minHeight: 44,
+    borderRadius: 12,
+    border: '1px solid #cbd5e1',
+    background: '#f8fafc',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    fontWeight: 800,
+    color: '#334155',
+    cursor: 'pointer'
+  },
+  binaryOptionYesActive: {
+    background: '#ecfdf3',
+    color: '#166534',
+    borderColor: '#22c55e'
+  },
+  binaryOptionNoActive: {
+    background: '#fef2f2',
+    color: '#991b1b',
+    borderColor: '#ef4444'
+  },
+  binaryIcon: {
+    fontSize: 16,
+    lineHeight: 1
+  },
+  binaryText: {
+    fontSize: 13
+  },
 
   toggleGroup: {
     display: 'flex',

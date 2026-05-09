@@ -1116,19 +1116,35 @@ const handleAnioChange = (value) => {
 
 const renderYesNoField = (label, value, onChange, disabled = false) => (
   <div style={styles.field}>
-    <label style={styles.label}>{label}</label>
+    <div style={styles.binaryFieldHeader}>
+      <label style={styles.label}>{label}</label>
+      <span
+        style={{
+          ...styles.binaryStatusPill,
+          ...(value === 'si'
+            ? styles.binaryStatusYes
+            : value === 'no'
+            ? styles.binaryStatusNo
+            : styles.binaryStatusPending)
+        }}
+      >
+        {value === 'si' ? 'Confirmado' : value === 'no' ? 'No disponible' : 'Pendiente'}
+      </span>
+    </div>
 
-    <div style={styles.toggleGroup}>
+    <div style={styles.binarySegment}>
       <button
         type="button"
         onClick={() => onChange('si')}
         disabled={disabled}
         style={{
-          ...styles.toggleButton,
-          ...(value === 'si' ? styles.toggleYesActive : {})
+          ...styles.binaryOption,
+          ...(value === 'si' ? styles.binaryOptionYesActive : {})
         }}
+        title="Sí"
       >
-        ✔
+        <span style={styles.binaryIcon}>✔</span>
+        <span style={styles.binaryText}>Sí</span>
       </button>
 
       <button
@@ -1136,11 +1152,13 @@ const renderYesNoField = (label, value, onChange, disabled = false) => (
         onClick={() => onChange('no')}
         disabled={disabled}
         style={{
-          ...styles.toggleButton,
-          ...(value === 'no' ? styles.toggleNoActive : {})
+          ...styles.binaryOption,
+          ...(value === 'no' ? styles.binaryOptionNoActive : {})
         }}
+        title="No"
       >
-        ✖
+        <span style={styles.binaryIcon}>✖</span>
+        <span style={styles.binaryText}>No</span>
       </button>
     </div>
   </div>
