@@ -185,6 +185,14 @@ export const styles = {
     color: '#0f172a',
     letterSpacing: '-0.01em'
   },
+
+  detailHeaderActions: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+    gap: '8px',
+    flexWrap: 'wrap'
+  },
   helperText: {
     margin: '4px 0 0 0',
     color: '#6b7280',
@@ -668,24 +676,70 @@ export const styles = {
     marginTop: '10px'
   },
   detailPhotoCard: {
-    border: '1px solid #dbe4f0',
-    borderRadius: '14px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '16px',
     overflow: 'hidden',
-    background: '#ffffff'
+    background: '#ffffff',
+    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.08)'
   },
   detailPhotoPreview: {
-    height: '138px',
-    background: '#f8fafc'
+    height: '146px',
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0'
   },
   detailPhotoInfo: {
-    padding: '9px',
+    padding: '10px',
     display: 'grid',
     gap: '8px'
   },
   detailPhotoName: {
     fontSize: '11px',
     color: '#111827',
-    wordBreak: 'break-word'
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  detailEmptyState: {
+    border: '1px dashed #cbd5e1',
+    borderRadius: '16px',
+    padding: '16px',
+    display: 'grid',
+    justifyItems: 'center',
+    gap: '8px',
+    background: '#f8fafc',
+    gridColumn: '1 / -1'
+  },
+  detailEmptyTitle: {
+    margin: 0,
+    fontSize: '12px',
+    fontWeight: 800,
+    color: '#334155'
+  },
+  detailTipsRow: {
+    display: 'flex',
+    gap: '6px',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
+  },
+  detailTipPill: {
+    fontSize: '10px',
+    fontWeight: 700,
+    color: '#475569',
+    background: '#eef2ff',
+    border: '1px solid #cbd5e1',
+    borderRadius: '999px',
+    padding: '4px 8px'
+  },
+  detailDeleteButton: {
+    background: '#ffffff',
+    color: '#991b1b',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '5px 8px',
+    cursor: 'pointer',
+    fontWeight: 700,
+    fontSize: '10px',
+    justifySelf: 'start'
   },
   emptyPhotoBox: {
     border: '1px dashed #d1d5db',

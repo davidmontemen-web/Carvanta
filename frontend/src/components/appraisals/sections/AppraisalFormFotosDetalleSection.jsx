@@ -38,8 +38,22 @@ export default function AppraisalFormFotosDetalleSection({
           <p style={styles.sectionSubtitle}>
             Agrega evidencias adicionales, daños, interiores, motor o cualquier hallazgo relevante.
           </p>
+          <p style={styles.helperText}>Sube daños, interiores, motor y hallazgos clave.</p>
         </div>
-        {renderSectionStatus(sectionKey)}
+        <div style={styles.detailHeaderActions}>
+          {renderSectionStatus(sectionKey)}
+          <button
+            type="button"
+            style={styles.primaryButton}
+            onClick={() => {
+              if (!ensureHeaderBeforeUpload()) return;
+              detailInputRef.current?.click();
+            }}
+            disabled={isBusy || isReadOnly}
+          >
+            + Agregar fotos de detalle
+          </button>
+        </div>
       </div>
 
       <input
@@ -53,23 +67,18 @@ export default function AppraisalFormFotosDetalleSection({
         disabled={isReadOnly}
       />
 
-      <button
-        type="button"
-        style={styles.primaryButton}
-        onClick={() => {
-          if (!ensureHeaderBeforeUpload()) return;
-          detailInputRef.current?.click();
-        }}
-        disabled={isBusy || isReadOnly}
-      >
-        + Agregar fotos de detalle
-      </button>
-
       <div style={styles.detailPhotoGrid}>
         {form.fotosDetalle.length === 0 ? (
-          <div style={styles.emptyPhotoBox}>
-            {renderUnifiedSilhouette()}
-            <div style={styles.silhouetteHint}>No hay fotos de detalle aún.</div>
+          <div style={styles.detailEmptyState}>
+            <div style={styles.emptyPhotoBox}>
+              {renderUnifiedSilhouette()}
+            </div>
+            <p style={styles.detailEmptyTitle}>No hay fotos de detalle aún</p>
+            <p style={styles.silhouetteHint}>Captura daños, interiores y piezas clave para dejar evidencia clara.</p>
+            <div style={styles.detailTipsRow}>
+              <span style={styles.detailTipPill}>1 toma abierta</span>
+              <span style={styles.detailTipPill}>1 toma de acercamiento</span>
+            </div>
           </div>
         ) : (
           form.fotosDetalle.map((photo, index) => (
@@ -86,7 +95,7 @@ export default function AppraisalFormFotosDetalleSection({
                 <span style={styles.detailPhotoName}>{photo.name}</span>
                 <button
                   type="button"
-                  style={styles.smallDangerButton}
+                  style={styles.detailDeleteButton}
                   onClick={() => removeDetailPhoto(index)}
                   disabled={isBusy || isReadOnly}
                 >
