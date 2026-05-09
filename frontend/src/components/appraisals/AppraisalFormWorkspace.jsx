@@ -600,11 +600,15 @@ export default function AppraisalFormWorkspace({
   const isTechnicalRole = ['tecnico_servicio', 'tecnico'].includes(currentRole);
 
   const canEditSection = (sectionKey) => {
+    const mechanicalEnabledStatuses = ['pendiente_validacion', 'completo'];
+
     if (isManagerRole) return true;
     if (isTechnicalRole) {
-      return ['fotosDetalle', 'carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
+      const stageAllowsTechnicalWork = mechanicalEnabledStatuses.includes(String(form.estatus || '').toLowerCase());
+      if (!stageAllowsTechnicalWork) return false;
+      return ['interior', 'fotosDetalle', 'carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
     }
-    return !['carroceria', 'sistemaElectrico', 'fugasMotor'].includes(sectionKey);
+    return !['sistemaElectrico', 'fugasMotor'].includes(sectionKey);
   };
 
   const getRoleFriendlyName = () => {
@@ -1556,13 +1560,17 @@ const renderNeumaticoCard = (positionKey, label) => {
         </div>
 
         <div style={styles.sectionNav}>
-          {sections.map((section, idx) => (
+          {sections.map((section, idx) => {
+            const sectionEditable = canEditSection(section.key);
+
+            return (
             <button
               key={section.key}
               type="button"
               style={{
                 ...styles.sectionButton,
-                ...(activeSection === section.key ? styles.sectionButtonActive : {})
+                ...(activeSection === section.key ? styles.sectionButtonActive : {}),
+                ...(!sectionEditable ? styles.sectionButtonLocked : {})
               }}
               onClick={() => scrollToSection(section.key)}
             >
@@ -1571,11 +1579,12 @@ const renderNeumaticoCard = (positionKey, label) => {
                 <div>
                   <div>{section.label}</div>
                   <small style={styles.sectionButtonSubtitle}>{section.subtitle}</small>
+                  {!sectionEditable ? <small style={styles.sectionLockLabel}>Bloqueado para tu rol/etapa</small> : null}
                 </div>
               </div>
-              {renderSectionStatus(section.key)}
+              {sectionEditable ? renderSectionStatus(section.key) : <span style={styles.sectionLockBadge}>🔒</span>}
             </button>
-          ))}
+          );})}
         </div>
       </aside>
 

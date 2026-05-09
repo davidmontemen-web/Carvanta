@@ -99,6 +99,23 @@ export const styles = {
     boxShadow: '0 8px 16px rgba(15, 23, 42, 0.14)'
   },
 
+
+  sectionButtonLocked: {
+    background: '#f8fafc',
+    border: '1px dashed #cbd5e1',
+    color: '#64748b'
+  },
+  sectionLockLabel: {
+    display: 'block',
+    marginTop: '3px',
+    fontSize: '10px',
+    color: '#94a3b8',
+    fontWeight: 700
+  },
+  sectionLockBadge: {
+    fontSize: '13px',
+    lineHeight: 1
+  },
   navStatus: {
     fontSize: '10px',
     fontWeight: 800,
