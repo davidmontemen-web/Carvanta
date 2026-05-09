@@ -27,7 +27,7 @@ export default function AppraisalFormDocumentacionSection({
         {renderSectionStatus(sectionKey)}
       </div>
 
-      <div style={styles.grid2}>
+      <div style={{ ...styles.grid2, ...styles.documentationGrid }}>
         {renderYesNoField('Factura', form.documentacion.factura, (val) =>
           updateSectionField('documentacion', 'factura', val)
         )}

@@ -197,6 +197,11 @@ export const styles = {
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     gap: '10px'
   },
+  documentationGrid: {
+    columnGap: '20px',
+    backgroundImage: 'linear-gradient(to right, transparent calc(50% - 0.5px), #e2e8f0 calc(50% - 0.5px), #e2e8f0 calc(50% + 0.5px), transparent calc(50% + 0.5px))',
+    backgroundRepeat: 'no-repeat'
+  },
   grid3: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -338,7 +343,7 @@ export const styles = {
   },
   binaryStatusWrap: {
     display: 'flex',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-start'
   },
   binaryStatusPill: {
     fontSize: 10,
@@ -365,7 +370,7 @@ export const styles = {
   binarySegment: {
     display: 'flex',
     gap: 10,
-    justifyContent: 'center'
+    justifyContent: 'flex-start'
   },
   binaryOption: {
     minHeight: 42,
