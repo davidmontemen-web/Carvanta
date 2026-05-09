@@ -161,7 +161,8 @@ export const styles = {
     borderRadius: '20px',
     padding: '16px',
     boxShadow: '0 12px 24px rgba(15, 23, 42, 0.06)',
-    border: '1px solid #e2e8f0'
+    border: '1px solid #e2e8f0',
+    scrollMarginTop: '190px'
   },
   sectionCardActive: {
     border: '1px solid #bfdbfe',
