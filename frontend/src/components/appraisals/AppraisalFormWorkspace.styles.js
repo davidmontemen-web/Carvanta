@@ -348,12 +348,14 @@ export const styles = {
     borderColor: '#cbd5e1'
   },
   binarySegment: {
-    display: 'inline-flex',
-    gap: 8
+    display: 'flex',
+    gap: 10,
+    width: '100%',
+    justifyContent: 'center'
   },
   binaryOption: {
-    minHeight: 40,
-    minWidth: 84,
+    minHeight: 42,
+    minWidth: 104,
     borderRadius: 12,
     border: '1px solid #cbd5e1',
     background: '#f8fafc',
