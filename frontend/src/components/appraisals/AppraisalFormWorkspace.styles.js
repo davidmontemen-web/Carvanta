@@ -842,10 +842,30 @@ export const styles = {
     borderRadius: '14px',
     padding: '12px',
     background: '#ffffff',
+    display: 'grid',
+    gridTemplateColumns: '72px minmax(0, 1fr)',
+    gap: '10px',
+    alignItems: 'flex-start',
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)'
+  },
+  tireIllustrationWrap: {
+    width: '72px',
+    minHeight: '72px',
+    borderRadius: '12px',
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    display: 'grid',
+    placeItems: 'center'
+  },
+  tireIllustration: {
+    width: '52px',
+    height: '52px',
+    opacity: 0.92
+  },
+  tireCardContent: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
-    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)'
+    gap: '8px'
   },
   tireCardHeader: {
     display: 'flex',

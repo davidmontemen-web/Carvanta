@@ -1394,12 +1394,22 @@ const renderNeumaticoCard = (positionKey, label) => {
 
   return (
     <div style={styles.tireCard}>
-      <div style={styles.tireCardHeader}>
-        <h4 style={styles.tireCardTitle}>{label}</h4>
-        <span style={styles.tirePositionBadge}>Posición</span>
+      <div style={styles.tireIllustrationWrap} aria-hidden="true">
+        <svg viewBox="0 0 96 96" style={styles.tireIllustration}>
+          <circle cx="48" cy="48" r="39" fill="#0f172a" />
+          <circle cx="48" cy="48" r="31" fill="#1e293b" />
+          <circle cx="48" cy="48" r="18" fill="#cbd5e1" />
+          <circle cx="48" cy="48" r="8" fill="#64748b" />
+        </svg>
       </div>
 
-      <div style={styles.field}>
+      <div style={styles.tireCardContent}>
+        <div style={styles.tireCardHeader}>
+          <h4 style={styles.tireCardTitle}>{label}</h4>
+          <span style={styles.tirePositionBadge}>Posición</span>
+        </div>
+
+        <div style={styles.field}>
         <label style={styles.label}>Neumático</label>
         <select
           value={current.neumatico || ''}
@@ -1415,20 +1425,21 @@ const renderNeumaticoCard = (positionKey, label) => {
         </select>
       </div>
 
-      <div style={styles.field}>
-        <label style={styles.label}>Rin</label>
-        <select
-          value={current.rin || ''}
-          onChange={(e) => updateNeumaticoField(positionKey, 'rin', e.target.value)}
-          style={styles.input}
-        >
-          <option value="">Selecciona</option>
-          {rinOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div style={styles.field}>
+          <label style={styles.label}>Rin</label>
+          <select
+            value={current.rin || ''}
+            onChange={(e) => updateNeumaticoField(positionKey, 'rin', e.target.value)}
+            style={styles.input}
+          >
+            <option value="">Selecciona</option>
+            {rinOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );
