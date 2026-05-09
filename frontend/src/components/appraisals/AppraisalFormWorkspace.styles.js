@@ -438,39 +438,45 @@ export const styles = {
   },
 
   toggleGroup: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap'
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '8px',
+    width: '100%',
+    maxWidth: '260px'
   },
   toggleButton: {
-    minWidth: '30px',
-    height: '28px',
-    padding: '4px 8px',
-    borderRadius: '9px',
+    minWidth: '0',
+    height: '40px',
+    padding: '6px 8px',
+    borderRadius: '12px',
     border: '1px solid #cbd5e1',
     background: '#f8fafc',
     cursor: 'pointer',
-    fontSize: '11px',
-    fontWeight: 700,
+    fontSize: '12px',
+    fontWeight: 800,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)'
   },
   toggleYesActive: {
     background: '#dcfce7',
     border: '1px solid #22c55e',
-    color: '#166534'
+    color: '#166534',
+    boxShadow: '0 6px 14px rgba(34, 197, 94, 0.22)'
   },
   toggleNoActive: {
     background: '#fee2e2',
     border: '1px solid #ef4444',
-    color: '#7f1d1d'
+    color: '#7f1d1d',
+    boxShadow: '0 6px 14px rgba(239, 68, 68, 0.2)'
   },
   toggleNAActive: {
-    background: '#e5e7eb',
-    border: '1px solid #9ca3af',
-    color: '#374151'
+    background: '#e2e8f0',
+    border: '1px solid #94a3b8',
+    color: '#334155',
+    boxShadow: '0 6px 14px rgba(71, 85, 105, 0.16)'
   },
 
   conditionGroup: {
