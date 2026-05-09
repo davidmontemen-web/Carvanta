@@ -806,6 +806,11 @@ export const styles = {
     fontWeight: 800,
     color: '#0f172a'
   },
+  damageZoneHint: {
+    margin: '4px 0 0 0',
+    fontSize: '10px',
+    color: '#64748b'
+  },
   damageChips: {
     display: 'flex',
     flexWrap: 'wrap',

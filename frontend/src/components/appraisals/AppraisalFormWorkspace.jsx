@@ -92,15 +92,15 @@ const generalPhotoSlots = [
 ];
 
 const carroceriaDamageOptions = [
-  { value: 'pieza_repintada', label: 'Pieza repintada' },
-  { value: 'rayon_leve', label: 'Rayón leve' },
-  { value: 'rayon_profundo', label: 'Rayón profundo' },
-  { value: 'pieza_rota', label: 'Pieza rota' },
-  { value: 'pieza_con_pasta', label: 'Pieza con pasta' },
-  { value: 'abolladura', label: 'Abolladura' },
-  { value: 'golpe_fuerte', label: 'Golpe fuerte' },
-  { value: 'parabrisas_estrellado', label: 'Parabrisas estrellado' },
-  { value: 'parabrisas_roto', label: 'Parabrisas roto' }
+  { value: 'pieza_repintada', label: 'Pieza repintada', appliesTo: 'body' },
+  { value: 'rayon_leve', label: 'Rayón leve', appliesTo: 'body' },
+  { value: 'rayon_profundo', label: 'Rayón profundo', appliesTo: 'body' },
+  { value: 'pieza_rota', label: 'Pieza rota', appliesTo: 'body' },
+  { value: 'pieza_con_pasta', label: 'Pieza con pasta', appliesTo: 'body' },
+  { value: 'abolladura', label: 'Abolladura', appliesTo: 'body' },
+  { value: 'golpe_fuerte', label: 'Golpe fuerte', appliesTo: 'body' },
+  { value: 'parabrisas_estrellado', label: 'Parabrisas estrellado', appliesTo: 'glass' },
+  { value: 'parabrisas_roto', label: 'Parabrisas roto', appliesTo: 'glass' }
 ];
 
 const neumaticoOptions = [
@@ -1349,15 +1349,22 @@ const renderTechnicalStatusField = (label, value, onChange, disabled = false) =>
 
   const renderDamageZone = (zoneKey, label) => {
   const selected = form.carroceria?.zonas?.[zoneKey] || [];
+  const isParabrisas = zoneKey === 'parabrisas';
+  const zoneOptions = carroceriaDamageOptions.filter((option) =>
+    isParabrisas ? option.appliesTo === 'glass' : option.appliesTo === 'body'
+  );
 
   return (
     <div style={styles.damageZoneCard}>
       <div style={styles.damageZoneHeader}>
         <h4 style={styles.damageZoneTitle}>{label}</h4>
+        {isParabrisas ? (
+          <p style={styles.damageZoneHint}>En parabrisas solo se muestran hallazgos de cristal.</p>
+        ) : null}
       </div>
 
       <div style={styles.damageChips}>
-        {carroceriaDamageOptions.map((option) => {
+        {zoneOptions.map((option) => {
           const active = selected.includes(option.value);
 
           return (
