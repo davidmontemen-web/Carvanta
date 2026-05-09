@@ -15,16 +15,16 @@ export default function AppraisalFormFotosGeneralesSection({
 }) {
   const sectionKey = 'fotosGenerales';
   const slotReferenceMap = {
-    frontal: 'Frente del vehículo',
-    frontalDerecha: 'Frente 3/4 derecha',
-    lateralDerecha: 'Costado derecho',
-    traseraDerecha: 'Trasera 3/4 derecha',
-    trasera: 'Parte trasera',
-    traseraIzquierda: 'Trasera 3/4 izquierda',
-    lateralIzquierda: 'Costado izquierdo',
-    frontalIzquierda: 'Frente 3/4 izquierda',
-    interiorTablero: 'Tablero interior',
-    motor: 'Bahía del motor'
+    frontal: { label: 'Frente del vehículo', cue: 'FRONTAL' },
+    frontalDerecha: { label: 'Frente 3/4 derecha', cue: '3/4 DER' },
+    lateralDerecha: { label: 'Costado derecho', cue: 'LATERAL DER' },
+    traseraDerecha: { label: 'Trasera 3/4 derecha', cue: 'TRASERA 3/4 DER' },
+    trasera: { label: 'Parte trasera', cue: 'TRASERA' },
+    traseraIzquierda: { label: 'Trasera 3/4 izquierda', cue: 'TRASERA 3/4 IZQ' },
+    lateralIzquierda: { label: 'Costado izquierdo', cue: 'LATERAL IZQ' },
+    frontalIzquierda: { label: 'Frente 3/4 izquierda', cue: '3/4 IZQ' },
+    interiorTablero: { label: 'Tablero interior', cue: 'INTERIOR' },
+    motor: { label: 'Bahía del motor', cue: 'MOTOR' }
   };
 
   return (
@@ -77,8 +77,25 @@ export default function AppraisalFormFotosGeneralesSection({
                   <img src={photo.preview} alt={slot.label} style={styles.previewImage} />
                 ) : (
                   <div style={styles.silhouetteBox}>
-                    <div style={styles.silhouetteCar}>🚗</div>
-                    <div style={styles.silhouetteText}>Referencia: {slotReferenceMap[slot.key] || slot.label}</div>
+                    <div style={styles.silhouetteCue}>
+                      {slotReferenceMap[slot.key]?.cue || slot.label.toUpperCase()}
+                    </div>
+                    <svg viewBox="0 0 180 92" style={styles.silhouetteSvg} aria-hidden="true">
+                      <path
+                        d="M10 58 C26 42, 48 38, 74 38 L92 38 C103 38, 112 34, 122 26 C132 19, 147 16, 162 24 C169 28, 174 34, 176 40 L176 62 C176 67, 172 71, 166 71 L18 71 C13 71, 9 67, 9 62 Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="51" cy="70" r="12" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <circle cx="138" cy="70" r="12" fill="none" stroke="currentColor" strokeWidth="4" />
+                      <path d="M82 38 L118 38 C128 38, 137 34, 144 28" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M30 52 L48 52" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M164 49 L176 49" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                    </svg>
+                    <div style={styles.silhouetteText}>Referencia: {slotReferenceMap[slot.key]?.label || slot.label}</div>
                     <div style={styles.silhouetteHint}>Toca para capturar</div>
                   </div>
                 )}

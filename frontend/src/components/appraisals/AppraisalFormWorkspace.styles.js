@@ -596,6 +596,21 @@ export const styles = {
     gap: '6px',
     color: '#6b7280'
   },
+  silhouetteCue: {
+    fontSize: '9px',
+    fontWeight: 800,
+    letterSpacing: '0.08em',
+    color: '#64748b',
+    background: '#eef2f7',
+    border: '1px solid #dbe4f0',
+    borderRadius: '999px',
+    padding: '3px 8px'
+  },
+  silhouetteSvg: {
+    width: '96px',
+    height: '48px',
+    color: '#475569'
+  },
   silhouetteCar: {
     fontSize: '30px',
     lineHeight: 1
