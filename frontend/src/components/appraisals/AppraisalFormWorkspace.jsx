@@ -1115,21 +1115,9 @@ const handleAnioChange = (value) => {
 );
 
 const renderYesNoField = (label, value, onChange, disabled = false) => (
-  <div style={styles.field}>
-    <div style={styles.binaryFieldHeader}>
+  <div style={styles.binaryRow}>
+    <div style={styles.binaryLabelWrap}>
       <label style={styles.label}>{label}</label>
-      <span
-        style={{
-          ...styles.binaryStatusPill,
-          ...(value === 'si'
-            ? styles.binaryStatusYes
-            : value === 'no'
-            ? styles.binaryStatusNo
-            : styles.binaryStatusPending)
-        }}
-      >
-        {value === 'si' ? 'Confirmado' : value === 'no' ? 'No disponible' : 'Pendiente'}
-      </span>
     </div>
 
     <div style={styles.binarySegment}>
@@ -1160,6 +1148,21 @@ const renderYesNoField = (label, value, onChange, disabled = false) => (
         <span style={styles.binaryIcon}>✖</span>
         <span style={styles.binaryText}>No</span>
       </button>
+    </div>
+
+    <div style={styles.binaryStatusWrap}>
+      <span
+        style={{
+          ...styles.binaryStatusPill,
+          ...(value === 'si'
+            ? styles.binaryStatusYes
+            : value === 'no'
+            ? styles.binaryStatusNo
+            : styles.binaryStatusPending)
+        }}
+      >
+        {value === 'si' ? 'Confirmado' : value === 'no' ? 'No disponible' : 'Pendiente'}
+      </span>
     </div>
   </div>
 );

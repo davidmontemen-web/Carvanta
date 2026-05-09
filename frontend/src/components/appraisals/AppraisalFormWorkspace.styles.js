@@ -325,6 +325,21 @@ export const styles = {
     marginBottom: 6,
     gap: 8
   },
+  binaryRow: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(140px, 1fr) auto auto',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 0 14px 0',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  binaryLabelWrap: {
+    minWidth: 0
+  },
+  binaryStatusWrap: {
+    display: 'flex',
+    justifyContent: 'flex-end'
+  },
   binaryStatusPill: {
     fontSize: 10,
     fontWeight: 800,
@@ -350,7 +365,6 @@ export const styles = {
   binarySegment: {
     display: 'flex',
     gap: 10,
-    width: '100%',
     justifyContent: 'center'
   },
   binaryOption: {
