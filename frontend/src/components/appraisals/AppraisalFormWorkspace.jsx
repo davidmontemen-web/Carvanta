@@ -1103,7 +1103,7 @@ const handleAnioChange = (value) => {
       })
     );
 
-    showNotification('success', 'Avalúo enviado a validación.');
+    showNotification('success', 'Avalúo enviado a validación comercial.');
   } catch (error) {
     console.error(error);
     showNotification('error', 'Ocurrió un error al guardar el avalúo.');
@@ -1620,7 +1620,7 @@ const renderNeumaticoCard = (positionKey, label) => {
   onClick={handleSaveAppraisal}
   disabled={isBusy}
 >
-  {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Enviar a validación'}
+  {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Enviar a validación comercial'}
 </button>
           </div>
         </div>
