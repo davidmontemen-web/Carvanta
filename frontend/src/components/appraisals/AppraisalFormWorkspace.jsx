@@ -618,6 +618,10 @@ const generalInputRefs = useRef({});
 const detailInputRef = useRef(null);
 
 const registerSectionRef = (key, el) => {
+  if (el) {
+    el.setAttribute('data-section-key', key);
+  }
+
   sectionRefs.current = {
     ...sectionRefs.current,
     [key]: el
@@ -640,6 +644,35 @@ const registerSectionRef = (key, el) => {
   const timer = setTimeout(() => setNotification(null), 5000);
   return () => clearTimeout(timer);
 }, [notification]);
+
+  useEffect(() => {
+    const keys = sections.map((section) => section.key);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (!visibleEntries.length) return;
+        const sectionKey = visibleEntries[0].target.getAttribute('data-section-key');
+        if (sectionKey) {
+          setActiveSection((prev) => (prev === sectionKey ? prev : sectionKey));
+        }
+      },
+      {
+        root: null,
+        rootMargin: '-140px 0px -55% 0px',
+        threshold: [0.2, 0.35, 0.5, 0.75]
+      }
+    );
+
+    keys.forEach((key) => {
+      const el = sectionRefs.current[key];
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [form.id]);
 
   const generalPhotosArray = useMemo(() => {
     return generalPhotoSlots
