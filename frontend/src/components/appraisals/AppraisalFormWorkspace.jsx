@@ -693,7 +693,7 @@ const registerSectionRef = (key, el) => {
     }
     setActiveSection(key);
     sectionRefs.current[key]?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: 'auto',
       block: 'start'
     });
   };
