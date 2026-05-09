@@ -56,6 +56,14 @@ function StatusBadge({ status }) {
   const config =
     normalized === 'pendiente_validacion'
       ? { label: 'Pendiente validación comercial', style: styles.badgeComplete }
+      : normalized === 'en_seguimiento'
+      ? { label: 'En seguimiento', style: styles.badgeInfo }
+      : normalized === 'pendiente_validacion_mecanica'
+      ? { label: 'Pendiente validación mecánica', style: styles.badgeWarning }
+      : normalized === 'validacion_mecanica_completa'
+      ? { label: 'Validación mecánica completa', style: styles.badgeInfo }
+      : normalized === 'pendiente_aprobacion_final_gerencia'
+      ? { label: 'Pendiente aprobación final', style: styles.badgeWarning }
       : normalized === 'completo'
       ? { label: 'Completo', style: styles.badgeInfo }
       : normalized === 'comprado'
@@ -378,6 +386,10 @@ export default function AppraisalsPage({ usuario }) {
       total: rawTotals.total || 0,
       incompletos: rawTotals.incompletos || 0,
       pendientesValidacion: rawTotals.pendientesValidacion || 0,
+      enSeguimiento: rawTotals.enSeguimiento || 0,
+      pendientesValidacionMecanica: rawTotals.pendientesValidacionMecanica || 0,
+      validacionesMecanicaCompletas: rawTotals.validacionesMecanicaCompletas || 0,
+      pendientesAprobacionFinalGerencia: rawTotals.pendientesAprobacionFinalGerencia || 0,
       comprados: rawTotals.comprados || 0
     }),
     [rawTotals]
@@ -397,6 +409,10 @@ export default function AppraisalsPage({ usuario }) {
     { key: 'todos', label: 'Todos', count: totals.total },
     { key: 'incompleto', label: 'Incompletos', count: totals.incompletos },
     { key: 'pendiente_validacion', label: 'Pend. validación comercial', count: totals.pendientesValidacion },
+    { key: 'en_seguimiento', label: 'En seguimiento', count: totals.enSeguimiento || 0 },
+    { key: 'pendiente_validacion_mecanica', label: 'Pend. validación mecánica', count: totals.pendientesValidacionMecanica || 0 },
+    { key: 'validacion_mecanica_completa', label: 'Validación mecánica completa', count: totals.validacionesMecanicaCompletas || 0 },
+    { key: 'pendiente_aprobacion_final_gerencia', label: 'Pend. aprobación final', count: totals.pendientesAprobacionFinalGerencia || 0 },
     { key: 'completo', label: 'Completos', count: totals.completos || 0 },
     { key: 'comprado', label: 'Comprados', count: totals.comprados }
   ];
@@ -659,6 +675,10 @@ export default function AppraisalsPage({ usuario }) {
             <option value="todos">Todos los estados</option>
             <option value="incompleto">Incompleto</option>
             <option value="pendiente_validacion">Pendiente validación comercial</option>
+            <option value="en_seguimiento">En seguimiento</option>
+            <option value="pendiente_validacion_mecanica">Pendiente validación mecánica</option>
+            <option value="validacion_mecanica_completa">Validación mecánica completa</option>
+            <option value="pendiente_aprobacion_final_gerencia">Pendiente aprobación final gerencia</option>
             <option value="completo">Completo</option>
             <option value="comprado">Comprado</option>
           </select>
@@ -1202,6 +1222,10 @@ const styles = {
   badgeInfo: {
     background: '#dbeafe',
     color: '#1d4ed8'
+  },
+  badgeWarning: {
+    background: '#ffedd5',
+    color: '#9a3412'
   },
   attentionTag: {
     width: 'fit-content',

@@ -141,6 +141,10 @@ const ensureAppraisalWorkflowColumns = async () => {
       'borrador',
       'incompleto',
       'pendiente_validacion',
+      'en_seguimiento',
+      'pendiente_validacion_mecanica',
+      'validacion_mecanica_completa',
+      'pendiente_aprobacion_final_gerencia',
       'completo',
       'comprado'
     ) NOT NULL DEFAULT 'borrador'
@@ -164,6 +168,32 @@ const normalizeAppraisalStatus = (status) => {
   const value = String(status || '').trim().toLowerCase();
   if (!value || value === 'borrador') return 'incompleto';
   return value;
+};
+
+
+const APPRAISAL_STATUS_TRANSITIONS = {
+  incompleto: ['incompleto', 'pendiente_validacion'],
+  pendiente_validacion: ['en_seguimiento', 'pendiente_validacion_mecanica'],
+  en_seguimiento: ['pendiente_validacion', 'pendiente_validacion_mecanica'],
+  pendiente_validacion_mecanica: ['validacion_mecanica_completa'],
+  validacion_mecanica_completa: ['pendiente_aprobacion_final_gerencia'],
+  pendiente_aprobacion_final_gerencia: ['completo'],
+  completo: ['comprado']
+};
+
+const canTransitionStatus = ({ currentStatus, nextStatus, isManagerRole, isTechnicalRole }) => {
+  if (currentStatus === nextStatus) return true;
+
+  const allowedNext = APPRAISAL_STATUS_TRANSITIONS[currentStatus] || [];
+  if (!allowedNext.includes(nextStatus)) return false;
+
+  if (nextStatus === 'comprado') return isManagerRole;
+  if (nextStatus === 'completo') return isManagerRole;
+  if (['pendiente_validacion_mecanica', 'validacion_mecanica_completa'].includes(nextStatus)) {
+    return isTechnicalRole || isManagerRole;
+  }
+
+  return true;
 };
 
 const calculateProgressPercentage = (payload = {}) => {
@@ -616,10 +646,10 @@ const actualizarAppraisal = async (req, res) => {
       });
     }
 
-    if (estatusNuevo === 'comprado' && (estatusActual !== 'completo' || !isManagerRole)) {
+    if (!canTransitionStatus({ currentStatus: estatusActual, nextStatus: estatusNuevo, isManagerRole, isTechnicalRole })) {
       return res.status(403).json({
         ok: false,
-        error: 'Solo gerencia puede confirmar compra desde pendiente de validación'
+        error: `Transición de estatus no permitida: ${estatusActual} → ${estatusNuevo}`
       });
     }
 

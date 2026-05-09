@@ -4,6 +4,12 @@ export const getSuccessMessageByStatus = (status) => {
       return 'Avalúo guardado como incompleto';
     case 'pendiente_validacion':
       return 'Avalúo enviado a validación comercial';
+    case 'pendiente_validacion_mecanica':
+      return 'Avalúo enviado a validación mecánica';
+    case 'validacion_mecanica_completa':
+      return 'Validación mecánica completada';
+    case 'pendiente_aprobacion_final_gerencia':
+      return 'Pendiente de aprobación final de gerencia';
     case 'completo':
       return 'Avalúo completo';
     case 'comprado':
@@ -47,6 +53,10 @@ export const getTotals = (appraisals) => {
   const total = appraisals.length;
   const incompletos = appraisals.filter((item) => item.estatus === 'incompleto').length;
   const pendientesValidacion = appraisals.filter((item) => item.estatus === 'pendiente_validacion').length;
+  const enSeguimiento = appraisals.filter((item) => item.estatus === 'en_seguimiento').length;
+  const pendientesValidacionMecanica = appraisals.filter((item) => item.estatus === 'pendiente_validacion_mecanica').length;
+  const validacionesMecanicaCompletas = appraisals.filter((item) => item.estatus === 'validacion_mecanica_completa').length;
+  const pendientesAprobacionFinalGerencia = appraisals.filter((item) => item.estatus === 'pendiente_aprobacion_final_gerencia').length;
   const completos = appraisals.filter((item) => item.estatus === 'completo').length;
   const comprados = appraisals.filter((item) => item.estatus === 'comprado').length;
 
@@ -54,6 +64,10 @@ export const getTotals = (appraisals) => {
     total,
     incompletos,
     pendientesValidacion,
+    enSeguimiento,
+    pendientesValidacionMecanica,
+    validacionesMecanicaCompletas,
+    pendientesAprobacionFinalGerencia,
     completos,
     comprados
   };
