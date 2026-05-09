@@ -205,6 +205,31 @@ export const styles = {
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     gap: '10px'
   },
+  electricHeaderStats: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end'
+  },
+  electricProgressPill: {
+    fontSize: '10px',
+    fontWeight: 800,
+    color: '#1d4ed8',
+    background: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '999px',
+    padding: '4px 9px'
+  },
+  electricGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px',
+    padding: '12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '16px',
+    background: '#fcfdff'
+  },
   documentationGrid: {
     columnGap: '20px',
     backgroundImage: 'linear-gradient(to right, transparent calc(50% - 0.5px), #e2e8f0 calc(50% - 0.5px), #e2e8f0 calc(50% + 0.5px), transparent calc(50% + 0.5px))',

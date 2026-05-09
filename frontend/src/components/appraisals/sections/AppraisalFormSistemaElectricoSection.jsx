@@ -11,6 +11,17 @@ export default function AppraisalFormSistemaElectricoSection({
 }) {
   const sectionKey = 'sistemaElectrico';
 
+  const electricFields = [
+    'espejosElectricos','bolsasAire','aireAcondicionado','controlCrucero','chisguetero','luzMapa',
+    'controlesVolante','checkEngine','asientosElectricos','encendedor','claxon','lucesInternas',
+    'segurosElectricos','cristalesElectricos','aperturaCajuela','pantalla','farosNiebla','lucesExternas',
+    'limpiadores','estereoUsb','quemacocos','testigos','direccionales'
+  ];
+  const completedElectricalChecks = electricFields.filter((key) => {
+    const value = form.sistemaElectrico?.[key];
+    return value === 'si' || value === 'no' || value === 'na';
+  }).length;
+
   return (
     <section
       ref={(el) => {
@@ -24,11 +35,15 @@ export default function AppraisalFormSistemaElectricoSection({
       <div style={styles.sectionHeader}>
         <div>
           <h3 style={styles.sectionTitle}>Sistema eléctrico</h3>
+          <p style={styles.helperText}>Evalúa cada componente y marca su estado operativo.</p>
         </div>
-        {renderSectionStatus(sectionKey)}
+        <div style={styles.electricHeaderStats}>
+          <span style={styles.electricProgressPill}>{completedElectricalChecks}/{electricFields.length} revisados</span>
+          {renderSectionStatus(sectionKey)}
+        </div>
       </div>
 
-      <fieldset style={styles.grid2} disabled={isReadOnly}>
+      <fieldset style={styles.electricGrid} disabled={isReadOnly}>
         {renderYesNoNAField('Espejos eléctricos', form.sistemaElectrico.espejosElectricos, (val) =>
           updateSectionField('sistemaElectrico', 'espejosElectricos', val)
         , isReadOnly)}
