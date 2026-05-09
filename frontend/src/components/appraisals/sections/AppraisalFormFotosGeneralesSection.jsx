@@ -27,13 +27,17 @@ export default function AppraisalFormFotosGeneralesSection({
     motor: { label: 'Bahía del motor', cue: 'MOTOR' }
   };
   const renderFrontSilhouette = () => (
-    <svg viewBox="0 0 180 92" style={styles.silhouetteSvg} aria-hidden="true">
-      <path d="M34 62 L44 38 C47 31 55 26 63 26 H117 C125 26 133 31 136 38 L146 62" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <rect x="30" y="58" width="120" height="22" rx="9" fill="none" stroke="currentColor" strokeWidth="4" />
-      <rect x="56" y="38" width="68" height="14" rx="6" fill="none" stroke="currentColor" strokeWidth="3" />
-      <circle cx="53" cy="69" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
-      <circle cx="127" cy="69" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
-      <line x1="82" y1="44" x2="98" y2="44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    <svg viewBox="0 0 260 95" style={styles.silhouetteSvg} aria-hidden="true">
+      <path
+        d="M12 64 C22 49, 50 39, 86 38 C111 37, 129 32, 148 24 C176 12, 212 12, 244 28 L252 32 L236 36 C224 39, 218 44, 208 52 C199 59, 186 63, 164 64 L32 64 C24 64, 17 64, 12 64 Z"
+        fill="currentColor"
+      />
+      <path d="M44 66 C49 51, 62 41, 79 40 C95 40, 107 49, 112 66" fill="#f8fafc" />
+      <path d="M176 66 C181 51, 194 41, 211 40 C227 40, 239 49, 244 66" fill="#f8fafc" />
+      <path d="M57 66 C61 55, 69 48, 79 48 C89 48, 97 55, 101 66" fill="currentColor" />
+      <path d="M189 66 C193 55, 201 48, 211 48 C221 48, 229 55, 233 66" fill="currentColor" />
+      <path d="M92 40 C116 30, 137 24, 160 23 C180 22, 198 25, 214 32 L193 35 C183 38, 174 45, 167 52 L102 52 L92 40 Z" fill="#f8fafc" />
+      <path d="M105 54 L172 54 C184 54, 193 52, 202 48 L214 45 L200 58 L100 58 Z" fill="currentColor" />
     </svg>
   );
 

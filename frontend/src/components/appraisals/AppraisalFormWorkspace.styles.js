@@ -607,9 +607,9 @@ export const styles = {
     padding: '3px 8px'
   },
   silhouetteSvg: {
-    width: '96px',
-    height: '48px',
-    color: '#475569'
+    width: '128px',
+    height: '56px',
+    color: '#334155'
   },
   silhouetteCar: {
     fontSize: '30px',
