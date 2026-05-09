@@ -55,7 +55,9 @@ function StatusBadge({ status }) {
 
   const config =
     normalized === 'pendiente_validacion'
-      ? { label: 'Pendiente validación', style: styles.badgeComplete }
+      ? { label: 'Pendiente validación comercial', style: styles.badgeComplete }
+      : normalized === 'completo'
+      ? { label: 'Completo', style: styles.badgeInfo }
       : normalized === 'comprado'
       ? { label: 'Comprado', style: styles.badgeInfo }
       : { label: 'Incompleto', style: styles.badgeDraft };
@@ -394,7 +396,8 @@ export default function AppraisalsPage({ usuario }) {
   const tabItems = [
     { key: 'todos', label: 'Todos', count: totals.total },
     { key: 'incompleto', label: 'Incompletos', count: totals.incompletos },
-    { key: 'pendiente_validacion', label: 'Pend. validación', count: totals.pendientesValidacion },
+    { key: 'pendiente_validacion', label: 'Pend. validación comercial', count: totals.pendientesValidacion },
+    { key: 'completo', label: 'Completos', count: totals.completos || 0 },
     { key: 'comprado', label: 'Comprados', count: totals.comprados }
   ];
 
@@ -585,7 +588,7 @@ export default function AppraisalsPage({ usuario }) {
           tone="warning"
         />
         <KpiCard
-          label="Pendientes validación"
+          label="Pendientes validación comercial"
           value={totals.pendientesValidacion}
           subtitle="Listos para operar"
           tone="success"
@@ -655,7 +658,8 @@ export default function AppraisalsPage({ usuario }) {
           >
             <option value="todos">Todos los estados</option>
             <option value="incompleto">Incompleto</option>
-            <option value="pendiente_validacion">Pendiente validación</option>
+            <option value="pendiente_validacion">Pendiente validación comercial</option>
+            <option value="completo">Completo</option>
             <option value="comprado">Comprado</option>
           </select>
 

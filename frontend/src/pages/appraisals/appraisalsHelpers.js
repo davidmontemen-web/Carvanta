@@ -3,7 +3,9 @@ export const getSuccessMessageByStatus = (status) => {
     case 'incompleto':
       return 'Avalúo guardado como incompleto';
     case 'pendiente_validacion':
-      return 'Avalúo enviado a validación';
+      return 'Avalúo enviado a validación comercial';
+    case 'completo':
+      return 'Avalúo completo';
     case 'comprado':
       return 'Compra confirmada';
     default:
@@ -45,12 +47,14 @@ export const getTotals = (appraisals) => {
   const total = appraisals.length;
   const incompletos = appraisals.filter((item) => item.estatus === 'incompleto').length;
   const pendientesValidacion = appraisals.filter((item) => item.estatus === 'pendiente_validacion').length;
+  const completos = appraisals.filter((item) => item.estatus === 'completo').length;
   const comprados = appraisals.filter((item) => item.estatus === 'comprado').length;
 
   return {
     total,
     incompletos,
     pendientesValidacion,
+    completos,
     comprados
   };
 };
