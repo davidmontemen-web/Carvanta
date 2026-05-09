@@ -1396,10 +1396,30 @@ const renderNeumaticoCard = (positionKey, label) => {
     <div style={styles.tireCard}>
       <div style={styles.tireIllustrationWrap} aria-hidden="true">
         <svg viewBox="0 0 96 96" style={styles.tireIllustration}>
-          <circle cx="48" cy="48" r="39" fill="#0f172a" />
-          <circle cx="48" cy="48" r="31" fill="#1e293b" />
-          <circle cx="48" cy="48" r="18" fill="#cbd5e1" />
-          <circle cx="48" cy="48" r="8" fill="#64748b" />
+                    <circle cx="48" cy="48" r="40" fill="#0b1220" />
+          <circle cx="48" cy="48" r="35" fill="#111827" />
+          <circle cx="48" cy="48" r="30" fill="#1f2937" />
+          <g stroke="#334155" strokeWidth="2" strokeLinecap="round" opacity="0.9">
+            <path d="M24 21 L31 28" />
+            <path d="M17 34 L27 39" />
+            <path d="M16 48 L27 48" />
+            <path d="M17 62 L27 57" />
+            <path d="M24 75 L31 68" />
+            <path d="M72 28 L79 21" />
+            <path d="M69 39 L79 34" />
+            <path d="M69 48 L80 48" />
+            <path d="M69 57 L79 62" />
+            <path d="M72 68 L79 75" />
+          </g>
+          <circle cx="48" cy="48" r="19" fill="#cbd5e1" />
+          <circle cx="48" cy="48" r="9" fill="#475569" />
+          <g fill="#cbd5e1">
+            <circle cx="48" cy="32" r="2.2" />
+            <circle cx="62" cy="48" r="2.2" />
+            <circle cx="48" cy="64" r="2.2" />
+            <circle cx="34" cy="48" r="2.2" />
+            <circle cx="58" cy="38" r="2.2" />
+          </g>
         </svg>
       </div>
 
