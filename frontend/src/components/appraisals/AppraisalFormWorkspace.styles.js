@@ -46,10 +46,10 @@ export const styles = {
     boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)',
     border: '1px solid #e2e8f0',
     position: 'sticky',
-    top: '12px',
+    top: '96px',
     alignSelf: 'start',
-    height: 'calc(100vh - 24px)',
-    maxHeight: 'calc(100vh - 24px)',
+    height: 'calc(100vh - 108px)',
+    maxHeight: 'calc(100vh - 108px)',
     overflowY: 'auto'
   },
   sidebarHeader: {
@@ -132,7 +132,7 @@ export const styles = {
     gap: '12px',
     marginBottom: '4px',
     position: 'sticky',
-    top: 8,
+    top: 96,
     zIndex: 10
   },
   formTitle: {

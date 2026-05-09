@@ -1666,32 +1666,6 @@ const renderNeumaticoCard = (positionKey, label) => {
 />
         </div>
 
-        <div style={styles.bottomBar}>
-          <div style={styles.bottomBarText}>
-            {validation.canComplete
-              ? 'El avalúo ya cumple con lo requerido para enviarse a validación.'
-              : 'Todavía faltan campos o evidencias para enviarlo a validación.'}
-          </div>
-
-          <div style={styles.topbarActions}>
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={handleSaveDraft}
-              disabled={isBusy}
-            >
-              {saving ? 'Guardando...' : 'Guardar avance'}
-            </button>
-            <button
-              type="button"
-              style={styles.primaryButton}
-              onClick={handleSaveAppraisal}
-              disabled={isBusy}
-            >
-              {uploading ? 'Subiendo...' : saving ? 'Guardando...' : 'Enviar a validación'}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
