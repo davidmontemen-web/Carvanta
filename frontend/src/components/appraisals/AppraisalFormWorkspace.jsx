@@ -1387,7 +1387,10 @@ const renderNeumaticoCard = (positionKey, label) => {
 
   return (
     <div style={styles.tireCard}>
-      <h4 style={styles.tireCardTitle}>{label}</h4>
+      <div style={styles.tireCardHeader}>
+        <h4 style={styles.tireCardTitle}>{label}</h4>
+        <span style={styles.tirePositionBadge}>Posición</span>
+      </div>
 
       <div style={styles.field}>
         <label style={styles.label}>Neumático</label>

@@ -758,13 +758,32 @@ export const styles = {
   subsectionBlock: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '10px',
+    padding: '12px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '16px',
+    background: '#fcfdff'
+  },
+  subsectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '8px'
   },
   subsectionTitle: {
     margin: 0,
     fontSize: '13px',
     fontWeight: 800,
     color: '#0f172a'
+  },
+  subsectionPill: {
+    fontSize: '10px',
+    fontWeight: 800,
+    color: '#334155',
+    background: '#eef2ff',
+    border: '1px solid #cbd5e1',
+    borderRadius: '999px',
+    padding: '4px 9px'
   },
   damageZoneGrid: {
     display: 'grid',
@@ -775,7 +794,8 @@ export const styles = {
     border: '1px solid #dbe4f0',
     borderRadius: '14px',
     padding: '12px',
-    background: '#fbfdff'
+    background: '#ffffff',
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)'
   },
   damageZoneHeader: {
     marginBottom: '8px'
@@ -794,7 +814,7 @@ export const styles = {
   damageChip: {
     border: '1px solid #d1d5db',
     borderRadius: '999px',
-    padding: '6px 9px',
+    padding: '7px 10px',
     background: '#ffffff',
     color: '#334155',
     fontSize: '10px',
@@ -819,6 +839,13 @@ export const styles = {
     background: '#ffffff',
     display: 'flex',
     flexDirection: 'column',
+    gap: '8px',
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)'
+  },
+  tireCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: '8px'
   },
   tireCardTitle: {
@@ -826,6 +853,15 @@ export const styles = {
     fontSize: '12px',
     fontWeight: 800,
     color: '#0f172a'
+  },
+  tirePositionBadge: {
+    fontSize: '10px',
+    fontWeight: 700,
+    color: '#475569',
+    background: '#f1f5f9',
+    border: '1px solid #cbd5e1',
+    borderRadius: '999px',
+    padding: '3px 8px'
   },
 
   validationGrid: {

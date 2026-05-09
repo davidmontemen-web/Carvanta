@@ -30,13 +30,17 @@ export default function AppraisalFormCarroceriaSection({
           <p style={styles.sectionSubtitle}>
             Deja aquí las observaciones generales del estado exterior y neumáticos.
           </p>
+          <p style={styles.helperText}>Marca el estado general y daños visibles por zona para una revisión más clara.</p>
         </div>
         {renderSectionStatus(sectionKey)}
       </div>
 
       <fieldset style={styles.carroceriaWrapper} disabled={isReadOnly}>
         <div style={styles.subsectionBlock}>
-          <h4 style={styles.subsectionTitle}>Carrocería por zonas</h4>
+          <div style={styles.subsectionHeader}>
+            <h4 style={styles.subsectionTitle}>Carrocería por zonas</h4>
+            <span style={styles.subsectionPill}>Inspección exterior</span>
+          </div>
           <p style={styles.helperText}>
             Selecciona uno o varios hallazgos por cada zona del vehículo.
           </p>
@@ -47,7 +51,10 @@ export default function AppraisalFormCarroceriaSection({
         </div>
 
         <div style={styles.subsectionBlock}>
-          <h4 style={styles.subsectionTitle}>Neumáticos y rines</h4>
+          <div style={styles.subsectionHeader}>
+            <h4 style={styles.subsectionTitle}>Neumáticos y rines</h4>
+            <span style={styles.subsectionPill}>4 posiciones</span>
+          </div>
           <p style={styles.helperText}>
             Para guardar el avalúo completo debes evaluar las 4 posiciones.
           </p>
