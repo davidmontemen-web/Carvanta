@@ -616,6 +616,7 @@ export default function AppraisalFormWorkspace({
   const sectionRefs = useRef({});
 const generalInputRefs = useRef({});
 const detailInputRef = useRef(null);
+const sidebarJumpLockRef = useRef(null);
 
 const registerSectionRef = (key, el) => {
   if (el) {
@@ -655,9 +656,13 @@ const registerSectionRef = (key, el) => {
 
         if (!visibleEntries.length) return;
         const sectionKey = visibleEntries[0].target.getAttribute('data-section-key');
-        if (sectionKey) {
-          setActiveSection((prev) => (prev === sectionKey ? prev : sectionKey));
+        if (!sectionKey) return;
+
+        if (sidebarJumpLockRef.current && sidebarJumpLockRef.current !== sectionKey) {
+          return;
         }
+
+        setActiveSection((prev) => (prev === sectionKey ? prev : sectionKey));
       },
       {
         root: null,
@@ -691,11 +696,18 @@ const registerSectionRef = (key, el) => {
         message: `${getRoleFriendlyName()} no puede editar esta sección. Solo el perfil autorizado puede capturarla.`
       });
     }
+    sidebarJumpLockRef.current = key;
     setActiveSection(key);
     sectionRefs.current[key]?.scrollIntoView({
       behavior: 'auto',
       block: 'start'
     });
+
+    window.setTimeout(() => {
+      if (sidebarJumpLockRef.current === key) {
+        sidebarJumpLockRef.current = null;
+      }
+    }, 450);
   };
 
   const updateRootField = (field, value) => {
