@@ -14,6 +14,18 @@ export default function AppraisalFormFotosGeneralesSection({
   isReadOnly = false
 }) {
   const sectionKey = 'fotosGenerales';
+  const slotReferenceMap = {
+    frontal: 'Frente del vehículo',
+    frontalDerecha: 'Frente 3/4 derecha',
+    lateralDerecha: 'Costado derecho',
+    traseraDerecha: 'Trasera 3/4 derecha',
+    trasera: 'Parte trasera',
+    traseraIzquierda: 'Trasera 3/4 izquierda',
+    lateralIzquierda: 'Costado izquierdo',
+    frontalIzquierda: 'Frente 3/4 izquierda',
+    interiorTablero: 'Tablero interior',
+    motor: 'Bahía del motor'
+  };
 
   return (
     <section
@@ -65,8 +77,9 @@ export default function AppraisalFormFotosGeneralesSection({
                   <img src={photo.preview} alt={slot.label} style={styles.previewImage} />
                 ) : (
                   <div style={styles.silhouetteBox}>
-                    <div style={styles.silhouetteIcon}>📷</div>
-                    <div style={styles.silhouetteText}>Tomar foto</div>
+                    <div style={styles.silhouetteCar}>🚗</div>
+                    <div style={styles.silhouetteText}>Referencia: {slotReferenceMap[slot.key] || slot.label}</div>
+                    <div style={styles.silhouetteHint}>Toca para capturar</div>
                   </div>
                 )}
               </div>

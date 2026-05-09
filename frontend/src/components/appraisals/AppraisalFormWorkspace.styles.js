@@ -596,12 +596,19 @@ export const styles = {
     gap: '6px',
     color: '#6b7280'
   },
-  silhouetteIcon: {
-    fontSize: '20px'
+  silhouetteCar: {
+    fontSize: '30px',
+    lineHeight: 1
   },
   silhouetteText: {
     fontSize: '11px',
-    fontWeight: 700
+    fontWeight: 700,
+    textAlign: 'center',
+    maxWidth: '120px'
+  },
+  silhouetteHint: {
+    fontSize: '10px',
+    color: '#94a3b8'
   },
   previewImage: {
     width: '100%',
