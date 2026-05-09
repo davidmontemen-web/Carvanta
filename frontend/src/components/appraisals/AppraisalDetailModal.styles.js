@@ -263,6 +263,11 @@ export const styles = {
     display: 'grid',
     gap: '8px'
   },
+
+  valuationCardHighlight: {
+    background: '#e0e7ff',
+    border: '1px solid #818cf8'
+  },
   valuationLabel: {
     fontSize: '12px',
     fontWeight: 800,

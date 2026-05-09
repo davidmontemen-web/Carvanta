@@ -498,6 +498,10 @@ async function handleAddFollowup() {
                   <span style={styles.valuationLabel}>Reparaciones</span>
                   <span style={styles.valuationValue}>{formatMoney(appraisal.valuacion?.reparaciones)}</span>
                 </div>
+                <div style={{ ...styles.valuationCard, ...styles.valuationCardHighlight }}>
+                  <span style={styles.valuationLabel}>Solicitado por el cliente</span>
+                  <span style={styles.valuationValue}>{formatMoney(appraisal.valuacion?.solicitadoCliente)}</span>
+                </div>
                 <div style={styles.valuationCard}>
                   <span style={styles.valuationLabel}>Toma autorizada</span>
                   <span style={styles.valuationValue}>{formatMoney(appraisal.valuacion?.tomaAutorizada)}</span>

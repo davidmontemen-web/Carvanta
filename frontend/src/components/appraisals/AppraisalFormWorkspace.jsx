@@ -11,8 +11,7 @@ import {
   AppraisalFormFugasMotorSection,
   AppraisalFormValuacionSection,
   AppraisalFormFotosGeneralesSection,
-  AppraisalFormFotosDetalleSection,
-  AppraisalFormRevisionFinalSection
+  AppraisalFormFotosDetalleSection
 } from './sections';
 
 
@@ -74,8 +73,7 @@ const sections = [
   { key: 'carroceria', label: 'Carrocería y neumáticos', subtitle: 'Lámina, pintura, llantas' },
   { key: 'sistemaElectrico', label: 'Sistema eléctrico', subtitle: 'Componentes eléctricos' },
   { key: 'fugasMotor', label: 'Fugas y motor', subtitle: 'Mecánica y fluidos' },
-  { key: 'valuacion', label: 'Valuación', subtitle: 'Parámetros comerciales' },
-  { key: 'revisionFinal', label: 'Revisión final', subtitle: 'Checklist de cierre' }
+  { key: 'valuacion', label: 'Valuación', subtitle: 'Parámetros comerciales' }
 ];
 
 const generalPhotoSlots = [
@@ -253,6 +251,7 @@ const createEmptyForm = () => ({
   ventaLibro: '',
   reparaciones: '',
   tomaAutorizada: '',
+  solicitadoCliente: '',
   media: '',
   comentarios: ''
 },
@@ -289,6 +288,7 @@ const normalizeInitialData = (initialData) => {
   ventaLibro: source?.valuacion?.ventaLibro ?? '',
   reparaciones: source?.valuacion?.reparaciones ?? '',
   tomaAutorizada: source?.valuacion?.tomaAutorizada ?? '',
+  solicitadoCliente: source?.valuacion?.solicitadoCliente ?? '',
   media:
     source?.valuacion?.media ??
     calculateMediaValue(
@@ -478,6 +478,7 @@ if (!hasValue(form.valuacion.ventaLibro)) missingValuacionFields.push('Venta lib
 if (!hasValue(form.valuacion.reparaciones) && form.valuacion.reparaciones !== '0') {
   missingValuacionFields.push('Reparaciones');
 }
+if (!hasValue(form.valuacion.solicitadoCliente)) missingValuacionFields.push('Solicitado por cliente');
 if (!hasValue(form.valuacion.tomaAutorizada)) {
   missingValuacionFields.push('Toma autorizada');
 }
@@ -1069,7 +1070,6 @@ const handleAnioChange = (value) => {
       Object.values(form.documentacion || {}).filter((value) => hasValue(value)).length >= 4;
     const sistemaElectricoReady =
       Object.values(form.sistemaElectrico || {}).filter((value) => hasValue(value)).length >= 8;
-    const revisionReady = validation.canComplete;
 
     const map = {
       encabezado: validation.requiredHeader,
@@ -1082,7 +1082,6 @@ const handleAnioChange = (value) => {
       carroceria: carroceriaReady,
       sistemaElectrico: sistemaElectricoReady,
       fugasMotor: fugasReady,
-      revisionFinal: revisionReady
     };
 
     if (!(key in map)) return null;
@@ -1731,15 +1730,6 @@ const renderNeumaticoCard = (positionKey, label) => {
   formatMoneyDisplay={formatMoneyDisplay}
   handleValuacionNumberChange={handleValuacionNumberChange}
   renderTextarea={renderTextarea}
-/>
-
-<AppraisalFormRevisionFinalSection
-  managerCanValidate={isManagerRole}
-  activeSection={activeSection}
-  registerSectionRef={registerSectionRef}
-  renderSectionStatus={renderSectionStatus}
-  styles={styles}
-  validation={validation}
 />
         </div>
 

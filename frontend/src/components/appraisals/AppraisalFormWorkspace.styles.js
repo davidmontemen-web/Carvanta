@@ -169,6 +169,17 @@ export const styles = {
     boxShadow: '0 14px 26px rgba(37, 99, 235, 0.12)'
   },
 
+
+  valuationSectionCard: {
+    background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+    border: '1px solid #c7d2fe'
+  },
+  valuationHighlightInput: {
+    background: '#e0e7ff',
+    border: '1px solid #818cf8',
+    color: '#312e81',
+    fontWeight: 800
+  },
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',

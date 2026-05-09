@@ -18,12 +18,14 @@ export default function AppraisalFormValuacionSection({
       }}
       style={{
         ...styles.sectionCard,
+        ...styles.valuationSectionCard,
         ...(activeSection === sectionKey ? styles.sectionCardActive : {})
       }}
     >
       <div style={styles.sectionHeader}>
         <div>
           <h3 style={styles.sectionTitle}>Valuación</h3>
+          <p style={styles.helperText}>Apartado clave para el cierre comercial del avalúo.</p>
         </div>
         {renderSectionStatus(sectionKey)}
       </div>
@@ -73,6 +75,20 @@ export default function AppraisalFormValuacionSection({
             onChange={(e) => handleValuacionNumberChange('reparaciones', e.target.value)}
             placeholder="Ej. 15000"
             style={styles.input}
+            inputMode="numeric"
+            disabled={isReadOnly}
+          />
+        </div>
+
+
+        <div style={styles.field}>
+          <label style={styles.label}>Solicitado por el cliente</label>
+          <input
+            type="text"
+            value={formatMoneyDisplay(form.valuacion.solicitadoCliente)}
+            onChange={(e) => handleValuacionNumberChange('solicitadoCliente', e.target.value)}
+            placeholder="Ej. 205000"
+            style={{ ...styles.input, ...styles.valuationHighlightInput }}
             inputMode="numeric"
             disabled={isReadOnly}
           />
