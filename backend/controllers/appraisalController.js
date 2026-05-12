@@ -64,6 +64,34 @@ const canRolePerformTransition = (role, fromStatus, toStatus) => {
   return false;
 };
 
+const hasValue = (value) => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  return true;
+};
+
+const validateTransitionRequirements = ({ fromStatus, toStatus, payload }) => {
+  const errors = [];
+
+  if (fromStatus === 'incompleto' && toStatus === 'pendiente_validacion_comercial') {
+    if (!hasValue(payload.folio)) errors.push('folio');
+    if (!hasValue(payload.clienteNombre)) errors.push('clienteNombre');
+    if (!hasValue(payload.clienteTelefono)) errors.push('clienteTelefono');
+    if (!hasValue(payload.vehiculoInteres)) errors.push('vehiculoInteres');
+    if (!hasValue(payload.fechaAvaluo)) errors.push('fechaAvaluo');
+    if (!hasValue(payload.valuacion?.tomaAutorizada)) errors.push('valuacion.tomaAutorizada');
+  }
+
+  if (fromStatus === 'pendiente_aprobacion_final_gerencia' && toStatus === 'completo') {
+    if (!hasValue(payload.generales?.marca)) errors.push('generales.marca');
+    if (!hasValue(payload.generales?.modelo)) errors.push('generales.modelo');
+    if (!hasValue(payload.generales?.anio)) errors.push('generales.anio');
+    if (!hasValue(payload.valuacion?.tomaAutorizada)) errors.push('valuacion.tomaAutorizada');
+  }
+
+  return errors;
+};
+
 
 // ==============================
 // HELPERS
@@ -518,6 +546,27 @@ const actualizarAppraisal = async (req, res) => {
         return res.status(403).json({
           ok: false,
           error: `El rol ${actorRole || 'desconocido'} no puede realizar la transición ${estatusActual} -> ${estatusNuevo}`
+        });
+      }
+
+      const transitionErrors = validateTransitionRequirements({
+        fromStatus: estatusActual,
+        toStatus: estatusNuevo,
+        payload: {
+          folio,
+          clienteNombre,
+          clienteTelefono,
+          vehiculoInteres,
+          fechaAvaluo,
+          generales,
+          valuacion
+        }
+      });
+
+      if (transitionErrors.length) {
+        return res.status(400).json({
+          ok: false,
+          error: `No se puede completar la transición ${estatusActual} -> ${estatusNuevo}. Campos faltantes: ${transitionErrors.join(', ')}`
         });
       }
     }
