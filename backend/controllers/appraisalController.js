@@ -3,6 +3,68 @@ const { logHistory } = require('../utils/historyLogger');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
 
+const APPRAISAL_STATUSES = [
+  'incompleto',
+  'pendiente_validacion_comercial',
+  'validado_comercial_gerencia',
+  'en_seguimiento',
+  'pendiente_validacion_mecanica',
+  'validacion_mecanica_completa',
+  'pendiente_aprobacion_final_gerencia',
+  'completo',
+  'comprado',
+  'cerrado_no_viable',
+  'borrador'
+];
+
+const ROLE_ALIASES = {
+  administrador: 'gerencia',
+  gerencia: 'gerencia',
+  valuador: 'valuador',
+  tecnico: 'tecnico'
+};
+
+const ALLOWED_TRANSITIONS = {
+  borrador: ['incompleto', 'pendiente_validacion_comercial', 'completo', 'comprado'],
+  incompleto: ['pendiente_validacion_comercial', 'en_seguimiento', 'cerrado_no_viable', 'completo'],
+  pendiente_validacion_comercial: ['incompleto', 'validado_comercial_gerencia', 'en_seguimiento', 'cerrado_no_viable'],
+  validado_comercial_gerencia: ['pendiente_validacion_mecanica', 'en_seguimiento', 'cerrado_no_viable'],
+  en_seguimiento: ['pendiente_validacion_comercial', 'pendiente_validacion_mecanica', 'cerrado_no_viable'],
+  pendiente_validacion_mecanica: ['validacion_mecanica_completa', 'cerrado_no_viable'],
+  validacion_mecanica_completa: ['pendiente_aprobacion_final_gerencia', 'cerrado_no_viable'],
+  pendiente_aprobacion_final_gerencia: ['completo', 'cerrado_no_viable'],
+  completo: ['comprado'],
+  comprado: [],
+  cerrado_no_viable: []
+};
+
+const canRolePerformTransition = (role, fromStatus, toStatus) => {
+  const normalizedRole = ROLE_ALIASES[role] || role;
+
+  if (normalizedRole === 'gerencia') return true;
+  if (fromStatus === toStatus) return true;
+
+  // Compatibilidad: si no hay rol identificado, permitimos transición
+  // para no bloquear integraciones legacy que aún no inyectan usuario.
+  if (!normalizedRole) return true;
+
+  if (normalizedRole === 'valuador') {
+    return [
+      'incompleto->pendiente_validacion_comercial',
+      'pendiente_validacion_comercial->incompleto',
+      'validado_comercial_gerencia->en_seguimiento',
+      'en_seguimiento->pendiente_validacion_comercial'
+    ].includes(`${fromStatus}->${toStatus}`);
+  }
+
+  if (normalizedRole === 'tecnico') {
+    return fromStatus === 'pendiente_validacion_mecanica' && toStatus === 'validacion_mecanica_completa';
+  }
+
+  return false;
+};
+
+
 // ==============================
 // HELPERS
 // ==============================
@@ -284,6 +346,16 @@ const crearAppraisal = async (req, res) => {
       });
     }
 
+
+    const estatusNuevo = estatus || 'borrador';
+
+    if (!APPRAISAL_STATUSES.includes(estatusNuevo)) {
+      return res.status(400).json({
+        ok: false,
+        error: `Estatus no válido: ${estatusNuevo}`
+      });
+    }
+
     const [exists] = await db.query(
       `SELECT id FROM appraisals WHERE id = ? OR folio = ? LIMIT 1`,
       [id, folio]
@@ -416,9 +488,39 @@ const actualizarAppraisal = async (req, res) => {
     }
 
     const estatusActual = rows[0].estatus;
-    const estatusNuevo = estatus || 'borrador';
+    const estatusNuevo = estatus || estatusActual;
     const fechaAvaluoFormateada = formatDateOnly(fechaAvaluo);
     const fechaActualizacionMysql = formatDateTimeForMySQL(fechaActualizacion);
+    const actorRole = req.usuario?.rol || null;
+
+    if (!APPRAISAL_STATUSES.includes(estatusNuevo)) {
+      return res.status(400).json({
+        ok: false,
+        error: `Estatus no válido: ${estatusNuevo}`
+      });
+    }
+
+    // Solo validamos transición si realmente pidieron cambio de estado.
+    const isStatusChangeRequested = typeof estatus === 'string' && estatusNuevo !== estatusActual;
+
+    if (isStatusChangeRequested) {
+      const allowedTargets = ALLOWED_TRANSITIONS[estatusActual] || [];
+      const isTransitionAllowed = allowedTargets.includes(estatusNuevo);
+
+      if (!isTransitionAllowed) {
+        return res.status(400).json({
+          ok: false,
+          error: `Transición no permitida: ${estatusActual} -> ${estatusNuevo}`
+        });
+      }
+
+      if (!canRolePerformTransition(actorRole, estatusActual, estatusNuevo)) {
+        return res.status(403).json({
+          ok: false,
+          error: `El rol ${actorRole || 'desconocido'} no puede realizar la transición ${estatusActual} -> ${estatusNuevo}`
+        });
+      }
+    }
 
     if (!fechaAvaluoFormateada) {
       return res.status(400).json({
